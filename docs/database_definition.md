@@ -355,7 +355,7 @@ ALTER TABLE price_history ADD CONSTRAINT chk_price_history_price_positive
 
 ### 8. point_history (ポイント履歴)
 
-ポイントの増減履歴を管理するテーブル。
+ポイントの増減履歴を管理するテーブル。全てのポイント操作を記録し、監査証跡として機能。
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
@@ -364,8 +364,15 @@ ALTER TABLE price_history ADD CONSTRAINT chk_price_history_price_positive
 | amount | BIGINT | NO | - | ポイント増減量 (正: 増加、負: 減少) |
 | type | VARCHAR(50) | NO | - | 種別 (grant/reserve/release/consume/refund) |
 | reason | TEXT | YES | NULL | 理由・備考 |
-| related_id | BIGINT | YES | NULL | 関連ID (bid_id, auction_id等) |
+| related_auction_id | BIGINT | YES | NULL | 関連オークションID (外部キー) |
+| related_bid_id | BIGINT | YES | NULL | 関連入札ID (外部キー) |
 | admin_id | BIGINT | YES | NULL | 実行管理者ID (外部キー: admins) |
+| balance_before | BIGINT | NO | - | 操作前の利用可能ポイント |
+| balance_after | BIGINT | NO | - | 操作後の利用可能ポイント |
+| reserved_before | BIGINT | NO | - | 操作前の予約ポイント |
+| reserved_after | BIGINT | NO | - | 操作後の予約ポイント |
+| total_before | BIGINT | NO | - | 操作前の累計ポイント |
+| total_after | BIGINT | NO | - | 操作後の累計ポイント |
 | created_at | TIMESTAMPTZ | NO | NOW() | 作成日時 |
 
 **インデックス**
@@ -373,7 +380,9 @@ ALTER TABLE price_history ADD CONSTRAINT chk_price_history_price_positive
 CREATE INDEX idx_point_history_bidder ON point_history(bidder_id, created_at DESC);
 CREATE INDEX idx_point_history_type ON point_history(type);
 CREATE INDEX idx_point_history_admin ON point_history(admin_id);
-CREATE INDEX idx_point_history_related ON point_history(related_id, type);
+CREATE INDEX idx_point_history_auction ON point_history(related_auction_id);
+CREATE INDEX idx_point_history_bid ON point_history(related_bid_id);
+CREATE INDEX idx_point_history_created_at ON point_history(created_at DESC);
 ```
 
 **制約**
@@ -382,18 +391,37 @@ ALTER TABLE point_history ADD CONSTRAINT fk_point_history_bidder
   FOREIGN KEY (bidder_id) REFERENCES bidders(id) ON DELETE CASCADE;
 ALTER TABLE point_history ADD CONSTRAINT fk_point_history_admin 
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE SET NULL;
+ALTER TABLE point_history ADD CONSTRAINT fk_point_history_auction 
+  FOREIGN KEY (related_auction_id) REFERENCES auctions(id) ON DELETE SET NULL;
+ALTER TABLE point_history ADD CONSTRAINT fk_point_history_bid 
+  FOREIGN KEY (related_bid_id) REFERENCES bids(id) ON DELETE SET NULL;
 ALTER TABLE point_history ADD CONSTRAINT chk_point_history_type 
   CHECK (type IN ('grant', 'reserve', 'release', 'consume', 'refund'));
 ALTER TABLE point_history ADD CONSTRAINT chk_point_history_amount_not_zero 
   CHECK (amount != 0);
+ALTER TABLE point_history ADD CONSTRAINT chk_point_history_balance_non_negative 
+  CHECK (balance_before >= 0 AND balance_after >= 0 AND 
+         reserved_before >= 0 AND reserved_after >= 0 AND
+         total_before >= 0 AND total_after >= 0);
 ```
 
-**ポイント種別 (type)**
-- `grant`: ポイント付与 (システム管理者による)
-- `reserve`: 入札時の予約 (available → reserved)
-- `release`: 入札取消・落札失敗時の解放 (reserved → available)
-- `consume`: 落札時の消費 (reserved → 消費)
-- `refund`: オークション中止時の返金 (reserved → available)
+**ポイント種別 (type) と動作**
+
+| 種別 | 説明 | amount | available | reserved | total | 実行者 |
+|-----|------|--------|-----------|----------|-------|--------|
+| `grant` | ポイント付与 | +N | +N | - | +N | system_admin |
+| `reserve` | 入札時の予約 | -N | -N | +N | - | bidder (自動) |
+| `release` | 落札失敗時の解放 | +N | +N | -N | - | system (自動) |
+| `consume` | 落札時の消費 | -N | - | -N | - | system (自動) |
+| `refund` | オークション中止時の返金 | +N | +N | -N | - | auctioneer/admin |
+
+**履歴記録の詳細**
+
+各ポイント操作は以下の情報を記録：
+1. **変更前後の全残高**: `balance_before/after`, `reserved_before/after`, `total_before/after`
+2. **関連エンティティ**: `related_auction_id`, `related_bid_id`
+3. **実行者**: `admin_id` (付与・返金の場合)
+4. **理由**: `reason` (自由記述)
 
 ## トリガー関数
 
@@ -460,6 +488,70 @@ CREATE TRIGGER trigger_update_bid_winning_status AFTER INSERT ON bids
     FOR EACH ROW EXECUTE FUNCTION update_bid_winning_status();
 ```
 
+### 4. ポイント履歴自動記録
+
+```sql
+CREATE OR REPLACE FUNCTION record_point_history()
+RETURNS TRIGGER AS $$
+DECLARE
+    point_type VARCHAR(50);
+    point_amount BIGINT;
+BEGIN
+    -- 変更内容に基づいてポイント種別と金額を判定
+    IF NEW.total_points > OLD.total_points THEN
+        -- ポイント付与
+        point_type := 'grant';
+        point_amount := NEW.total_points - OLD.total_points;
+    ELSIF NEW.reserved_points > OLD.reserved_points THEN
+        -- 入札時の予約
+        point_type := 'reserve';
+        point_amount := -(NEW.reserved_points - OLD.reserved_points);
+    ELSIF NEW.reserved_points < OLD.reserved_points AND NEW.available_points > OLD.available_points THEN
+        -- 予約解放
+        point_type := 'release';
+        point_amount := NEW.available_points - OLD.available_points;
+    ELSIF NEW.reserved_points < OLD.reserved_points AND NEW.available_points = OLD.available_points THEN
+        -- 落札時の消費
+        point_type := 'consume';
+        point_amount := -(OLD.reserved_points - NEW.reserved_points);
+    ELSE
+        -- その他の変更（通常は発生しない）
+        RETURN NEW;
+    END IF;
+
+    -- 履歴レコードの挿入
+    INSERT INTO point_history (
+        bidder_id,
+        amount,
+        type,
+        balance_before,
+        balance_after,
+        reserved_before,
+        reserved_after,
+        total_before,
+        total_after
+    ) VALUES (
+        NEW.bidder_id,
+        point_amount,
+        point_type,
+        OLD.available_points,
+        NEW.available_points,
+        OLD.reserved_points,
+        NEW.reserved_points,
+        OLD.total_points,
+        NEW.total_points
+    );
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_record_point_history AFTER UPDATE ON bidder_points
+    FOR EACH ROW 
+    WHEN (OLD.* IS DISTINCT FROM NEW.*)
+    EXECUTE FUNCTION record_point_history();
+```
+
 ## ビュー
 
 ### 1. active_auctions_view (アクティブなオークション一覧)
@@ -505,6 +597,79 @@ LEFT JOIN bidder_points bp ON bd.id = bp.bidder_id
 LEFT JOIN bids b ON bd.id = b.bidder_id
 LEFT JOIN auctions a ON b.auction_id = a.id AND a.status = 'ended'
 GROUP BY bd.id, bd.email, bd.display_name, bp.available_points, bp.reserved_points;
+```
+
+### 3. point_history_detailed (ポイント履歴詳細ビュー)
+
+```sql
+CREATE VIEW point_history_detailed AS
+SELECT 
+    ph.id,
+    ph.bidder_id,
+    bd.email AS bidder_email,
+    bd.display_name AS bidder_name,
+    ph.amount,
+    ph.type,
+    ph.reason,
+    ph.balance_before,
+    ph.balance_after,
+    ph.reserved_before,
+    ph.reserved_after,
+    ph.total_before,
+    ph.total_after,
+    a.title AS auction_title,
+    b.price AS bid_price,
+    ad.display_name AS admin_name,
+    ph.created_at
+FROM point_history ph
+JOIN bidders bd ON ph.bidder_id = bd.id
+LEFT JOIN auctions a ON ph.related_auction_id = a.id
+LEFT JOIN bids b ON ph.related_bid_id = b.id
+LEFT JOIN admins ad ON ph.admin_id = ad.id
+ORDER BY ph.created_at DESC;
+```
+
+### 4. bidder_point_balance_view (入札者ポイント残高ビュー)
+
+```sql
+CREATE VIEW bidder_point_balance_view AS
+SELECT 
+    bd.id AS bidder_id,
+    bd.email,
+    bd.display_name,
+    bp.total_points,
+    bp.available_points,
+    bp.reserved_points,
+    (bp.total_points - bp.available_points - bp.reserved_points) AS consumed_points,
+    COALESCE(SUM(CASE WHEN ph.type = 'grant' THEN ph.amount END), 0) AS total_granted,
+    COALESCE(SUM(CASE WHEN ph.type = 'consume' THEN ABS(ph.amount) END), 0) AS total_consumed,
+    COALESCE(COUNT(CASE WHEN ph.type = 'reserve' THEN 1 END), 0) AS total_bids,
+    bp.updated_at AS last_updated
+FROM bidders bd
+LEFT JOIN bidder_points bp ON bd.id = bp.bidder_id
+LEFT JOIN point_history ph ON bd.id = ph.bidder_id
+GROUP BY bd.id, bd.email, bd.display_name, bp.total_points, 
+         bp.available_points, bp.reserved_points, bp.updated_at;
+```
+
+### 5. point_transactions_by_auction (オークション別ポイント取引)
+
+```sql
+CREATE VIEW point_transactions_by_auction AS
+SELECT 
+    a.id AS auction_id,
+    a.title AS auction_title,
+    a.status AS auction_status,
+    COUNT(DISTINCT ph.bidder_id) AS unique_bidders,
+    COALESCE(SUM(CASE WHEN ph.type = 'reserve' THEN ABS(ph.amount) END), 0) AS total_reserved,
+    COALESCE(SUM(CASE WHEN ph.type = 'consume' THEN ABS(ph.amount) END), 0) AS total_consumed,
+    COALESCE(SUM(CASE WHEN ph.type = 'release' THEN ph.amount END), 0) AS total_released,
+    COALESCE(SUM(CASE WHEN ph.type = 'refund' THEN ph.amount END), 0) AS total_refunded,
+    MAX(ph.created_at) AS last_transaction_at
+FROM auctions a
+LEFT JOIN point_history ph ON a.id = ph.related_auction_id
+GROUP BY a.id, a.title, a.status
+ORDER BY a.id DESC;
 ```
 
 ## 初期データ
@@ -588,6 +753,37 @@ LEFT JOIN items i ON a.id = i.auction_id
 LEFT JOIN bids b ON a.id = b.auction_id
 WHERE a.id = $1
 GROUP BY a.id, i.name, i.description, i.horse_info, i.image_url;
+
+-- ポイント履歴取得クエリ (入札者ごと、ページング対応)
+EXPLAIN ANALYZE
+SELECT 
+    ph.id,
+    ph.type,
+    ph.amount,
+    ph.balance_after,
+    ph.reserved_after,
+    ph.reason,
+    a.title AS auction_title,
+    ph.created_at
+FROM point_history ph
+LEFT JOIN auctions a ON ph.related_auction_id = a.id
+WHERE ph.bidder_id = $1
+ORDER BY ph.created_at DESC
+LIMIT 50 OFFSET $2;
+
+-- ポイント残高整合性チェッククエリ
+EXPLAIN ANALYZE
+SELECT 
+    bp.bidder_id,
+    bp.total_points,
+    bp.available_points,
+    bp.reserved_points,
+    COALESCE(SUM(CASE WHEN ph.type = 'grant' THEN ph.amount END), 0) AS calculated_total,
+    (bp.available_points + bp.reserved_points) AS current_sum
+FROM bidder_points bp
+LEFT JOIN point_history ph ON bp.bidder_id = ph.bidder_id
+GROUP BY bp.bidder_id, bp.total_points, bp.available_points, bp.reserved_points
+HAVING bp.total_points != COALESCE(SUM(CASE WHEN ph.type = 'grant' THEN ph.amount END), 0);
 ```
 
 ### 3. パーティショニング (将来的な対応)
@@ -596,10 +792,25 @@ GROUP BY a.id, i.name, i.description, i.horse_info, i.image_url;
 
 ```sql
 -- bids テーブルを月ごとにパーティション化
-CREATE TABLE bids_2025_01 PARTITION OF bids
+CREATE TABLE bids_partitioned (
+    LIKE bids INCLUDING ALL
+) PARTITION BY RANGE (bid_at);
+
+CREATE TABLE bids_2025_01 PARTITION OF bids_partitioned
     FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
 
-CREATE TABLE bids_2025_02 PARTITION OF bids
+CREATE TABLE bids_2025_02 PARTITION OF bids_partitioned
+    FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+
+-- point_history テーブルを月ごとにパーティション化
+CREATE TABLE point_history_partitioned (
+    LIKE point_history INCLUDING ALL
+) PARTITION BY RANGE (created_at);
+
+CREATE TABLE point_history_2025_01 PARTITION OF point_history_partitioned
+    FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+
+CREATE TABLE point_history_2025_02 PARTITION OF point_history_partitioned
     FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
 ```
 
@@ -642,6 +853,113 @@ db.AutoMigrate(
 )
 ```
 
+### ポイント履歴記録の実装例 (Go)
+
+```go
+// internal/service/point_service.go
+package service
+
+import (
+    "context"
+    "fmt"
+    "gorm.io/gorm"
+)
+
+type PointService struct {
+    db *gorm.DB
+}
+
+// ポイント付与
+func (s *PointService) GrantPoints(ctx context.Context, bidderID string, amount int64, reason string, adminID int64) error {
+    return s.db.Transaction(func(tx *gorm.DB) error {
+        // 現在のポイント残高を取得（FOR UPDATE）
+        var points BidderPoint
+        if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+            Where("bidder_id = ?", bidderID).
+            First(&points).Error; err != nil {
+            return err
+        }
+
+        // 変更前の状態を保存
+        balanceBefore := points.AvailablePoints
+        reservedBefore := points.ReservedPoints
+        totalBefore := points.TotalPoints
+
+        // ポイント付与
+        points.TotalPoints += amount
+        points.AvailablePoints += amount
+
+        if err := tx.Save(&points).Error; err != nil {
+            return err
+        }
+
+        // 履歴記録（トリガーで自動作成されるが、手動でも記録可能）
+        history := PointHistory{
+            BidderID:       bidderID,
+            Amount:         amount,
+            Type:           "grant",
+            Reason:         reason,
+            AdminID:        &adminID,
+            BalanceBefore:  balanceBefore,
+            BalanceAfter:   points.AvailablePoints,
+            ReservedBefore: reservedBefore,
+            ReservedAfter:  points.ReservedPoints,
+            TotalBefore:    totalBefore,
+            TotalAfter:     points.TotalPoints,
+        }
+
+        return tx.Create(&history).Error
+    })
+}
+
+// 入札時のポイント予約
+func (s *PointService) ReservePoints(ctx context.Context, bidderID string, auctionID int64, bidID int64, amount int64) error {
+    return s.db.Transaction(func(tx *gorm.DB) error {
+        var points BidderPoint
+        if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+            Where("bidder_id = ?", bidderID).
+            First(&points).Error; err != nil {
+            return err
+        }
+
+        // 残高チェック
+        if points.AvailablePoints < amount {
+            return fmt.Errorf("insufficient points: available=%d, required=%d", 
+                points.AvailablePoints, amount)
+        }
+
+        balanceBefore := points.AvailablePoints
+        reservedBefore := points.ReservedPoints
+        totalBefore := points.TotalPoints
+
+        // ポイント予約（available → reserved）
+        points.AvailablePoints -= amount
+        points.ReservedPoints += amount
+
+        if err := tx.Save(&points).Error; err != nil {
+            return err
+        }
+
+        // 履歴記録
+        history := PointHistory{
+            BidderID:          bidderID,
+            Amount:            -amount,
+            Type:              "reserve",
+            RelatedAuctionID:  &auctionID,
+            RelatedBidID:      &bidID,
+            BalanceBefore:     balanceBefore,
+            BalanceAfter:      points.AvailablePoints,
+            ReservedBefore:    reservedBefore,
+            ReservedAfter:     points.ReservedPoints,
+            TotalBefore:       totalBefore,
+            TotalAfter:        points.TotalPoints,
+        }
+
+        return tx.Create(&history).Error
+    })
+}
+```
+
 ### 本番環境マイグレーション
 
 ```bash
@@ -659,10 +977,69 @@ migrate -path migrations -database "postgresql://auction_user:password@localhost
 
 ## 監視項目
 
+### データベース全般
+
 - **接続数**: `SELECT count(*) FROM pg_stat_activity;`
 - **スロークエリ**: `log_min_duration_statement = 1000` (1秒以上)
-- **テーブルサイズ**: `SELECT pg_size_pretty(pg_total_relation_size('bids'));`
+- **テーブルサイズ**: 
+  ```sql
+  SELECT 
+      schemaname,
+      tablename,
+      pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
+  FROM pg_tables 
+  WHERE schemaname = 'public'
+  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+  ```
 - **インデックス使用率**: `SELECT * FROM pg_stat_user_indexes;`
+
+### ポイント履歴関連
+
+- **日次ポイント変動量**:
+  ```sql
+  SELECT 
+      DATE(created_at) AS date,
+      type,
+      COUNT(*) AS transaction_count,
+      SUM(ABS(amount)) AS total_amount
+  FROM point_history
+  WHERE created_at >= NOW() - INTERVAL '7 days'
+  GROUP BY DATE(created_at), type
+  ORDER BY date DESC, type;
+  ```
+
+- **ポイント残高整合性チェック**:
+  ```sql
+  -- 履歴の合計と現在の残高が一致するか確認
+  SELECT 
+      bp.bidder_id,
+      bd.email,
+      bp.total_points AS current_total,
+      COALESCE(SUM(CASE WHEN ph.type = 'grant' THEN ph.amount END), 0) AS granted_total,
+      bp.available_points + bp.reserved_points AS sum_of_parts
+  FROM bidder_points bp
+  JOIN bidders bd ON bp.bidder_id = bd.id
+  LEFT JOIN point_history ph ON bp.bidder_id = ph.bidder_id
+  GROUP BY bp.bidder_id, bd.email, bp.total_points, bp.available_points, bp.reserved_points
+  HAVING bp.total_points != COALESCE(SUM(CASE WHEN ph.type = 'grant' THEN ph.amount END), 0)
+      OR bp.total_points < (bp.available_points + bp.reserved_points);
+  ```
+
+- **異常なポイント取引の検出**:
+  ```sql
+  -- 短時間に大量のポイント変動があった入札者を検出
+  SELECT 
+      bidder_id,
+      COUNT(*) AS transaction_count,
+      SUM(ABS(amount)) AS total_amount,
+      MIN(created_at) AS first_transaction,
+      MAX(created_at) AS last_transaction
+  FROM point_history
+  WHERE created_at >= NOW() - INTERVAL '1 hour'
+  GROUP BY bidder_id
+  HAVING COUNT(*) > 50 OR SUM(ABS(amount)) > 100000
+  ORDER BY transaction_count DESC;
+  ```
 
 ## テーブル分離の設計方針
 
