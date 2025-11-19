@@ -3,7 +3,14 @@
 ## 概要
 
 競走馬セリをモデルとしたリアルタイムオークションシステムのアーキテクチャ設計書です。
-5分間の制限時間と入札時の5分延長機能を持ち、WebSocketによるリアルタイム通信を実現します。
+仮想ポイント制を採用し、主催者主導で価格を開示していく方式のオークションシステムです。
+WebSocketによるリアルタイム通信で、入札状況や価格変動を即座に反映します。
+
+**オークション方式の特徴**
+- **ポイント制**: 仮想ポイントで入札（実際の金銭取引なし）
+- **主催者主導**: 主催者が開始価格と次の入札価格を決定・開示
+- **タイマーレス**: 制限時間なし、主催者の判断で終了
+- **競り下げも可能**: 入札がなければ前の価格で入札したユーザーが落札
 
 **開発フェーズ**
 - **第一フェーズ**: Webアプリケーション (Vue.js) の開発
@@ -101,11 +108,12 @@
 │  │                      │      │                      │    │
 │  │  テーブル:            │      │  用途:                │    │
 │  │  - users             │      │  - セッション管理      │    │
-│  │  - auctions          │      │  - リアルタイム状態    │    │
-│  │  - items (horses)    │      │  - 入札キュー         │    │
-│  │  - bids              │      │  - タイマー状態       │    │
-│  │  - notifications     │      │  - アクティブ接続情報  │    │
-│  │                      │      │  - Pub/Sub           │    │
+│  │  - user_points       │      │  - リアルタイム状態    │    │
+│  │  - auctions          │      │  - 入札キュー         │    │
+│  │  - items (horses)    │      │  - 現在価格状態       │    │
+│  │  - bids              │      │  - アクティブ接続情報  │    │
+│  │  - price_history     │      │  - Pub/Sub           │    │
+│  │  - notifications     │      │                      │    │
 │  └──────────────────────┘      └──────────────────────┘    │
 │           │                              │                  │
 │           │                              │                  │
@@ -159,39 +167,50 @@
 - **Pub/Sub**: 複数WebSocketサーバー間でのイベント配信
 - **入札キュー**: 同時入札の競合制御と順序保証
 
-### 4. タイマー管理アーキテクチャ
+### 4. 価格管理アーキテクチャ
 
-**オークションタイマーの精密な管理**：
+**主催者主導の価格開示システム**：
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│           タイマー管理システム                         │
+│           価格管理システム                             │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  1. オークション開始時                                │
 │     ↓                                               │
-│     Redis: SET auction:{id}:end_time {timestamp}    │
-│     Redis: SET auction:{id}:extended false          │
+│     主催者: 開始価格を設定 (例: 100pt)                │
+│     Redis: SET auction:{id}:current_price 100       │
+│     Redis: SET auction:{id}:status "active"         │
+│     WebSocket: broadcast "auction:started"          │
 │                                                     │
-│  2. 毎秒の残り時間計算                                │
+│  2. 入札イベント受信                                  │
 │     ↓                                               │
-│     remaining = end_time - current_time             │
-│     WebSocket: broadcast remaining time             │
+│     ポイント残高確認                                  │
+│     PostgreSQL: INSERT bid record                   │
+│     Redis: SET auction:{id}:has_bid true            │
+│     Redis: SET auction:{id}:last_bidder {user_id}   │
+│     WebSocket: broadcast "auction:bid"              │
 │                                                     │
-│  3. 入札イベント受信                                  │
+│  3. 主催者が次の価格を開示                            │
 │     ↓                                               │
-│     IF remaining < 300s (5分) THEN                  │
-│       new_end_time = current_time + 300s            │
-│       Redis: SET auction:{id}:end_time {new_time}   │
-│       Redis: SET auction:{id}:extended true         │
-│       WebSocket: broadcast "extended" event         │
+│     主催者: 次の価格を設定 (例: 150pt)                │
+│     Redis: SET auction:{id}:current_price 150       │
+│     PostgreSQL: INSERT price_history                │
+│     WebSocket: broadcast "auction:price_open"       │
 │                                                     │
-│  4. タイムアウト検知                                  │
+│  4. 入札がない場合                                    │
 │     ↓                                               │
-│     IF current_time >= end_time THEN                │
-│       オークション終了処理                            │
-│       落札者確定                                     │
-│       WebSocket: broadcast "ended" event            │
+│     主催者: 「入札なし」を確認                        │
+│     前の価格で入札したユーザーを落札者として確定        │
+│     PostgreSQL: UPDATE auction SET winner           │
+│     ポイント確定処理                                  │
+│     WebSocket: broadcast "auction:ended"            │
+│                                                     │
+│  5. 主催者が手動で終了                                │
+│     ↓                                               │
+│     最後の入札者を落札者として確定                     │
+│     ポイント確定処理                                  │
+│     WebSocket: broadcast "auction:ended"            │
 │                                                     │
 └─────────────────────────────────────────────────────┘
 ```
@@ -229,75 +248,111 @@
 ### 入札処理フロー
 
 ```
-┌──────────┐
-│  Client  │
-└─────┬────┘
-      │ 1. bid event (WebSocket)
-      ↓
-┌─────────────────┐
-│ WebSocket Server│
-└─────┬───────────┘
-      │ 2. validate connection & auth
-      ↓
-┌─────────────────┐
-│ Business Logic  │
-└─────┬───────────┘
-      │ 3. validate bid (amount, timing)
-      ↓
-┌─────────────────┐
-│   PostgreSQL    │ ← 4. INSERT bid record
-└─────────────────┘
-      │
-      │ 5. update auction state
-      ↓
-┌─────────────────┐
-│     Redis       │ ← 6. update cache & timer
-└─────┬───────────┘
-      │ 7. publish event
-      ↓
-┌─────────────────┐
-│   Redis Pub/Sub │
-└─────┬───────────┘
-      │ 8. broadcast to all WS servers
-      ↓
-┌──────────────────────────────────┐
-│  All WebSocket Server Instances  │
-└─────┬────────────────────────────┘
-      │ 9. emit to clients in room
-      ↓
-┌──────────────────────────────┐
-│  All Connected Clients       │ ← 10. UI update
-└──────────────────────────────┘
+入札者 (Client)
+  │
+  │ 1. bid event (WebSocket) + current_price
+  ↓
+WebSocket Server
+  │
+  │ 2. validate connection & auth (role: bidder)
+  ↓
+Business Logic
+  │
+  │ 3. validate bid
+  │    - 現在の開示価格と一致するか
+  │    - ポイント残高が十分か
+  │    - オークションがactiveか
+  ↓
+PostgreSQL
+  │ 4. BEGIN TRANSACTION
+  │ 5. INSERT INTO bids (auction_id, user_id, price, points)
+  │ 6. UPDATE user_points SET reserved_points += price
+  │ 7. COMMIT
+  ↓
+Redis
+  │ 8. SET auction:{id}:has_bid true
+  │ 9. SET auction:{id}:last_bidder {user_id}
+  │ 10. SET auction:{id}:last_bid_price {price}
+  ↓
+Redis Pub/Sub
+  │ 11. PUBLISH auction:bid {auction_id, user_id, price}
+  ↓
+All WebSocket Server Instances
+  │ 12. broadcast to auction room
+  ↓
+All Connected Clients
+  │ 13. UI update (新しい入札を表示)
 ```
 
 ### オークション開始フロー
 
 ```
-管理者
+主催者 (Auctioneer)
   │
   │ 1. POST /api/auctions/:id/start
+  │    { starting_price: 100 }
   ↓
 REST API Server
   │
-  │ 2. validate permissions
-  │ 3. update auction status = "active"
+  │ 2. validate permissions (role: auctioneer)
+  │ 3. validate starting_price
   ↓
 PostgreSQL
-  │
+  │ 4. UPDATE auctions SET
+  │    status = 'active',
+  │    started_at = NOW()
+  │ 5. INSERT INTO price_history
+  │    (auction_id, price, opened_by, opened_at)
   ↓
 Redis
-  │ 4. SET auction:{id}:end_time
-  │ 5. SET auction:{id}:status "active"
+  │ 6. SET auction:{id}:status "active"
+  │ 7. SET auction:{id}:current_price 100
+  │ 8. SET auction:{id}:has_bid false
   ↓
 Redis Pub/Sub
-  │ 6. PUBLISH auction:started {auction_id}
+  │ 9. PUBLISH auction:started {auction_id, price: 100}
   ↓
 WebSocket Servers
-  │ 7. broadcast to all connected clients
-  │ 8. start timer countdown
+  │ 10. broadcast to all connected clients
   ↓
 All Clients
-  │ 9. show auction UI with timer
+  │ 11. show auction UI with starting price
+  │ 12. enable bid button for bidders
+```
+
+### 価格開示フロー
+
+```
+主催者 (Auctioneer)
+  │
+  │ 1. POST /api/auctions/:id/open-price
+  │    { next_price: 150 }
+  ↓
+REST API Server
+  │
+  │ 2. validate permissions (role: auctioneer)
+  │ 3. validate next_price > current_price
+  ↓
+PostgreSQL
+  │ 4. INSERT INTO price_history
+  │    (auction_id, price, opened_by, opened_at)
+  ↓
+Redis
+  │ 5. GET auction:{id}:has_bid
+  │ 6. SET auction:{id}:current_price 150
+  │ 7. SET auction:{id}:has_bid false
+  │ 8. DEL auction:{id}:last_bidder (reset)
+  ↓
+Redis Pub/Sub
+  │ 9. PUBLISH auction:price_open
+  │    {auction_id, new_price: 150, had_previous_bid}
+  ↓
+WebSocket Servers
+  │ 10. broadcast to auction room
+  ↓
+All Clients
+  │ 11. UI update (new price displayed)
+  │ 12. reset bid status display
 ```
 
 ## セキュリティ設計
@@ -313,10 +368,9 @@ All Clients
    - 接続後も定期的にトークンの有効性をチェック
 
 3. **ロールベースアクセス制御 (RBAC)**
-   - `admin`: 全権限
-   - `auctioneer`: オークション管理・開始・終了
-   - `bidder`: 入札のみ
-   - `viewer`: 閲覧のみ
+   - `system_admin`: システム管理者（全権限、ユーザー管理、ポイント付与、全体状況確認）
+   - `auctioneer`: オークション主催者（オークション作成・開始・終了、商品登録、価格開示）
+   - `bidder`: 入札者（入札のみ、自分のポイント・入札履歴閲覧）
 
 ### データ保護
 
@@ -328,9 +382,11 @@ All Clients
 ### 不正防止
 
 - **二重入札防止**: Redisロックによる排他制御
-- **入札額検証**: 最低入札単位、最高入札額の検証
-- **タイムスタンプ検証**: クライアント時刻改ざん防止
-- **監査ログ**: 全入札イベントを記録
+- **ポイント残高検証**: 入札時にリアルタイムで残高確認
+- **価格整合性チェック**: 開示価格との一致を検証
+- **ロール権限チェック**: 主催者のみが価格開示・終了可能
+- **監査ログ**: 全入札イベント、価格開示、ポイント付与を記録
+- **ポイント不正利用防止**: システム管理者のみがポイント付与可能
 
 ## パフォーマンス要件
 
@@ -339,7 +395,9 @@ All Clients
 | WebSocket接続確立 | < 100ms |
 | 入札イベント処理 | < 50ms |
 | 入札通知配信 | < 100ms |
+| 価格開示通知配信 | < 100ms |
 | REST API応答時間 | < 200ms (P95) |
+| ポイント残高照会 | < 50ms |
 | 同時接続数 | 10,000+ connections |
 | 同時開催オークション数 | 100+ auctions |
 | データベースクエリ | < 50ms (P95) |
@@ -441,16 +499,18 @@ All Clients
 
 本アーキテクチャは以下の要件を満たします：
 
-✅ **リアルタイム性**: WebSocketによる双方向通信で瞬時の入札反映  
-✅ **5分タイマー + 延長**: Redisベースの精密なタイマー管理  
+✅ **リアルタイム性**: WebSocketによる双方向通信で瞬時の入札・価格開示を反映  
+✅ **ポイント制**: 仮想ポイントによる安全なオークション運営  
+✅ **主催者主導**: 主催者が価格をコントロールする柔軟な運営  
+✅ **3ロール体制**: システム管理者・主催者・入札者の明確な権限分離  
 ✅ **スケーラビリティ**: ステートレス設計で水平スケール可能  
 ✅ **可用性**: Multi-AZ構成と自動フェイルオーバー  
-✅ **セキュリティ**: JWT認証、TLS暗号化、レート制限  
+✅ **セキュリティ**: JWT認証、TLS暗号化、ロール別アクセス制御  
 ✅ **マルチプラットフォーム**:  
    - **Phase 1**: Web (Vue.js 3 + Vite) - レスポンシブ対応  
    - **Phase 2**: iOS App (Swift + SwiftUI) - ネイティブアプリ
 
-競走馬セリの要件に最適化された、エンタープライズグレードのアーキテクチャです。
+競走馬セリの要件に最適化された、主催者主導型のエンタープライズグレードのアーキテクチャです。
 
 ## フェーズ別開発計画
 
@@ -469,7 +529,10 @@ All Clients
 **対応機能**
 - オークション一覧・詳細閲覧
 - リアルタイム入札
-- 管理画面 (オークション作成・管理)
+- システム管理画面 (ユーザー管理・ポイント付与・全体状況確認)
+- 主催者管理画面 (オークション作成・開始・終了・価格開示・商品登録)
+- ポイント残高表示
+- 入札履歴閲覧
 - ユーザー登録・認証
 - レスポンシブデザイン (モバイルブラウザ対応)
 
