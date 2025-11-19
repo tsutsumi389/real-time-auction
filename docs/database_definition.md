@@ -78,8 +78,25 @@ PostgreSQLを使用し、ポイント制オークションにおける主催者�
                        │   │ auction_id (FK)  │
                        │   │ name             │
                        │   │ description      │
-                       │   │ horse_info       │
-                       │   │ image_url        │
+                       │   │ metadata         │
+                       │   │ created_at       │
+                       │   │ updated_at       │
+                       │   └────────┬─────────┘
+                       │            │
+                       │            ┼ 1
+                       │            │
+                       │            │
+                       │            ┼ *
+                       │            │
+                       │   ┌────────┴─────────┐
+                       │   │  item_media      │
+                       │   ├──────────────────┤
+                       │   │ id (PK)          │
+                       │   │ item_id (FK)     │
+                       │   │ media_type       │
+                       │   │ url              │
+                       │   │ thumbnail_url    │
+                       │   │ display_order    │
                        │   │ created_at       │
                        │   └──────────────────┘
                        │
@@ -241,25 +258,24 @@ ALTER TABLE auctions ADD CONSTRAINT chk_auctions_dates
   CHECK (ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at);
 ```
 
-### 5. items (商品・競走馬)
+### 5. items (商品)
 
-オークションに出品される商品（競走馬）の情報を管理するテーブル。
+オークションに出品される商品の基本情報を管理するテーブル。
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
 | id | BIGSERIAL | NO | - | 商品ID (主キー) |
 | auction_id | BIGINT | NO | - | オークションID (外部キー) |
-| name | VARCHAR(200) | NO | - | 商品名（馬名） |
+| name | VARCHAR(200) | NO | - | 商品名 |
 | description | TEXT | YES | NULL | 商品説明 |
-| horse_info | JSONB | YES | NULL | 競走馬詳細情報 (JSON形式) |
-| image_url | VARCHAR(500) | YES | NULL | 画像URL |
+| metadata | JSONB | YES | NULL | 商品詳細情報 (JSON形式、自由フォーマット) |
 | created_at | TIMESTAMPTZ | NO | NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NO | NOW() | 更新日時 |
 
 **インデックス**
 ```sql
 CREATE INDEX idx_items_auction ON items(auction_id);
-CREATE INDEX idx_items_horse_info ON items USING GIN(horse_info);
+CREATE INDEX idx_items_metadata ON items USING GIN(metadata);
 ```
 
 **制約**
@@ -268,9 +284,10 @@ ALTER TABLE items ADD CONSTRAINT fk_items_auction
   FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE;
 ```
 
-**horse_info JSON例**
+**metadata JSON例（競走馬の場合）**
 ```json
 {
+  "category": "horse",
   "birth_date": "2022-03-15",
   "gender": "male",
   "coat_color": "栗毛",
@@ -289,7 +306,59 @@ ALTER TABLE items ADD CONSTRAINT fk_items_auction
 }
 ```
 
-### 6. bids (入札)
+**metadata JSON例（その他商品の場合）**
+```json
+{
+  "category": "art",
+  "artist": "山田太郎",
+  "year": "2023",
+  "dimensions": "100cm x 80cm",
+  "material": "油彩・キャンバス",
+  "condition": "良好"
+}
+```
+
+### 6. item_media (商品メディア)
+
+商品に紐づく画像・動画を管理するテーブル。1つの商品に複数のメディアを登録可能。
+
+| カラム名 | データ型 | NULL | デフォルト | 説明 |
+|---------|---------|------|-----------|------|
+| id | BIGSERIAL | NO | - | メディアID (主キー) |
+| item_id | BIGINT | NO | - | 商品ID (外部キー) |
+| media_type | VARCHAR(20) | NO | - | メディア種別 (image/video) |
+| url | VARCHAR(500) | NO | - | メディアURL (S3等) |
+| thumbnail_url | VARCHAR(500) | YES | NULL | サムネイルURL (動画の場合) |
+| display_order | INT | NO | 0 | 表示順序 (小さい順に表示) |
+| created_at | TIMESTAMPTZ | NO | NOW() | 作成日時 |
+
+**インデックス**
+```sql
+CREATE INDEX idx_item_media_item ON item_media(item_id, display_order);
+CREATE INDEX idx_item_media_type ON item_media(media_type);
+```
+
+**制約**
+```sql
+ALTER TABLE item_media ADD CONSTRAINT fk_item_media_item 
+  FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE;
+ALTER TABLE item_media ADD CONSTRAINT chk_item_media_type 
+  CHECK (media_type IN ('image', 'video'));
+ALTER TABLE item_media ADD CONSTRAINT chk_item_media_order_non_negative 
+  CHECK (display_order >= 0);
+```
+
+**使用例**
+```sql
+-- 商品に3つの画像と1つの動画を登録
+INSERT INTO item_media (item_id, media_type, url, display_order) VALUES
+  (1, 'image', 'https://cdn.example.com/items/1/main.jpg', 0),
+  (1, 'image', 'https://cdn.example.com/items/1/side.jpg', 1),
+  (1, 'video', 'https://cdn.example.com/items/1/movie.mp4', 2),
+  (1, 'image', 'https://cdn.example.com/items/1/back.jpg', 3);
+```
+
+### 7. bids (入札)
 
 入札履歴を管理するテーブル。
 
@@ -324,7 +393,7 @@ ALTER TABLE bids ADD CONSTRAINT chk_bids_price_positive
 - `is_winning`: オークション終了時、TRUEのレコードが落札入札となる
 - 同一価格で複数入札があった場合、最も早い `bid_at` が優先
 
-### 7. price_history (価格開示履歴)
+### 8. price_history (価格開示履歴)
 
 主催者による価格開示の履歴を管理するテーブル。
 
@@ -353,7 +422,7 @@ ALTER TABLE price_history ADD CONSTRAINT chk_price_history_price_positive
   CHECK (price > 0);
 ```
 
-### 8. point_history (ポイント履歴)
+### 9. point_history (ポイント履歴)
 
 ポイントの増減履歴を管理するテーブル。全てのポイント操作を記録し、監査証跡として機能。
 
@@ -451,6 +520,8 @@ CREATE TRIGGER update_auctions_updated_at BEFORE UPDATE ON auctions
 
 CREATE TRIGGER update_items_updated_at BEFORE UPDATE ON items
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- item_media テーブルには updated_at がないため、トリガー不要
 ```
 
 ### 2. bidder_points 自動作成
@@ -566,7 +637,7 @@ SELECT
     a.current_price,
     a.started_at,
     i.name AS item_name,
-    i.image_url,
+    (SELECT url FROM item_media WHERE item_id = i.id ORDER BY display_order LIMIT 1) AS main_image_url,
     COUNT(DISTINCT b.bidder_id) AS bidder_count,
     MAX(b.bid_at) AS last_bid_at,
     bd.display_name AS winner_name
@@ -575,7 +646,7 @@ LEFT JOIN items i ON a.id = i.auction_id
 LEFT JOIN bids b ON a.id = b.auction_id
 LEFT JOIN bidders bd ON a.winner_id = bd.id
 WHERE a.status IN ('active', 'ended')
-GROUP BY a.id, i.name, i.image_url, bd.display_name
+GROUP BY a.id, i.id, i.name, bd.display_name
 ORDER BY a.started_at DESC;
 ```
 
@@ -741,18 +812,31 @@ WHERE b.bidder_id = $1
 ORDER BY b.bid_at DESC
 LIMIT 20;
 
--- オークション詳細取得クエリ
+-- オークション詳細取得クエリ（メディア含む）
 EXPLAIN ANALYZE
 SELECT 
     a.*,
-    i.name, i.description, i.horse_info, i.image_url,
-    COUNT(b.id) AS total_bids,
-    MAX(b.bid_at) AS last_bid_at
+    i.id AS item_id,
+    i.name AS item_name,
+    i.description AS item_description,
+    i.metadata AS item_metadata,
+    COUNT(DISTINCT b.id) AS total_bids,
+    MAX(b.bid_at) AS last_bid_at,
+    json_agg(
+        json_build_object(
+            'id', im.id,
+            'media_type', im.media_type,
+            'url', im.url,
+            'thumbnail_url', im.thumbnail_url,
+            'display_order', im.display_order
+        ) ORDER BY im.display_order
+    ) FILTER (WHERE im.id IS NOT NULL) AS media
 FROM auctions a
 LEFT JOIN items i ON a.id = i.auction_id
 LEFT JOIN bids b ON a.id = b.auction_id
+LEFT JOIN item_media im ON i.id = im.item_id
 WHERE a.id = $1
-GROUP BY a.id, i.name, i.description, i.horse_info, i.image_url;
+GROUP BY a.id, i.id, i.name, i.description, i.metadata;
 
 -- ポイント履歴取得クエリ (入札者ごと、ページング対応)
 EXPLAIN ANALYZE
@@ -847,6 +931,7 @@ db.AutoMigrate(
     &domain.BidderPoint{},
     &domain.Auction{},
     &domain.Item{},
+    &domain.ItemMedia{},
     &domain.Bid{},
     &domain.PriceHistory{},
     &domain.PointHistory{},
@@ -1040,6 +1125,91 @@ migrate -path migrations -database "postgresql://auction_user:password@localhost
   HAVING COUNT(*) > 50 OR SUM(ABS(amount)) > 100000
   ORDER BY transaction_count DESC;
   ```
+
+## 商品メディア管理の設計方針
+
+### 複数メディア対応の理由
+
+1. **柔軟な商品展示**
+   - 1つの商品に対して複数の角度からの画像を登録可能
+   - 動画による詳細な商品紹介が可能
+   - 表示順序を制御可能
+
+2. **パフォーマンスの最適化**
+   - メディアファイルは別テーブルで管理し、必要に応じて取得
+   - サムネイルURLを別途保存することで一覧表示を高速化
+   - メディアの追加・削除が商品テーブルに影響しない
+
+3. **スケーラビリティ**
+   - 大量の画像・動画に対応可能
+   - CDN（CloudFront等）との連携が容易
+   - メディアのみのキャッシュ戦略が可能
+
+4. **汎用性**
+   - 競走馬以外の商品（美術品、骨董品、車両等）にも対応
+   - 商品カテゴリごとに異なるメディア構成が可能
+
+### metadata フィールドの活用
+
+`items.metadata` はJSONB型で、商品カテゴリに応じて自由にフィールドを定義可能：
+
+**競走馬の場合:**
+```json
+{
+  "category": "horse",
+  "birth_date": "2022-03-15",
+  "gender": "male",
+  "pedigree": {...}
+}
+```
+
+**美術品の場合:**
+```json
+{
+  "category": "art",
+  "artist": "山田太郎",
+  "year": "2023",
+  "technique": "油彩"
+}
+```
+
+**車両の場合:**
+```json
+{
+  "category": "vehicle",
+  "make": "Toyota",
+  "model": "Land Cruiser",
+  "year": 2023,
+  "mileage": 5000
+}
+```
+
+### メディア取得の最適化
+
+```sql
+-- 商品一覧表示用（メインメディアのみ）
+SELECT 
+    i.*,
+    (SELECT url FROM item_media 
+     WHERE item_id = i.id 
+     ORDER BY display_order LIMIT 1) AS main_media_url
+FROM items i;
+
+-- 商品詳細表示用（全メディア取得）
+SELECT 
+    i.*,
+    json_agg(
+        json_build_object(
+            'type', im.media_type,
+            'url', im.url,
+            'thumbnail', im.thumbnail_url
+        ) ORDER BY im.display_order
+    ) AS media
+FROM items i
+LEFT JOIN item_media im ON i.id = im.item_id
+WHERE i.id = $1
+GROUP BY i.id;
+```
 
 ## テーブル分離の設計方針
 
