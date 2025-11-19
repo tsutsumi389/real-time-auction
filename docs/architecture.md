@@ -150,22 +150,24 @@ WebSocketによるリアルタイム通信で、入札状況や価格変動を�
 
 ### 2. リアルタイム通信の実装
 
-**WebSocket (Socket.io)** を使用したリアルタイム双方向通信：
+**WebSocket (Gorilla WebSocket)** を使用したリアルタイム双方向通信：
 
-- **低レイテンシ**: 入札から通知まで100ms以内の応答
-- **永続的接続**: ポーリング不要でサーバーリソースを節約
-- **自動再接続**: ネットワーク断時の自動リカバリ
-- **ルームベース管理**: オークションごとに独立したチャネル
-- **クライアント対応**: Vue.js (Socket.io-client) / iOS Swift (Starscream or Socket.IO-Client-Swift)
+- **低レイテンシ**: 入札から通知まで100ms以内の応答（Goの高速処理）
+- **永続的接続**: goroutineによる効率的な接続管理
+- **軽量**: 数万の同時接続を1サーバーで処理可能
+- **ルームベース管理**: チャネルを使った安全な並行処理
+- **標準準拠**: RFC 6455完全準拠の実装
+- **クライアント対応**: Vue.js (標準WebSocket API) / iOS Swift (URLSessionWebSocketTask)
 
 ### 3. Redis活用による高速性とスケーラビリティ
 
 **Redis** を多目的に活用：
 
 - **セッション管理**: 分散環境でのユーザーセッション共有
-- **リアルタイム状態管理**: オークションの残り時間、最高入札額をキャッシュ
-- **Pub/Sub**: 複数WebSocketサーバー間でのイベント配信
-- **入札キュー**: 同時入札の競合制御と順序保証
+- **リアルタイム状態管理**: オークションの現在価格、入札状況をキャッシュ
+- **Pub/Sub**: 複数WebSocketサーバー間でのイベント配信（go-redis使用）
+- **入札キュー**: Goの並行処理とRedisロックによる競合制御と順序保証
+- **高速アクセス**: Goのgoroutineと組み合わせて非同期処理を実現
 
 ### 4. 価格管理アーキテクチャ
 
@@ -512,6 +514,105 @@ All Clients
 
 競走馬セリの要件に最適化された、主催者主導型のエンタープライズグレードのアーキテクチャです。
 
+## バックエンド技術スタック
+
+### Go言語採用の理由
+
+**パフォーマンス**
+- ネイティブコンパイルによる高速実行
+- 低レイテンシ（入札処理 < 50ms）
+- 効率的なメモリ管理
+
+**並行処理**
+- goroutineによる軽量スレッド（数万の同時接続に対応）
+- チャネルを使った安全な並行処理
+- WebSocket接続管理に最適
+
+**スケーラビリティ**
+- 単一バイナリで簡単デプロイ
+- 水平スケールが容易
+- Kubernetes/Docker対応
+
+**信頼性**
+- 静的型付けによる安全性
+- 明示的なエラーハンドリング
+- 大規模本番環境での実績
+
+### 主要ライブラリ・フレームワーク
+
+**Webフレームワーク: Gin**
+- 高速なHTTPルーター（httprouterベース）
+- 充実したミドルウェア
+- JSONバインディング・バリデーション
+- 豊富なコミュニティとドキュメント
+
+**WebSocket: Gorilla WebSocket**
+- RFC 6455完全準拠
+- 安定した実装と豊富な実績
+- 柔軟なメッセージハンドリング
+
+**データベース: GORM**
+- 型安全なORM
+- マイグレーション機能
+- リレーション管理
+
+**Redis: go-redis**
+- 高性能なRedisクライアント
+- Pub/Sub対応
+- コネクションプーリング
+
+**認証: golang-jwt/jwt**
+- JWT生成・検証
+- 標準的な実装
+
+**バリデーション: go-playground/validator**
+- 構造体ベースのバリデーション
+- カスタムルール対応
+
+### バックエンドプロジェクト構造
+
+```
+backend/
+├── cmd/
+│   ├── api/              # REST APIサーバー
+│   │   └── main.go
+│   └── ws/               # WebSocketサーバー
+│       └── main.go
+├── internal/
+│   ├── domain/           # ドメインモデル
+│   │   ├── auction.go
+│   │   ├── user.go
+│   │   ├── bid.go
+│   │   └── point.go
+│   ├── repository/       # データアクセス層
+│   │   ├── postgres/
+│   │   └── redis/
+│   ├── service/          # ビジネスロジック
+│   │   ├── auction_service.go
+│   │   ├── bid_service.go
+│   │   └── point_service.go
+│   ├── handler/          # HTTPハンドラー
+│   │   ├── auction_handler.go
+│   │   ├── user_handler.go
+│   │   └── auth_handler.go
+│   ├── ws/               # WebSocketハンドラー
+│   │   ├── hub.go        # 接続管理
+│   │   ├── client.go     # クライアント管理
+│   │   └── handler.go    # イベント処理
+│   └── middleware/       # ミドルウェア
+│       ├── auth.go
+│       ├── cors.go
+│       └── logger.go
+├── pkg/
+│   ├── config/           # 設定管理
+│   ├── logger/           # ロギング
+│   └── validator/        # カスタムバリデーター
+├── migrations/           # DBマイグレーション
+├── docs/                 # API仕様書
+├── go.mod
+└── go.sum
+```
+
 ## フェーズ別開発計画
 
 ### Phase 1: Webアプリケーション (優先)
@@ -522,7 +623,7 @@ All Clients
 - **フロントエンド**: Vue.js 3 (Composition API) + Vite
 - **UIフレームワーク**: Vuetify 3 / Element Plus / Ant Design Vue
 - **状態管理**: Pinia
-- **WebSocket**: Socket.io-client
+- **WebSocket**: 標準WebSocket API (RFC 6455準拠)
 - **HTTP Client**: Axios
 - **認証**: JWT (localStorage/sessionStorage)
 
@@ -548,7 +649,7 @@ All Clients
 - **言語**: Swift 5+
 - **UIフレームワーク**: SwiftUI
 - **アーキテクチャ**: MVVM + Combine
-- **WebSocket**: Starscream または Socket.IO-Client-Swift
+- **WebSocket**: URLSessionWebSocketTask (iOS 13+) / Starscream
 - **HTTP Client**: URLSession / Alamofire
 - **認証**: Keychain による安全なトークン保存
 - **プッシュ通知**: APNs (Apple Push Notification service)
