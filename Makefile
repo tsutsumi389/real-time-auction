@@ -200,14 +200,64 @@ rebuild: ## 全サービスを再ビルドして起動 (キャッシュなし)
 # データベース操作
 # ============================================
 .PHONY: db-migrate
-db-migrate: ## データベースマイグレーションを実行 (準備中)
-	@echo "Database migration not yet implemented"
-	@echo "Will be available after backend structure is complete"
+db-migrate: ## データベースマイグレーションを実行
+	@echo "Running database migrations..."
+	@$(COMPOSE) exec $(SERVICE_API) migrate -path /app/migrations -database "postgresql://auction_user:auction_pass_dev_only@$(SERVICE_POSTGRES):5432/auction_db?sslmode=disable" up
+	@echo "✓ Database migration completed"
+
+.PHONY: db-migrate-down
+db-migrate-down: ## データベースマイグレーションを1つロールバック
+	@echo "⚠️  Rolling back last migration..."
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(COMPOSE) exec $(SERVICE_API) migrate -path /app/migrations -database "postgresql://auction_user:auction_pass_dev_only@$(SERVICE_POSTGRES):5432/auction_db?sslmode=disable" down 1; \
+		echo "✓ Database rollback completed"; \
+	else \
+		echo "Cancelled."; \
+	fi
+
+.PHONY: db-migrate-reset
+db-migrate-reset: ## データベースマイグレーションを全てロールバック
+	@echo "⚠️  Rolling back all migrations..."
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(COMPOSE) exec $(SERVICE_API) migrate -path /app/migrations -database "postgresql://auction_user:auction_pass_dev_only@$(SERVICE_POSTGRES):5432/auction_db?sslmode=disable" down; \
+		echo "✓ All migrations rolled back"; \
+	else \
+		echo "Cancelled."; \
+	fi
+
+.PHONY: db-version
+db-version: ## 現在のマイグレーションバージョンを表示
+	@$(COMPOSE) exec $(SERVICE_API) migrate -path /app/migrations -database "postgresql://auction_user:auction_pass_dev_only@$(SERVICE_POSTGRES):5432/auction_db?sslmode=disable" version
+
+.PHONY: db-status
+db-status: ## データベースの状態を確認
+	@echo "Current migration version:"
+	@$(COMPOSE) exec $(SERVICE_API) migrate -path /app/migrations -database "postgresql://auction_user:auction_pass_dev_only@$(SERVICE_POSTGRES):5432/auction_db?sslmode=disable" version
+	@echo ""
+	@echo "Database tables:"
+	@$(COMPOSE) exec -T $(SERVICE_POSTGRES) psql -U auction_user -d auction_db -c "\dt"
+	@echo ""
+	@echo "Database views:"
+	@$(COMPOSE) exec -T $(SERVICE_POSTGRES) psql -U auction_user -d auction_db -c "\dv"
 
 .PHONY: db-seed
-db-seed: ## シードデータを投入 (準備中)
-	@echo "Database seeding not yet implemented"
-	@echo "Will be available after backend structure is complete"
+db-seed: ## シードデータを投入 (マイグレーションに含まれています)
+	@echo "Seed data is included in migration 004_insert_initial_data"
+	@echo "Run 'make db-migrate' to apply seed data"
+
+.PHONY: db-create-migration
+db-create-migration: ## 新しいマイグレーションファイルを作成 (name=<migration_name>)
+ifndef name
+	@echo "Error: name parameter is required"
+	@echo "Usage: make db-create-migration name=<migration_name>"
+	@exit 1
+endif
+	@$(COMPOSE) exec $(SERVICE_API) migrate create -ext sql -dir /app/migrations -seq $(name)
+	@echo "✓ Migration files created"
 
 .PHONY: db-reset
 db-reset: ## データベースをリセット (削除して再作成)
