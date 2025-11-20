@@ -18,7 +18,7 @@ RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/
     chmod +x /usr/local/bin/migrate
 
 # 依存関係のキャッシュ用
-COPY go.mod go.sum ./
+COPY go.mod ./
 RUN go mod download
 
 # ソースコードはボリュームマウントで提供されるため、ここではコピーしない
