@@ -202,7 +202,7 @@ rebuild: ## 全サービスを再ビルドして起動 (キャッシュなし)
 .PHONY: db-migrate
 db-migrate: ## データベースマイグレーションを実行
 	@echo "Running database migrations..."
-	@$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$(SERVICE_POSTGRES):5432/$${POSTGRES_DB}?sslmode=disable" up'
+	@$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "$${DATABASE_URL}" up'
 	@echo "✓ Database migration completed"
 
 .PHONY: db-migrate-down
@@ -211,7 +211,7 @@ db-migrate-down: ## データベースマイグレーションを1つロール�
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$(SERVICE_POSTGRES):5432/$${POSTGRES_DB}?sslmode=disable" down 1'; \
+		$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "$${DATABASE_URL}" down 1'; \
 		echo "✓ Database rollback completed"; \
 	else \
 		echo "Cancelled."; \
@@ -223,7 +223,7 @@ db-migrate-reset: ## データベースマイグレーションを全てロー�
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$(SERVICE_POSTGRES):5432/$${POSTGRES_DB}?sslmode=disable" down'; \
+		$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "$${DATABASE_URL}" down'; \
 		echo "✓ All migrations rolled back"; \
 	else \
 		echo "Cancelled."; \
@@ -231,12 +231,12 @@ db-migrate-reset: ## データベースマイグレーションを全てロー�
 
 .PHONY: db-version
 db-version: ## 現在のマイグレーションバージョンを表示
-	@$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$(SERVICE_POSTGRES):5432/$${POSTGRES_DB}?sslmode=disable" version'
+	@$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "$${DATABASE_URL}" version'
 
 .PHONY: db-status
 db-status: ## データベースの状態を確認
 	@echo "Current migration version:"
-	@$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$(SERVICE_POSTGRES):5432/$${POSTGRES_DB}?sslmode=disable" version'
+	@$(COMPOSE) exec $(SERVICE_API) sh -c 'migrate -path /app/migrations -database "$${DATABASE_URL}" version'
 	@echo ""
 	@echo "Database tables:"
 	@$(COMPOSE) exec -T $(SERVICE_POSTGRES) psql -U auction_user -d auction_db -c "\dt"
