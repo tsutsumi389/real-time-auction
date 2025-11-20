@@ -37,29 +37,30 @@
 ### golang-migrate を使用する場合
 
 ```bash
-# マイグレーション実行
+# マイグレーション実行（環境変数使用を推奨）
+export DB_PASSWORD="your_secure_password"
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   up
 
 # 特定のバージョンまで実行
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   goto 2
 
 # 1つ戻す
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   down 1
 
 # 全て戻す
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   down
 
 # バージョン確認
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   version
 ```
 
@@ -88,7 +89,7 @@ import (
 )
 
 func main() {
-    dsn := "host=localhost user=auction_user password=password dbname=auction_db port=5432 sslmode=disable"
+    dsn := fmt.Sprintf("host=localhost user=auction_user password=%s dbname=auction_db port=5432 sslmode=disable", os.Getenv("DB_PASSWORD"))
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
     if err != nil {
         log.Fatal("Failed to connect database:", err)
@@ -141,12 +142,12 @@ func main() {
 ```bash
 # マイグレーション状態確認
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   version
 
 # 強制的にバージョンを設定
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   force <version>
 
 # schema_migrations テーブルを確認
@@ -161,7 +162,7 @@ docker-compose exec postgres psql -U auction_user -d auction_db -c "DROP SCHEMA 
 
 # マイグレーション再実行
 migrate -path backend/migrations \
-  -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" \
+  -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" \
   up
 ```
 
