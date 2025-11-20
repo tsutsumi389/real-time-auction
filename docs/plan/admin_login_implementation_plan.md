@@ -611,10 +611,10 @@ frontend/src/
 - [x] 手動テスト（curlまたはPostman）
 
 ### Phase 3: フロントエンド基盤（2-3時間）
-- [ ] API Clientの実装
-- [ ] トークン管理機能の実装
-- [ ] Pinia Storeの実装
-- [ ] ルーティング設定と認証ガード
+- [x] API Clientの実装
+- [x] トークン管理機能の実装
+- [x] Pinia Storeの実装
+- [x] ルーティング設定と認証ガード
 
 ### Phase 4: フロントエンドUI（3-4時間）
 - [ ] Shadcn UIコンポーネントのセットアップ
