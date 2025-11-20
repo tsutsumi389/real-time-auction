@@ -10,7 +10,7 @@ WORKDIR /app
 RUN apk add --no-cache git curl
 
 # Air（ホットリロードツール）のインストール - Go 1.23 互換バージョン
-RUN go install github.com/cosmtrek/air@v1.52.3
+RUN go install github.com/air-verse/air@latest
 
 # golang-migrate のインストール
 RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz && \
