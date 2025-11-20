@@ -1,22 +1,28 @@
 <template>
   <div id="app">
-    <header class="header">
+    <header v-if="!hideLayout" class="header">
       <h1>🏇 Real-Time Auction System</h1>
       <p>競走馬セリをモデルとしたリアルタイムオークションシステム</p>
     </header>
-    
-    <main class="main">
+
+    <main :class="hideLayout ? '' : 'main'">
       <router-view />
     </main>
 
-    <footer class="footer">
+    <footer v-if="!hideLayout" class="footer">
       <p>© 2025 Real-Time Auction System</p>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
+// 現在のルートのメタ情報に基づいてヘッダー/フッターを非表示にするか判定
+const hideLayout = computed(() => route.meta.hideLayout || false)
 
 onMounted(() => {
   console.log('Real-Time Auction System - Frontend')

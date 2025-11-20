@@ -274,19 +274,69 @@ db-reset: ## データベースをリセット (削除して再作成)
 	fi
 
 # ============================================
-# テスト (準備中)
+# テスト
 # ============================================
 .PHONY: test
-test: ## テストを実行 (準備中)
-	@echo "Tests not yet implemented"
+test: test-backend test-frontend ## 全てのテストを実行
+	@echo ""
+	@echo "✓ All tests completed"
 
 .PHONY: test-backend
-test-backend: ## バックエンドテストを実行 (準備中)
-	@echo "Backend tests not yet implemented"
+test-backend: ## バックエンドテストを実行
+	@echo "Running backend unit tests..."
+	@$(COMPOSE) exec -T $(SERVICE_API) go test ./internal/repository/... ./internal/service/... ./internal/handler/... -v
+	@echo ""
+	@echo "✓ Backend unit tests completed"
+
+.PHONY: test-backend-integration
+test-backend-integration: ## バックエンド統合テストを実行
+	@echo "Running backend integration tests..."
+	@$(COMPOSE) exec -T $(SERVICE_API) go test ./tests/integration/... -v
+	@echo ""
+	@echo "✓ Backend integration tests completed"
+
+.PHONY: test-backend-all
+test-backend-all: ## バックエンドの全テストを実行
+	@echo "Running all backend tests..."
+	@$(COMPOSE) exec -T $(SERVICE_API) go test ./internal/repository/... ./internal/service/... ./internal/handler/... ./tests/integration/... -v
+	@echo ""
+	@echo "✓ All backend tests completed"
 
 .PHONY: test-frontend
-test-frontend: ## フロントエンドテストを実行 (準備中)
-	@echo "Frontend tests not yet implemented"
+test-frontend: ## フロントエンドテストを実行
+	@echo "Running frontend tests..."
+	@$(COMPOSE) exec -T $(SERVICE_FRONTEND) npm run test -- --run
+	@echo ""
+	@echo "✓ Frontend tests completed"
+
+.PHONY: test-frontend-watch
+test-frontend-watch: ## フロントエンドテストをwatchモードで実行
+	@$(COMPOSE) exec $(SERVICE_FRONTEND) npm run test
+
+.PHONY: test-frontend-ui
+test-frontend-ui: ## フロントエンドテストをUIモードで実行
+	@$(COMPOSE) exec $(SERVICE_FRONTEND) npm run test:ui
+
+.PHONY: test-frontend-coverage
+test-frontend-coverage: ## フロントエンドテストのカバレッジを取得
+	@echo "Running frontend tests with coverage..."
+	@$(COMPOSE) exec -T $(SERVICE_FRONTEND) npm run test:coverage
+	@echo ""
+	@echo "✓ Frontend coverage report generated"
+
+.PHONY: test-security
+test-security: ## セキュリティ検証を実行
+	@echo "Running security validation..."
+	@$(COMPOSE) exec -T $(SERVICE_API) go run ./tests/security/security_check.go
+	@echo ""
+	@echo "✓ Security validation completed"
+
+.PHONY: test-all
+test-all: test-backend-all test-frontend test-security ## 全てのテスト（統合テスト・セキュリティ検証含む）を実行
+	@echo ""
+	@echo "=========================================="
+	@echo "✓ All tests and validations completed!"
+	@echo "=========================================="
 
 # ============================================
 # その他
