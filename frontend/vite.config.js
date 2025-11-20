@@ -16,5 +16,13 @@ export default defineConfig({
     watch: {
       usePolling: true
     }
-  }
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+    },
+  },
 })

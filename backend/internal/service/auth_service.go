@@ -17,12 +17,12 @@ var (
 
 // AuthService handles authentication logic
 type AuthService struct {
-	adminRepo  *repository.AdminRepository
-	jwtService *JWTService
+	adminRepo  repository.AdminRepositoryInterface
+	jwtService JWTServiceInterface
 }
 
 // NewAuthService creates a new AuthService instance
-func NewAuthService(adminRepo *repository.AdminRepository, jwtService *JWTService) *AuthService {
+func NewAuthService(adminRepo repository.AdminRepositoryInterface, jwtService JWTServiceInterface) *AuthService {
 	return &AuthService{
 		adminRepo:  adminRepo,
 		jwtService: jwtService,
