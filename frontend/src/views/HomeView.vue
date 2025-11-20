@@ -1,49 +1,134 @@
 <template>
-  <div class="home">
-    <div class="welcome-card">
-      <h2>🎉 開発環境セットアップ完了</h2>
-      <p>Docker + Vite + Vue.js 3 で動作中</p>
-    </div>
+  <div class="container mx-auto py-8 px-4">
+    <!-- Welcome Card -->
+    <Card class="mb-8 p-8 text-center">
+      <h2 class="text-3xl font-bold mb-2 text-primary">🎉 開発環境セットアップ完了</h2>
+      <p class="text-muted-foreground">Docker + Vite + Vue.js 3 + Shadcn Vue で動作中</p>
+    </Card>
 
-    <div class="status-grid">
-      <div class="status-card">
-        <h3>📡 API接続テスト</h3>
-        <button @click="testApi" :disabled="apiLoading">
+    <!-- Status Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- API Test Card -->
+      <Card class="p-6">
+        <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+          📡 API接続テスト
+        </h3>
+        <Button
+          class="w-full mb-4"
+          :disabled="apiLoading"
+          @click="testApi"
+        >
           {{ apiLoading ? 'テスト中...' : 'APIをテスト' }}
-        </button>
-        <div v-if="apiResult" class="result" :class="{ success: apiSuccess, error: !apiSuccess }">
+        </Button>
+        <div
+          v-if="apiResult"
+          :class="[
+            'p-4 rounded-md text-sm',
+            apiSuccess
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          ]"
+        >
           {{ apiResult }}
         </div>
-      </div>
+      </Card>
 
-      <div class="status-card">
-        <h3>🔌 WebSocket接続テスト</h3>
-        <button @click="testWebSocket" :disabled="wsLoading">
+      <!-- WebSocket Test Card -->
+      <Card class="p-6">
+        <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+          🔌 WebSocket接続テスト
+        </h3>
+        <Button
+          class="w-full mb-4"
+          variant="secondary"
+          :disabled="wsLoading"
+          @click="testWebSocket"
+        >
           {{ wsLoading ? 'テスト中...' : 'WebSocketをテスト' }}
-        </button>
-        <div v-if="wsResult" class="result" :class="{ success: wsSuccess, error: !wsSuccess }">
+        </Button>
+        <div
+          v-if="wsResult"
+          :class="[
+            'p-4 rounded-md text-sm',
+            wsSuccess
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          ]"
+        >
           {{ wsResult }}
         </div>
-      </div>
+      </Card>
     </div>
 
-    <div class="info-section">
-      <h3>📋 次のステップ</h3>
-      <ul>
-        <li>データベーススキーマの設計と実装</li>
-        <li>JWT認証システムの実装</li>
-        <li>ユーザー管理APIの実装</li>
-        <li>オークション管理機能の実装</li>
-        <li>WebSocketリアルタイム通信の実装</li>
-        <li>フロントエンドUIコンポーネントの構築</li>
+    <!-- Design System Showcase -->
+    <Card class="mb-8 p-6">
+      <h3 class="text-xl font-semibold mb-4">🎨 Shadcn Vue + Tailwind CSS デモ</h3>
+      <div class="space-y-4">
+        <div class="flex flex-wrap gap-2">
+          <Button>Default</Button>
+          <Button variant="secondary">Secondary</Button>
+          <Button variant="destructive">Destructive</Button>
+          <Button variant="outline">Outline</Button>
+          <Button variant="ghost">Ghost</Button>
+          <Button variant="link">Link</Button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <Button size="sm">Small</Button>
+          <Button>Default</Button>
+          <Button size="lg">Large</Button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div class="p-4 rounded-lg bg-primary text-primary-foreground">
+            Primary Color
+          </div>
+          <div class="p-4 rounded-lg bg-secondary text-secondary-foreground">
+            Secondary Color
+          </div>
+          <div class="p-4 rounded-lg bg-accent text-accent-foreground">
+            Accent Color
+          </div>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Next Steps -->
+    <Card class="p-6">
+      <h3 class="text-xl font-semibold mb-4">📋 次のステップ</h3>
+      <ul class="space-y-2 text-muted-foreground">
+        <li class="flex items-start gap-2">
+          <span class="text-primary">•</span>
+          <span>データベーススキーマの設計と実装</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary">•</span>
+          <span>JWT認証システムの実装</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary">•</span>
+          <span>ユーザー管理APIの実装</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary">•</span>
+          <span>オークション管理機能の実装</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary">•</span>
+          <span>WebSocketリアルタイム通信の実装</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-primary">•</span>
+          <span>フロントエンドUIコンポーネントの構築</span>
+        </li>
       </ul>
-    </div>
+    </Card>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
 
 const apiLoading = ref(false)
 const apiResult = ref('')
@@ -59,7 +144,7 @@ const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost/ws'
 async function testApi() {
   apiLoading.value = true
   apiResult.value = ''
-  
+
   try {
     const response = await axios.get(`${API_BASE_URL}/ping`)
     apiSuccess.value = true
@@ -75,23 +160,23 @@ async function testApi() {
 function testWebSocket() {
   wsLoading.value = true
   wsResult.value = ''
-  
+
   try {
     const ws = new WebSocket(WS_URL)
-    
+
     ws.onopen = () => {
       wsSuccess.value = true
       wsResult.value = '✓ WebSocket接続成功'
       ws.close()
       wsLoading.value = false
     }
-    
-    ws.onerror = (error) => {
+
+    ws.onerror = () => {
       wsSuccess.value = false
       wsResult.value = '✗ WebSocket接続エラー（まだ実装されていません）'
       wsLoading.value = false
     }
-    
+
     ws.onclose = () => {
       if (!wsSuccess.value && !wsResult.value) {
         wsSuccess.value = false
@@ -106,105 +191,3 @@ function testWebSocket() {
   }
 }
 </script>
-
-<style scoped>
-.home {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.welcome-card {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.welcome-card h2 {
-  margin: 0 0 0.5rem;
-  color: #667eea;
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.status-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.status-card h3 {
-  margin: 0 0 1rem;
-  color: #333;
-}
-
-button {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 4px;
-  background: #667eea;
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-button:hover:not(:disabled) {
-  background: #5568d3;
-}
-
-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.result {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.result.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.result.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.info-section {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.info-section h3 {
-  margin: 0 0 1rem;
-  color: #333;
-}
-
-.info-section ul {
-  margin: 0;
-  padding-left: 1.5rem;
-}
-
-.info-section li {
-  margin-bottom: 0.5rem;
-  color: #666;
-}
-</style>
