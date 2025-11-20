@@ -6,20 +6,44 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tsutsumi389/real-time-auction/internal/handler"
+	"github.com/tsutsumi389/real-time-auction/internal/middleware"
+	"github.com/tsutsumi389/real-time-auction/internal/repository"
+	"github.com/tsutsumi389/real-time-auction/internal/service"
 )
 
 func main() {
 	// 環境変数取得
 	port := getEnv("PORT", "8080")
 	env := getEnv("ENV", "development")
+	jwtSecret := getEnv("JWT_SECRET", "your-secret-key-change-in-production")
 
 	// Ginモード設定
 	if env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// データベース接続
+	db, err := repository.NewDatabase()
+	if err != nil {
+		log.Fatal("Failed to initialize database:", err)
+	}
+
+	// リポジトリ初期化
+	adminRepo := repository.NewAdminRepository(db)
+
+	// サービス初期化
+	jwtService := service.NewJWTService(jwtSecret)
+	authService := service.NewAuthService(adminRepo, jwtService)
+
+	// ハンドラ初期化
+	authHandler := handler.NewAuthHandler(authService)
+
 	// Ginルーター初期化
 	router := gin.Default()
+
+	// CORS ミドルウェア設定
+	router.Use(middleware.CORSMiddleware())
 
 	// ヘルスチェックエンドポイント
 	router.GET("/health", func(c *gin.Context) {
@@ -33,11 +57,22 @@ func main() {
 	// APIルートグループ
 	api := router.Group("/api")
 	{
-		api.GET("/ping", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"message": "pong",
+		// 認証エンドポイント
+		auth := api.Group("/auth")
+		{
+			auth.POST("/admin/login", authHandler.AdminLogin)
+		}
+
+		// 保護されたエンドポイント（認証が必要）
+		protected := api.Group("")
+		protected.Use(middleware.AuthMiddleware(jwtService))
+		{
+			protected.GET("/ping", func(c *gin.Context) {
+				c.JSON(http.StatusOK, gin.H{
+					"message": "pong",
+				})
 			})
-		})
+		}
 	}
 
 	// サーバー起動

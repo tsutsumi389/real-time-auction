@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/tsutsumi389/real-time-auction/backend/internal/domain"
+	"github.com/tsutsumi389/real-time-auction/internal/domain"
 )
 
 // JWTService handles JWT token generation and validation
@@ -15,11 +15,14 @@ type JWTService struct {
 }
 
 // NewJWTService creates a new JWTService instance
-func NewJWTService() *JWTService {
-	secretKey := os.Getenv("JWT_SECRET")
+func NewJWTService(secretKey string) *JWTService {
 	if secretKey == "" {
-		// Default secret for development (should be overridden in production)
-		secretKey = "your-secure-random-secret-key-min-32-chars"
+		// Use environment variable if no secret provided
+		secretKey = os.Getenv("JWT_SECRET")
+		if secretKey == "" {
+			// Default secret for development (should be overridden in production)
+			secretKey = "your-secure-random-secret-key-min-32-chars"
+		}
 	}
 	return &JWTService{
 		secretKey: []byte(secretKey),

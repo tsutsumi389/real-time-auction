@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"github.com/tsutsumi389/real-time-auction/backend/internal/domain"
+	"github.com/tsutsumi389/real-time-auction/internal/domain"
 	"gorm.io/gorm"
 )
 

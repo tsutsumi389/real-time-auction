@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tsutsumi389/real-time-auction/backend/internal/domain"
-	"github.com/tsutsumi389/real-time-auction/backend/internal/service"
+	"github.com/tsutsumi389/real-time-auction/internal/domain"
+	"github.com/tsutsumi389/real-time-auction/internal/service"
 )
 
 // AuthMiddleware creates a middleware that validates JWT tokens

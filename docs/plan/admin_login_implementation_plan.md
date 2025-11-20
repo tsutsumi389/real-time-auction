@@ -605,10 +605,10 @@ frontend/src/
 - [x] ミドルウェアの実装（JWT認証、ロール検証）
 
 ### Phase 2: バックエンドAPI（1-2時間）
-- [ ] Handler層の実装（ログインエンドポイント）
-- [ ] ルーティング設定
-- [ ] Seed dataの作成（テストアカウント）
-- [ ] 手動テスト（curlまたはPostman）
+- [x] Handler層の実装（ログインエンドポイント）
+- [x] ルーティング設定
+- [x] Seed dataの作成（テストアカウント）
+- [x] 手動テスト（curlまたはPostman）
 
 ### Phase 3: フロントエンド基盤（2-3時間）
 - [ ] API Clientの実装

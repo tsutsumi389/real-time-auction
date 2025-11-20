@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tsutsumi389/real-time-auction/backend/internal/domain"
-	"github.com/tsutsumi389/real-time-auction/backend/internal/repository"
+	"github.com/tsutsumi389/real-time-auction/internal/domain"
+	"github.com/tsutsumi389/real-time-auction/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
