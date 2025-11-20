@@ -4,981 +4,727 @@
 **対象画面**: 管理者ログイン画面（Admin Login）
 **パス**: `/admin/login`
 **権限**: 未認証ユーザー
+**優先度**: 最高（MVP必須機能）
 
 ---
 
 ## 1. 概要
 
-管理者（system_admin / auctioneer）が認証してシステムにアクセスするためのログイン画面。JWT認証を使用し、成功時にはトークンをクライアント側に保存してダッシュボードへリダイレクトする。
+### 1.1 目的
+管理者（システム管理者・オークション主催者）がシステムにログインするための認証画面です。メールアドレスとパスワードを入力することで、本人確認を行い、システムへのアクセス権限を付与します。
+
+### 1.2 対象ユーザー
+- **system_admin（システム管理者）**: システム全体の管理権限を持つユーザー
+- **auctioneer（オークション主催者）**: オークションの作成・運営を行うユーザー
+
+### 1.3 主要機能
+1. メールアドレスとパスワードの入力
+2. ログイン実行（認証処理）
+3. 入力内容のバリデーション（検証）
+4. エラーメッセージの表示
+5. ログイン成功後のダッシュボードへの自動遷移
 
 ---
 
-## 2. 実装範囲
+## 2. 画面レイアウト
 
-### 2.1 バックエンド実装（Go）
+### 2.1 画面構成
 
-#### 2.1.1 データモデル（Domain）
-**ファイル**: `backend/internal/domain/admin.go`
-
-```go
-// Admin represents an administrator or auctioneer user
-type Admin struct {
-    ID           int64     `gorm:"primaryKey;autoIncrement" json:"id"`
-    Email        string    `gorm:"type:varchar(255);uniqueIndex;not null" json:"email"`
-    PasswordHash string    `gorm:"type:varchar(255);not null" json:"-"` // Never expose in JSON
-    DisplayName  string    `gorm:"type:varchar(100)" json:"display_name"`
-    Role         string    `gorm:"type:varchar(20);not null;check:role IN ('system_admin','auctioneer')" json:"role"`
-    Status       string    `gorm:"type:varchar(20);not null;default:'active';check:status IN ('active','suspended','deleted')" json:"status"`
-    CreatedAt    time.Time `gorm:"autoCreateTime" json:"created_at"`
-    UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updated_at"`
-}
-
-// TableName specifies the table name for GORM
-func (Admin) TableName() string {
-    return "admins"
-}
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│           [ロゴまたはタイトル]              │
+│                                         │
+│    ┌───────────────────────────┐        │
+│    │  管理者ログイン               │        │
+│    │                           │        │
+│    │  システム管理者または        │        │
+│    │  オークション主催者として    │        │
+│    │  ログインしてください        │        │
+│    │                           │        │
+│    │  [エラーメッセージ表示エリア] │        │
+│    │                           │        │
+│    │  メールアドレス             │        │
+│    │  [___________________]    │        │
+│    │  [フィールドエラー]         │        │
+│    │                           │        │
+│    │  パスワード                │        │
+│    │  [___________________]    │        │
+│    │  [フィールドエラー]         │        │
+│    │                           │        │
+│    │  [    ログインボタン    ]   │        │
+│    │                           │        │
+│    └───────────────────────────┘        │
+│                                         │
+└─────────────────────────────────────────┘
 ```
 
-**JWT Claims構造体**:
-```go
-// JWTClaims represents JWT token claims
-type JWTClaims struct {
-    UserID      int64  `json:"user_id"`
-    Email       string `json:"email"`
-    DisplayName string `json:"display_name"`
-    Role        string `json:"role"`
-    UserType    string `json:"user_type"` // "admin" or "bidder"
-    jwt.RegisteredClaims
-}
-```
+### 2.2 デザイン要件
+- **背景**: グラデーション（淡いグレー系）
+- **カード**: 中央に配置された白いカード、影付き
+- **幅**: スマートフォンでは画面幅100%、PC/タブレットでは最大448px
+- **フォント**: シンプルで読みやすいフォント
+- **ボタン**: 幅いっぱい、青系の色、ホバー時に色が変わる
+- **エラー**: 赤い枠線と赤いテキストで表示
 
 ---
 
-#### 2.1.2 Repository層（Data Access）
-**ファイル**: `backend/internal/repository/admin_repository.go`
+## 3. 入力項目とバリデーション
 
-```go
-type AdminRepository interface {
-    FindByEmail(ctx context.Context, email string) (*domain.Admin, error)
-    FindByID(ctx context.Context, id int64) (*domain.Admin, error)
-}
+### 3.1 メールアドレス
 
-type adminRepository struct {
-    db *gorm.DB
-}
+| 項目 | 内容 |
+|------|------|
+| **ラベル** | メールアドレス |
+| **入力形式** | テキスト入力（email type） |
+| **プレースホルダー** | admin@example.com |
+| **必須/任意** | 必須 |
+| **最大文字数** | 255文字 |
 
-func NewAdminRepository(db *gorm.DB) AdminRepository {
-    return &adminRepository{db: db}
-}
+**バリデーションルール:**
+1. 空欄の場合: 「メールアドレスを入力してください」
+2. メール形式でない場合: 「メールアドレスの形式が正しくありません」
+   - 例: `@`が含まれていない、`.`が含まれていない
 
-// FindByEmail retrieves an admin by email address
-func (r *adminRepository) FindByEmail(ctx context.Context, email string) (*domain.Admin, error) {
-    var admin domain.Admin
-    if err := r.db.WithContext(ctx).
-        Where("email = ? AND status != ?", email, "deleted").
-        First(&admin).Error; err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, ErrAdminNotFound
-        }
-        return nil, err
-    }
-    return &admin, nil
-}
-
-// FindByID retrieves an admin by ID
-func (r *adminRepository) FindByID(ctx context.Context, id int64) (*domain.Admin, error) {
-    var admin domain.Admin
-    if err := r.db.WithContext(ctx).
-        Where("id = ? AND status != ?", id, "deleted").
-        First(&admin).Error; err != nil {
-        if errors.Is(err, gorm.ErrRecordNotFound) {
-            return nil, ErrAdminNotFound
-        }
-        return nil, err
-    }
-    return &admin, nil
-}
-```
-
-**カスタムエラー定義**:
-```go
-var (
-    ErrAdminNotFound = errors.New("admin not found")
-)
-```
+**バリデーションタイミング:**
+- リアルタイム: フィールドからフォーカスが外れた時（onBlur）
+- 送信時: ログインボタンをクリックした時
 
 ---
 
-#### 2.1.3 Service層（Business Logic）
-**ファイル**: `backend/internal/service/auth_service.go`
+### 3.2 パスワード
 
-```go
-type AuthService interface {
-    AdminLogin(ctx context.Context, email, password string) (string, *domain.Admin, error)
-    ValidateJWT(tokenString string) (*domain.JWTClaims, error)
-}
+| 項目 | 内容 |
+|------|------|
+| **ラベル** | パスワード |
+| **入力形式** | パスワード入力（****で表示） |
+| **プレースホルダー** | 8文字以上 |
+| **必須/任意** | 必須 |
+| **最小文字数** | 8文字 |
 
-type authService struct {
-    adminRepo repository.AdminRepository
-    jwtSecret string
-    jwtExpiry time.Duration
-}
+**バリデーションルール:**
+1. 空欄の場合: 「パスワードを入力してください」
+2. 8文字未満の場合: 「パスワードは8文字以上で入力してください」
 
-func NewAuthService(adminRepo repository.AdminRepository, jwtSecret string) AuthService {
-    return &authService{
-        adminRepo: adminRepo,
-        jwtSecret: jwtSecret,
-        jwtExpiry: 24 * time.Hour, // 24 hours
-    }
-}
-
-// AdminLogin authenticates an admin and returns JWT token
-func (s *authService) AdminLogin(ctx context.Context, email, password string) (string, *domain.Admin, error) {
-    // Find admin by email
-    admin, err := s.adminRepo.FindByEmail(ctx, email)
-    if err != nil {
-        if errors.Is(err, repository.ErrAdminNotFound) {
-            return "", nil, ErrInvalidCredentials
-        }
-        return "", nil, err
-    }
-
-    // Check if admin is suspended
-    if admin.Status == "suspended" {
-        return "", nil, ErrAccountSuspended
-    }
-
-    // Verify password
-    if err := bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(password)); err != nil {
-        return "", nil, ErrInvalidCredentials
-    }
-
-    // Generate JWT token
-    token, err := s.generateJWT(admin)
-    if err != nil {
-        return "", nil, err
-    }
-
-    return token, admin, nil
-}
-
-// generateJWT creates a new JWT token for admin
-func (s *authService) generateJWT(admin *domain.Admin) (string, error) {
-    claims := &domain.JWTClaims{
-        UserID:      admin.ID,
-        Email:       admin.Email,
-        DisplayName: admin.DisplayName,
-        Role:        admin.Role,
-        UserType:    "admin",
-        RegisteredClaims: jwt.RegisteredClaims{
-            ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.jwtExpiry)),
-            IssuedAt:  jwt.NewNumericDate(time.Now()),
-            Issuer:    "auction-system",
-        },
-    }
-
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString([]byte(s.jwtSecret))
-}
-
-// ValidateJWT validates and parses JWT token
-func (s *authService) ValidateJWT(tokenString string) (*domain.JWTClaims, error) {
-    token, err := jwt.ParseWithClaims(tokenString, &domain.JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, ErrInvalidToken
-        }
-        return []byte(s.jwtSecret), nil
-    })
-
-    if err != nil {
-        return nil, ErrInvalidToken
-    }
-
-    claims, ok := token.Claims.(*domain.JWTClaims)
-    if !ok || !token.Valid {
-        return nil, ErrInvalidToken
-    }
-
-    return claims, nil
-}
-```
-
-**カスタムエラー定義**:
-```go
-var (
-    ErrInvalidCredentials = errors.New("invalid email or password")
-    ErrAccountSuspended   = errors.New("account is suspended")
-    ErrInvalidToken       = errors.New("invalid token")
-)
-```
+**バリデーションタイミング:**
+- リアルタイム: フィールドからフォーカスが外れた時（onBlur）
+- 送信時: ログインボタンをクリックした時
 
 ---
 
-#### 2.1.4 Handler層（HTTP Handlers）
-**ファイル**: `backend/internal/handler/auth_handler.go`
+## 4. 認証処理フロー
 
-```go
-type AuthHandler struct {
-    authService service.AuthService
-}
+### 4.1 ログイン処理の流れ
 
-func NewAuthHandler(authService service.AuthService) *AuthHandler {
-    return &AuthHandler{
-        authService: authService,
-    }
-}
-
-// LoginRequest represents the login request body
-type LoginRequest struct {
-    Email    string `json:"email" binding:"required,email"`
-    Password string `json:"password" binding:"required,min=8"`
-}
-
-// LoginResponse represents the login response
-type LoginResponse struct {
-    Token string       `json:"token"`
-    User  UserResponse `json:"user"`
-}
-
-type UserResponse struct {
-    ID          int64  `json:"id"`
-    Email       string `json:"email"`
-    DisplayName string `json:"display_name"`
-    Role        string `json:"role"`
-    UserType    string `json:"user_type"`
-}
-
-// AdminLogin handles POST /api/auth/admin/login
-func (h *AuthHandler) AdminLogin(c *gin.Context) {
-    var req LoginRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{
-            "error": "Invalid request body",
-            "details": err.Error(),
-        })
-        return
-    }
-
-    // Authenticate admin
-    token, admin, err := h.authService.AdminLogin(c.Request.Context(), req.Email, req.Password)
-    if err != nil {
-        if errors.Is(err, service.ErrInvalidCredentials) {
-            c.JSON(http.StatusUnauthorized, gin.H{
-                "error": "Invalid email or password",
-            })
-            return
-        }
-        if errors.Is(err, service.ErrAccountSuspended) {
-            c.JSON(http.StatusForbidden, gin.H{
-                "error": "Account is suspended",
-            })
-            return
-        }
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "error": "Internal server error",
-        })
-        return
-    }
-
-    // Return success response
-    c.JSON(http.StatusOK, LoginResponse{
-        Token: token,
-        User: UserResponse{
-            ID:          admin.ID,
-            Email:       admin.Email,
-            DisplayName: admin.DisplayName,
-            Role:        admin.Role,
-            UserType:    "admin",
-        },
-    })
-}
 ```
+[ユーザー操作]
+  ↓
+1. メールアドレスとパスワードを入力
+  ↓
+2. ログインボタンをクリック
+  ↓
+3. フロントエンドで入力内容を検証
+  ↓
+4. バックエンドAPIにログインリクエストを送信
+  ↓
+5. バックエンドで認証処理を実行
+   - メールアドレスでユーザーを検索
+   - パスワードの照合
+   - アカウント状態の確認（停止されていないか）
+  ↓
+6. 認証成功の場合
+   - JWTトークン（認証チケット）を発行
+   - ユーザー情報を返却
+  ↓
+7. フロントエンドでトークンを保存
+  ↓
+8. ダッシュボード画面へ自動遷移
+```
+
+### 4.2 認証失敗時の処理
+
+| 失敗理由 | 表示メッセージ | HTTPステータス |
+|---------|--------------|--------------|
+| メールアドレスまたはパスワードが間違っている | メールアドレスまたはパスワードが正しくありません | 401 |
+| アカウントが停止されている | アカウントが停止されています | 403 |
+| サーバーエラー | ログインに失敗しました。もう一度お試しください。 | 500 |
+| ネットワークエラー | サーバーに接続できません | - |
+| タイムアウト | 接続がタイムアウトしました | - |
 
 ---
 
-#### 2.1.5 Middleware（JWT認証）
-**ファイル**: `backend/internal/middleware/auth_middleware.go`
+## 5. セキュリティ要件
 
-```go
-// AuthMiddleware validates JWT token and sets user context
-func AuthMiddleware(authService service.AuthService) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        // Get token from Authorization header
-        authHeader := c.GetHeader("Authorization")
-        if authHeader == "" {
-            c.JSON(http.StatusUnauthorized, gin.H{
-                "error": "Authorization header is required",
-            })
-            c.Abort()
-            return
-        }
+### 5.1 パスワードの取り扱い
 
-        // Extract Bearer token
-        parts := strings.Split(authHeader, " ")
-        if len(parts) != 2 || parts[0] != "Bearer" {
-            c.JSON(http.StatusUnauthorized, gin.H{
-                "error": "Invalid authorization header format",
-            })
-            c.Abort()
-            return
-        }
+1. **保存方法**
+   - データベースにはパスワードを平文で保存しない
+   - bcryptアルゴリズムでハッシュ化（暗号化）してから保存
+   - ハッシュ化コスト: 10（セキュリティと速度のバランス）
 
-        tokenString := parts[1]
+2. **照合方法**
+   - ユーザーが入力したパスワードをハッシュ化
+   - データベースに保存されたハッシュと比較
+   - 一致すれば認証成功
 
-        // Validate token
-        claims, err := authService.ValidateJWT(tokenString)
-        if err != nil {
-            c.JSON(http.StatusUnauthorized, gin.H{
-                "error": "Invalid or expired token",
-            })
-            c.Abort()
-            return
-        }
+### 5.2 JWT認証トークン
 
-        // Set user context
-        c.Set("user_id", claims.UserID)
-        c.Set("email", claims.Email)
-        c.Set("role", claims.Role)
-        c.Set("user_type", claims.UserType)
+1. **トークンの役割**
+   - ログイン成功後に発行される「認証チケット」
+   - 以降のAPI呼び出しで、このトークンを提示することで本人確認を行う
 
-        c.Next()
-    }
-}
+2. **トークンに含まれる情報**
+   - ユーザーID
+   - メールアドレス
+   - 表示名
+   - ロール（system_admin / auctioneer）
+   - ユーザータイプ（admin）
+   - 発行日時
+   - 有効期限（24時間）
 
-// RequireRole validates that the user has the required role
-func RequireRole(roles ...string) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        userRole, exists := c.Get("role")
-        if !exists {
-            c.JSON(http.StatusForbidden, gin.H{
-                "error": "User role not found",
-            })
-            c.Abort()
-            return
-        }
+3. **トークンの保存場所**
+   - ブラウザのlocalStorage（ローカルストレージ）に保存
+   - ユーザー情報も併せて保存
 
-        roleStr := userRole.(string)
-        for _, allowedRole := range roles {
-            if roleStr == allowedRole {
-                c.Next()
-                return
-            }
-        }
+4. **セキュリティ対策**
+   - トークンには署名が付与され、改ざんを検知
+   - 有効期限は24時間、期限切れ後は再ログインが必要
+   - HTTPS通信でのみトークンを送信（本番環境）
 
-        c.JSON(http.StatusForbidden, gin.H{
-            "error": "Insufficient permissions",
-        })
-        c.Abort()
-    }
-}
-```
+### 5.3 その他のセキュリティ対策
+
+1. **SQLインジェクション対策**
+   - データベースクエリにはプレースホルダーを使用
+   - ユーザー入力を直接SQL文に埋め込まない
+
+2. **XSS（クロスサイトスクリプティング）対策**
+   - ユーザー入力は自動的にエスケープ処理
+   - Vueフレームワークの自動保護機能を使用
+
+3. **CSRF（クロスサイトリクエストフォージェリ）対策**
+   - JWTトークンを使用（Cookieは使用しない）
+
+4. **CORS（クロス・オリジン・リソース・シェアリング）設定**
+   - 許可されたドメインからのアクセスのみ受け付ける
+   - 本番環境では特定のドメインのみ許可
+
+5. **レート制限（将来実装）**
+   - ブルートフォース攻撃対策として、1分間に5回までのログイン試行に制限
 
 ---
 
-#### 2.1.6 ルーティング設定
-**ファイル**: `backend/cmd/api/main.go`
+## 6. データベース設計
 
-```go
-func setupRoutes(router *gin.Engine, authHandler *handler.AuthHandler, authService service.AuthService) {
-    api := router.Group("/api")
-    {
-        // Public routes
-        auth := api.Group("/auth")
-        {
-            auth.POST("/admin/login", authHandler.AdminLogin)
-            // auth.POST("/bidder/login", authHandler.BidderLogin) // 将来実装
-        }
+### 6.1 管理者テーブル（admins）
 
-        // Protected routes (require authentication)
-        admin := api.Group("/admin")
-        admin.Use(middleware.AuthMiddleware(authService))
-        admin.Use(middleware.RequireRole("system_admin", "auctioneer"))
-        {
-            // 将来的にダッシュボードや他のエンドポイントを追加
-        }
-    }
-}
-```
+このテーブルには既に以下のカラムが定義されています（マイグレーション001で作成済み）:
+
+| カラム名 | データ型 | 説明 | 制約 |
+|---------|---------|------|------|
+| id | BIGSERIAL | 管理者ID（自動採番） | 主キー |
+| email | VARCHAR(255) | メールアドレス | 必須、ユニーク、メール形式 |
+| password_hash | VARCHAR(255) | パスワードハッシュ | 必須 |
+| display_name | VARCHAR(100) | 表示名 | 任意 |
+| role | VARCHAR(20) | ロール | 必須、system_admin または auctioneer |
+| status | VARCHAR(20) | アカウント状態 | 必須、active / suspended / deleted |
+| created_at | TIMESTAMP | 作成日時 | 自動設定 |
+| updated_at | TIMESTAMP | 更新日時 | 自動更新 |
+
+### 6.2 テスト用データ
+
+開発環境では、以下のテストアカウントを作成します:
+
+| メールアドレス | パスワード | ロール | 表示名 |
+|--------------|-----------|-------|--------|
+| admin@example.com | password123 | system_admin | システム管理者 |
+| auctioneer@example.com | password123 | auctioneer | 主催者テスト |
+
+**注意**: 本番環境では絶対に使用しないこと
 
 ---
 
-### 2.2 フロントエンド実装（Vue 3 + Shadcn）
+## 7. API仕様
 
-#### 2.2.1 ディレクトリ構造
+### 7.1 ログインAPI
+
+**エンドポイント**: `POST /api/auth/admin/login`
+
+**リクエスト形式**:
+```
+POST /api/auth/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+```
+
+**レスポンス形式（成功時）**:
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "admin@example.com",
+    "display_name": "システム管理者",
+    "role": "system_admin",
+    "user_type": "admin"
+  }
+}
+```
+
+**レスポンス形式（失敗時）**:
+```
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "error": "Invalid email or password"
+}
+```
+
+### 7.2 エラーレスポンス一覧
+
+| HTTPステータス | エラーメッセージ | 発生条件 |
+|--------------|----------------|---------|
+| 400 Bad Request | Invalid request body | リクエストボディの形式が不正 |
+| 401 Unauthorized | Invalid email or password | メールアドレスまたはパスワードが間違っている |
+| 403 Forbidden | Account is suspended | アカウントが停止されている |
+| 500 Internal Server Error | Internal server error | サーバー内部エラー |
+
+---
+
+## 8. バックエンド実装要件
+
+### 8.1 レイヤー構成
+
+バックエンドは以下の4層構造で実装します:
+
+1. **Domain層（データモデル）**
+   - 管理者情報の構造定義
+   - JWT認証トークンの構造定義
+
+2. **Repository層（データアクセス）**
+   - データベースからの管理者情報取得
+   - メールアドレスでの検索機能
+   - IDでの検索機能
+
+3. **Service層（ビジネスロジック）**
+   - ログイン処理の実装
+   - パスワード照合
+   - アカウント状態の確認
+   - JWTトークンの生成
+   - トークンの検証（他の画面で使用）
+
+4. **Handler層（APIエンドポイント）**
+   - HTTPリクエストの受け取り
+   - リクエストボディのバリデーション
+   - Service層の呼び出し
+   - HTTPレスポンスの返却
+
+### 8.2 認証ミドルウェア
+
+他の画面で使用する認証ミドルウェアも実装します:
+
+1. **JWT認証ミドルウェア**
+   - リクエストヘッダーからトークンを取得
+   - トークンの有効性を検証
+   - トークンからユーザー情報を抽出
+   - 認証失敗時は401エラーを返す
+
+2. **ロール検証ミドルウェア**
+   - ユーザーのロールを確認
+   - 必要な権限を持っているか検証
+   - 権限不足の場合は403エラーを返す
+
+### 8.3 使用技術
+
+- **フレームワーク**: Gin（HTTPルーティング）
+- **ORM**: GORM（データベースアクセス）
+- **パスワードハッシュ**: bcryptライブラリ
+- **JWT**: golang-jwt/jwtライブラリ
+
+---
+
+## 9. フロントエンド実装要件
+
+### 9.1 ディレクトリ構成
+
 ```
 frontend/src/
   views/
     admin/
-      AdminLoginView.vue      # 管理者ログイン画面
+      AdminLoginView.vue      # ログイン画面コンポーネント
   components/
-    ui/                       # Shadcn Vue components
-      button.vue
-      input.vue
-      label.vue
-      card.vue
-      alert.vue
+    ui/                       # UIコンポーネント（Shadcn Vue）
+      button.vue              # ボタン
+      input.vue               # 入力フィールド
+      label.vue               # ラベル
+      card.vue                # カード
+      alert.vue               # エラー表示
   services/
     api/
-      authApi.ts              # 認証API client
+      authApi.ts              # 認証API呼び出し
   stores/
-    authStore.ts              # 認証状態管理（Pinia）
+    authStore.ts              # 認証状態管理
+  utils/
+    auth.ts                   # トークン管理
   router/
     index.ts                  # ルーティング設定
-  utils/
-    auth.ts                   # JWT token管理
 ```
 
+### 9.2 実装コンポーネント
+
+1. **ログイン画面（AdminLoginView.vue）**
+   - メールアドレス入力フィールド
+   - パスワード入力フィールド
+   - ログインボタン
+   - エラーメッセージ表示エリア
+   - バリデーション処理
+   - API呼び出し
+
+2. **認証API Client（authApi.ts）**
+   - バックエンドAPIとの通信
+   - HTTPリクエスト/レスポンスの処理
+   - エラーハンドリング
+
+3. **トークン管理（auth.ts）**
+   - トークンのlocalStorageへの保存
+   - トークンの取得
+   - トークンの削除
+   - ユーザー情報の保存/取得/削除
+   - ログイン状態の確認
+
+4. **認証状態管理（authStore.ts）**
+   - ログイン処理の実行
+   - ログアウト処理
+   - ログイン状態の保持
+   - ユーザー情報の保持
+   - エラーメッセージの管理
+   - ローディング状態の管理
+
+5. **ルーティング設定（router/index.ts）**
+   - `/admin/login`へのルート定義
+   - 認証ガード（未認証時のリダイレクト）
+   - ログイン済みの場合はダッシュボードへリダイレクト
+
+### 9.3 使用技術
+
+- **フレームワーク**: Vue 3（Composition API）
+- **UIライブラリ**: Shadcn Vue + Tailwind CSS
+- **状態管理**: Pinia
+- **HTTP Client**: Axios
+- **ルーティング**: Vue Router
+
 ---
 
-#### 2.2.2 API Client（Axios）
-**ファイル**: `frontend/src/services/api/authApi.ts`
+## 10. 画面遷移
 
-```typescript
-import axios, { AxiosInstance } from 'axios'
+### 10.1 遷移パターン
 
-const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-export interface AdminLoginRequest {
-  email: string
-  password: string
-}
-
-export interface AdminLoginResponse {
-  token: string
-  user: {
-    id: number
-    email: string
-    display_name: string
-    role: string
-    user_type: string
-  }
-}
-
-export const authApi = {
-  adminLogin: async (credentials: AdminLoginRequest): Promise<AdminLoginResponse> => {
-    const response = await apiClient.post<AdminLoginResponse>('/auth/admin/login', credentials)
-    return response.data
-  },
-}
+```
+[未認証状態]
+  ↓
+/admin/login（ログイン画面）
+  ↓
+  ログイン成功
+  ↓
+/admin/dashboard（ダッシュボード）
 ```
 
----
+### 10.2 認証ガードの動作
 
-#### 2.2.3 JWT Token管理
-**ファイル**: `frontend/src/utils/auth.ts`
+1. **未認証ユーザーが保護された画面にアクセスした場合**
+   - `/admin/login`へ自動リダイレクト
 
-```typescript
-const TOKEN_KEY = 'auction_admin_token'
-const USER_KEY = 'auction_admin_user'
+2. **認証済みユーザーがログイン画面にアクセスした場合**
+   - `/admin/dashboard`へ自動リダイレクト
 
-export interface StoredUser {
-  id: number
-  email: string
-  display_name: string
-  role: string
-  user_type: string
-}
-
-export const tokenManager = {
-  getToken: (): string | null => {
-    return localStorage.getItem(TOKEN_KEY)
-  },
-
-  setToken: (token: string): void => {
-    localStorage.setItem(TOKEN_KEY, token)
-  },
-
-  removeToken: (): void => {
-    localStorage.removeItem(TOKEN_KEY)
-  },
-
-  getUser: (): StoredUser | null => {
-    const userStr = localStorage.getItem(USER_KEY)
-    return userStr ? JSON.parse(userStr) : null
-  },
-
-  setUser: (user: StoredUser): void => {
-    localStorage.setItem(USER_KEY, JSON.stringify(user))
-  },
-
-  removeUser: (): void => {
-    localStorage.removeItem(USER_KEY)
-  },
-
-  clearAuth: (): void => {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-  },
-
-  isAuthenticated: (): boolean => {
-    return !!tokenManager.getToken()
-  },
-}
-```
+3. **トークンの有効期限が切れた場合**
+   - `/admin/login`へ自動リダイレクト
+   - エラーメッセージ: 「セッションの有効期限が切れました。再度ログインしてください。」
 
 ---
 
-#### 2.2.4 Pinia Store（状態管理）
-**ファイル**: `frontend/src/stores/authStore.ts`
+## 11. UIの動作仕様
 
-```typescript
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { authApi, type AdminLoginRequest, type AdminLoginResponse } from '@/services/api/authApi'
-import { tokenManager, type StoredUser } from '@/utils/auth'
+### 11.1 通常時の動作
 
-export const useAuthStore = defineStore('auth', () => {
-  const user = ref<StoredUser | null>(tokenManager.getUser())
-  const token = ref<string | null>(tokenManager.getToken())
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
+1. **初期表示**
+   - メールアドレスとパスワードのフィールドが空の状態
+   - ログインボタンは有効
 
-  const isAuthenticated = computed(() => !!token.value)
-  const userRole = computed(() => user.value?.role || null)
+2. **入力中**
+   - フィールドにフォーカスが当たると枠線がハイライト
+   - パスワードは****で表示
 
-  const login = async (credentials: AdminLoginRequest) => {
-    isLoading.value = true
-    error.value = null
+3. **フィールドからフォーカスが外れた時**
+   - バリデーションを実行
+   - エラーがあればフィールドの下に赤いテキストで表示
+   - エラーがあればフィールドの枠線が赤くなる
 
-    try {
-      const response: AdminLoginResponse = await authApi.adminLogin(credentials)
+4. **Enterキー押下時**
+   - ログインボタンをクリックしたのと同じ動作
 
-      token.value = response.token
-      user.value = response.user
+### 11.2 ログイン処理中の動作
 
-      tokenManager.setToken(response.token)
-      tokenManager.setUser(response.user)
+1. **ログインボタンをクリックした時**
+   - すべてのフィールドのバリデーションを実行
+   - エラーがあれば処理を中断
 
-      return true
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        error.value = 'メールアドレスまたはパスワードが正しくありません'
-      } else if (err.response?.status === 403) {
-        error.value = 'アカウントが停止されています'
-      } else {
-        error.value = 'ログインに失敗しました。もう一度お試しください。'
-      }
-      return false
-    } finally {
-      isLoading.value = false
-    }
-  }
+2. **API通信中**
+   - ログインボタンが無効化される
+   - ボタンのテキストが「ログイン中...」に変わる
+   - フィールドが無効化される（入力不可）
 
-  const logout = () => {
-    token.value = null
-    user.value = null
-    tokenManager.clearAuth()
-  }
+3. **ログイン成功時**
+   - トークンとユーザー情報をlocalStorageに保存
+   - ダッシュボードへリダイレクト
 
-  return {
-    user,
-    token,
-    isLoading,
-    error,
-    isAuthenticated,
-    userRole,
-    login,
-    logout,
-  }
-})
-```
+4. **ログイン失敗時**
+   - カードの上部に赤い背景のエラーメッセージを表示
+   - ボタンとフィールドが再び有効化される
+   - パスワードフィールドはクリアされる（セキュリティのため）
 
 ---
 
-#### 2.2.5 Vue Component（ログイン画面）
-**ファイル**: `frontend/src/views/admin/AdminLoginView.vue`
+## 12. レスポンシブデザイン
 
-```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+### 12.1 スマートフォン（767px以下）
 
-const router = useRouter()
-const authStore = useAuthStore()
+- カードの幅: 画面幅の100%
+- 左右のパディング: 16px
+- ログインボタン: 幅いっぱい
 
-const email = ref('')
-const password = ref('')
-const emailError = ref('')
-const passwordError = ref('')
+### 12.2 タブレット/PC（768px以上）
 
-const validateEmail = (): boolean => {
-  if (!email.value) {
-    emailError.value = 'メールアドレスを入力してください'
-    return false
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email.value)) {
-    emailError.value = 'メールアドレスの形式が正しくありません'
-    return false
-  }
-
-  emailError.value = ''
-  return true
-}
-
-const validatePassword = (): boolean => {
-  if (!password.value) {
-    passwordError.value = 'パスワードを入力してください'
-    return false
-  }
-
-  if (password.value.length < 8) {
-    passwordError.value = 'パスワードは8文字以上で入力してください'
-    return false
-  }
-
-  passwordError.value = ''
-  return true
-}
-
-const handleSubmit = async () => {
-  const isEmailValid = validateEmail()
-  const isPasswordValid = validatePassword()
-
-  if (!isEmailValid || !isPasswordValid) {
-    return
-  }
-
-  const success = await authStore.login({
-    email: email.value,
-    password: password.value,
-  })
-
-  if (success) {
-    router.push('/admin/dashboard')
-  }
-}
-</script>
-
-<template>
-  <div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 px-4">
-    <Card class="w-full max-w-md shadow-xl">
-      <CardHeader class="space-y-1">
-        <CardTitle class="text-2xl font-bold tracking-tight">管理者ログイン</CardTitle>
-        <CardDescription class="text-sm text-muted-foreground">
-          システム管理者またはオークション主催者としてログインしてください
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent class="space-y-4">
-        <!-- Error Alert -->
-        <Alert v-if="authStore.error" variant="destructive" class="mb-4">
-          <AlertDescription>{{ authStore.error }}</AlertDescription>
-        </Alert>
-
-        <!-- Email Input -->
-        <div class="space-y-2">
-          <Label for="email">メールアドレス</Label>
-          <Input
-            id="email"
-            v-model="email"
-            type="email"
-            placeholder="admin@example.com"
-            autocomplete="email"
-            :disabled="authStore.isLoading"
-            :class="{ 'border-red-500': emailError }"
-            @blur="validateEmail"
-            @keydown.enter="handleSubmit"
-          />
-          <p v-if="emailError" class="text-sm text-red-500">{{ emailError }}</p>
-        </div>
-
-        <!-- Password Input -->
-        <div class="space-y-2">
-          <Label for="password">パスワード</Label>
-          <Input
-            id="password"
-            v-model="password"
-            type="password"
-            placeholder="8文字以上"
-            autocomplete="current-password"
-            :disabled="authStore.isLoading"
-            :class="{ 'border-red-500': passwordError }"
-            @blur="validatePassword"
-            @keydown.enter="handleSubmit"
-          />
-          <p v-if="passwordError" class="text-sm text-red-500">{{ passwordError }}</p>
-        </div>
-      </CardContent>
-
-      <CardFooter>
-        <Button
-          class="w-full"
-          :disabled="authStore.isLoading"
-          @click="handleSubmit"
-        >
-          <span v-if="authStore.isLoading">ログイン中...</span>
-          <span v-else>ログイン</span>
-        </Button>
-      </CardFooter>
-    </Card>
-  </div>
-</template>
-```
+- カードの幅: 最大448px
+- 画面中央に配置
+- ログインボタン: カード幅いっぱい
 
 ---
 
-#### 2.2.6 ルーティング設定
-**ファイル**: `frontend/src/router/index.ts`
+## 13. アクセシビリティ
 
-```typescript
-import { createRouter, createWebHistory } from 'vue-router'
-import { tokenManager } from '@/utils/auth'
-import AdminLoginView from '@/views/admin/AdminLoginView.vue'
+### 13.1 キーボード操作
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/admin/login',
-      name: 'AdminLogin',
-      component: AdminLoginView,
-      meta: { requiresAuth: false },
-    },
-    {
-      path: '/admin/dashboard',
-      name: 'AdminDashboard',
-      component: () => import('@/views/admin/AdminDashboardView.vue'),
-      meta: { requiresAuth: true, roles: ['system_admin', 'auctioneer'] },
-    },
-    // 他のルート定義...
-  ],
-})
+- Tabキー: フィールド間の移動
+- Enterキー: ログイン実行
+- Escapeキー: （将来実装）エラーメッセージを閉じる
 
-// Navigation guard for authentication
-router.beforeEach((to, from, next) => {
-  const isAuthenticated = tokenManager.isAuthenticated()
+### 13.2 スクリーンリーダー対応
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/admin/login')
-  } else if (to.path === '/admin/login' && isAuthenticated) {
-    next('/admin/dashboard')
-  } else {
-    next()
-  }
-})
+- すべての入力フィールドにラベルを関連付け
+- エラーメッセージをaria-liveで通知
+- ボタンに明確なラベルを設定
 
-export default router
-```
+### 13.3 フォーカス表示
+
+- キーボードでフォーカスした要素を明確に表示
+- フォーカスリングの色: 青系（高コントラスト）
 
 ---
 
-## 3. データベース設定
+## 14. テスト要件
 
-### 3.1 Seed Data（開発用）
-**ファイル**: `backend/migrations/005_seed_admin_users.up.sql`
+### 14.1 バックエンドテスト
 
-```sql
--- Insert test admin users (password: "password123" hashed with bcrypt)
-INSERT INTO admins (email, password_hash, display_name, role, status)
-VALUES
-  ('admin@example.com', '$2a$10$rZJ3KQ3X2k.9n5K/Z2xJEeW8Uc1R9vQ8Y6Yq7V0xF5Lm4Kf2Y3zL.', 'システム管理者', 'system_admin', 'active'),
-  ('auctioneer@example.com', '$2a$10$rZJ3KQ3X2k.9n5K/Z2xJEeW8Uc1R9vQ8Y6Yq7V0xF5Lm4Kf2Y3zL.', '主催者テスト', 'auctioneer', 'active');
-```
+1. **正常系テスト**
+   - 正しいメールアドレスとパスワードでログイン成功
+   - JWTトークンが正しく発行されること
+   - ユーザー情報が正しく返却されること
 
----
+2. **異常系テスト**
+   - 存在しないメールアドレスでログイン失敗（401エラー）
+   - 間違ったパスワードでログイン失敗（401エラー）
+   - 停止中のアカウントでログイン失敗（403エラー）
+   - 削除済みアカウントでログイン失敗（401エラー）
 
-## 4. セキュリティ要件
+3. **バリデーションテスト**
+   - メールアドレス形式が不正（400エラー）
+   - パスワードが8文字未満（400エラー）
+   - 空のリクエストボディ（400エラー）
 
-### 4.1 バックエンドセキュリティ
-1. **パスワードハッシュ化**: bcrypt（cost=10）を使用
-2. **JWT Secret**: 環境変数`JWT_SECRET`で管理（最低32文字のランダム文字列）
-3. **JWT有効期限**: 24時間
-4. **レート制限**: ログインエンドポイントに対して1分間に5回まで（将来実装）
-5. **HTTPS**: 本番環境では必須
-6. **CORS**: 許可されたオリジンのみ（環境変数`CORS_ORIGINS`）
-7. **SQLインジェクション対策**: GORMのプレースホルダー使用
+4. **セキュリティテスト**
+   - パスワードがレスポンスに含まれないこと
+   - JWTトークンの署名が正しいこと
+   - トークンの有効期限が24時間であること
 
-### 4.2 フロントエンドセキュリティ
-1. **XSS対策**: Vueの自動エスケープ機能
-2. **Token保存**: localStorage（sessionStorageも検討可）
-3. **HTTPSのみ**: 本番環境でのToken送信
-4. **CSRF対策**: JWTトークンを使用（Cookieは使用しない）
+### 14.2 フロントエンドテスト
 
----
+1. **コンポーネントテスト**
+   - ログイン画面が正しくレンダリングされること
+   - バリデーションが正しく動作すること
+   - エラーメッセージが正しく表示されること
+   - ローディング状態が正しく表示されること
 
-## 5. エラーハンドリング
+2. **統合テスト**
+   - ログイン成功時にダッシュボードへリダイレクトされること
+   - ログイン失敗時にエラーメッセージが表示されること
+   - トークンがlocalStorageに保存されること
 
-### 5.1 バックエンドエラーレスポンス
-
-| HTTPステータス | エラーコード | メッセージ | 説明 |
-|--------------|------------|----------|------|
-| 400 | `INVALID_REQUEST` | Invalid request body | リクエストボディの形式が不正 |
-| 401 | `INVALID_CREDENTIALS` | Invalid email or password | 認証情報が不正 |
-| 403 | `ACCOUNT_SUSPENDED` | Account is suspended | アカウントが停止中 |
-| 500 | `INTERNAL_ERROR` | Internal server error | サーバー内部エラー |
-
-### 5.2 フロントエンドエラー表示
-- **Network Error**: 「サーバーに接続できません」
-- **Timeout**: 「接続がタイムアウトしました」
-- **401 Unauthorized**: 「メールアドレスまたはパスワードが正しくありません」
-- **403 Forbidden**: 「アカウントが停止されています」
-- **500 Server Error**: 「ログインに失敗しました。もう一度お試しください。」
+3. **E2Eテスト（将来実装）**
+   - 実際のブラウザでログインフローを実行
+   - ログイン後にダッシュボードが表示されること
 
 ---
 
-## 6. バリデーションルール
+## 15. 環境変数
 
-### 6.1 バックエンドバリデーション
-- **Email**: 必須、メールアドレス形式、最大255文字
-- **Password**: 必須、最小8文字
+### 15.1 バックエンド環境変数
 
-### 6.2 フロントエンドバリデーション（リアルタイム）
-- **Email**:
-  - 必須: 「メールアドレスを入力してください」
-  - 形式: 「メールアドレスの形式が正しくありません」
-- **Password**:
-  - 必須: 「パスワードを入力してください」
-  - 最小長: 「パスワードは8文字以上で入力してください」
+`.env`ファイルに以下の設定が必要:
 
----
+| 変数名 | 説明 | 例 |
+|-------|------|-----|
+| JWT_SECRET | JWT署名用の秘密鍵（最低32文字） | your-secure-random-secret-key-min-32-chars |
+| API_PORT | APIサーバーのポート番号 | 8080 |
+| CORS_ORIGINS | CORS許可オリジン | http://localhost,http://localhost:5173 |
+| DATABASE_URL | PostgreSQL接続URL | postgres://auction_user:auction_pass@postgres:5432/auction_db |
 
-## 7. UI/UXデザイン要件
+### 15.2 フロントエンド環境変数
 
-### 7.1 デザインシステム（Shadcn + Tailwind）
-- **カラーテーマ**: Light/Darkモード対応
-- **Primary Color**: Slate（管理画面）
-- **Accent Color**: Blue（ボタン、リンク）
-- **Typography**: Inter font family
+`.env`ファイルに以下の設定が必要:
 
-### 7.2 レスポンシブデザイン
-- **Mobile**: 画面幅100%、パディング16px
-- **Tablet/Desktop**: カード幅最大448px（max-w-md）、中央配置
-
-### 7.3 アクセシビリティ
-- **Label**: すべての入力フィールドに関連付け
-- **Aria-label**: ボタンとリンクに明確なラベル
-- **Keyboard Navigation**: Tab/Enterキーでのフォーム送信
-- **Focus Styles**: 明確なフォーカス表示
+| 変数名 | 説明 | 例 |
+|-------|------|-----|
+| VITE_API_BASE_URL | バックエンドAPIのベースURL | http://localhost/api |
 
 ---
 
-## 8. テストケース
+## 16. 実装手順
 
-### 8.1 バックエンドテスト（Go）
-**ファイル**: `backend/internal/handler/auth_handler_test.go`
+### Phase 1: バックエンド基盤（2-3時間）
+1. データモデルの定義（Admin, JWTClaims）
+2. Repository層の実装（データベースアクセス）
+3. Service層の実装（認証ロジック、JWT生成）
+4. ミドルウェアの実装（JWT認証、ロール検証）
 
-```go
-func TestAdminLogin_Success(t *testing.T) {
-    // Test successful login with valid credentials
-}
+### Phase 2: バックエンドAPI（1-2時間）
+1. Handler層の実装（ログインエンドポイント）
+2. ルーティング設定
+3. Seed dataの作成（テストアカウント）
+4. 手動テスト（curlまたはPostman）
 
-func TestAdminLogin_InvalidCredentials(t *testing.T) {
-    // Test login failure with wrong password
-}
+### Phase 3: フロントエンド基盤（2-3時間）
+1. API Clientの実装
+2. トークン管理機能の実装
+3. Pinia Storeの実装
+4. ルーティング設定と認証ガード
 
-func TestAdminLogin_AccountSuspended(t *testing.T) {
-    // Test login failure with suspended account
-}
+### Phase 4: フロントエンドUI（3-4時間）
+1. Shadcn UIコンポーネントのセットアップ
+2. ログイン画面コンポーネントの実装
+3. バリデーション機能の実装
+4. エラーハンドリングの実装
 
-func TestAdminLogin_InvalidEmail(t *testing.T) {
-    // Test validation error with invalid email format
-}
-```
+### Phase 5: テストと検証（2-3時間）
+1. バックエンドユニットテストの作成
+2. フロントエンドコンポーネントテストの作成
+3. 統合テストの実施
+4. セキュリティ検証
 
-### 8.2 フロントエンドテスト（Vitest + Vue Test Utils）
-**ファイル**: `frontend/src/views/admin/AdminLoginView.spec.ts`
-
-```typescript
-describe('AdminLoginView', () => {
-  it('renders login form correctly', () => {})
-  it('validates email field on blur', () => {})
-  it('validates password field on blur', () => {})
-  it('displays error message on failed login', () => {})
-  it('redirects to dashboard on successful login', () => {})
-  it('disables submit button during loading', () => {})
-})
-```
+**合計想定時間**: 10-15時間
 
 ---
 
-## 9. 実装順序
+## 17. 実装時の注意事項
 
-1. **Phase 1: バックエンド基盤**
-   - [ ] データモデル（Admin, JWTClaims）
-   - [ ] Repository層（AdminRepository）
-   - [ ] Service層（AuthService）
-   - [ ] ミドルウェア（AuthMiddleware, RequireRole）
+### 17.1 セキュリティに関する注意
 
-2. **Phase 2: バックエンドAPI**
-   - [ ] Handler層（AuthHandler.AdminLogin）
-   - [ ] ルーティング設定
-   - [ ] Seed data作成（テスト用管理者アカウント）
+1. **絶対にやってはいけないこと**
+   - パスワードを平文でデータベースに保存する
+   - パスワードをログに出力する
+   - JWT_SECRETをGitにコミットする
+   - 本番環境でテストアカウントを使用する
 
-3. **Phase 3: フロントエンド基盤**
-   - [ ] API Client（authApi.ts）
-   - [ ] Token管理（auth.ts）
-   - [ ] Pinia Store（authStore.ts）
+2. **必ず守ること**
+   - パスワードは必ずbcryptでハッシュ化する
+   - JWT_SECRETは環境変数で管理する
+   - 本番環境ではHTTPSを使用する
+   - エラーメッセージで詳細な情報を漏らさない
 
-4. **Phase 4: フロントエンドUI**
-   - [ ] Shadcn UIコンポーネント設定（Button, Input, Label, Card, Alert）
-   - [ ] AdminLoginView.vue実装
-   - [ ] ルーティング設定（Navigation Guard）
+### 17.2 データ整合性
 
-5. **Phase 5: テストと検証**
-   - [ ] バックエンドユニットテスト
-   - [ ] フロントエンドコンポーネントテスト
-   - [ ] 統合テスト（E2E）
-   - [ ] セキュリティ検証
+1. **データベースの制約**
+   - メールアドレスはユニーク制約で重複を防ぐ
+   - ロールは`system_admin`または`auctioneer`のみ許可
+   - ステータスは`active`、`suspended`、`deleted`のみ許可
 
----
+2. **トランザクション**
+   - 複数テーブルの更新は必ずトランザクション内で実行
 
-## 10. 環境変数
+### 17.3 パフォーマンス
 
-### 10.1 バックエンド（`.env`）
-```bash
-# JWT Settings
-JWT_SECRET=your-secure-random-secret-key-min-32-chars
+1. **データベースインデックス**
+   - emailカラムにユニークインデックスを設定（既に設定済み）
 
-# Server Settings
-API_PORT=8080
-CORS_ORIGINS=http://localhost,http://localhost:5173
-
-# Database Settings
-DATABASE_URL=postgres://auction_user:auction_pass@postgres:5432/auction_db?sslmode=disable
-```
-
-### 10.2 フロントエンド（`.env`）
-```bash
-VITE_API_BASE_URL=http://localhost/api
-```
+2. **bcryptコスト**
+   - コスト10を使用（セキュリティと速度のバランス）
 
 ---
 
-## 11. 注意事項と制約
+## 18. 成功基準
 
-1. **パスワードの平文保存禁止**: 必ずbcryptでハッシュ化してから保存
-2. **JWT Secretの管理**: 環境変数で管理し、Gitにコミットしない
-3. **本番環境**: HTTPS必須、JWT Secretは強力なランダム文字列
-4. **ログ出力**: パスワードやトークンをログに出力しない
-5. **CORS設定**: 本番環境では特定のドメインのみ許可
-6. **レート制限**: ブルートフォース攻撃対策として将来実装必須
-7. **トークン有効期限**: 24時間、リフレッシュトークンは将来実装
+以下の条件がすべて満たされたら実装完了とします:
+
+- [ ] 正しいメールアドレスとパスワードでログインできる
+- [ ] ログイン成功後、ダッシュボードへ自動遷移する
+- [ ] 間違った認証情報でエラーメッセージが表示される
+- [ ] 停止中のアカウントでエラーメッセージが表示される
+- [ ] 入力バリデーションが正しく動作する
+- [ ] JWTトークンがlocalStorageに保存される
+- [ ] トークンを使って他のAPIにアクセスできる
+- [ ] レスポンシブデザインが正しく動作する（スマホ/PC）
+- [ ] キーボード操作でログインできる
+- [ ] すべてのテストが通過する
 
 ---
 
-## 12. 次のステップ
+## 19. 次のステップ
 
-この実装プラン完了後、以下の機能を実装予定：
+この実装完了後、以下の機能を実装予定:
 
-1. **ダッシュボード画面（1.1.2）**: 管理者用のホーム画面
-2. **入札者ログイン画面（2.1.1）**: 入札者用の認証画面
-3. **ログアウト機能**: JWT無効化（Redis blacklist使用）
-4. **リフレッシュトークン**: 長期間のセッション維持
-5. **パスワードリセット**: メール認証によるパスワード再設定
+1. **ダッシュボード画面（1.1.2）**
+   - ログイン後の最初の画面
+   - システム統計の表示
+   - クイックアクション
+
+2. **ログアウト機能**
+   - トークンの削除
+   - ログイン画面へのリダイレクト
+
+3. **入札者ログイン画面（2.1.1）**
+   - 入札者用の認証画面
+   - 別のテーブル（bidders）を使用
+
+4. **リフレッシュトークン（将来実装）**
+   - 長期間のセッション維持
+   - トークンの自動更新
+
+5. **パスワードリセット（将来実装）**
+   - メール認証
+   - パスワード再設定機能
+
+---
+
+## 20. 参考資料
+
+### 20.1 関連ドキュメント
+
+- [画面一覧](../screen_list.md): すべての画面の概要
+- [データベース定義](../database_definition.md): テーブル構造の詳細
+- [アーキテクチャドキュメント](../architecture.md): システム全体の設計
+
+### 20.2 技術仕様
+
+- JWT: RFC 7519 - JSON Web Token
+- bcrypt: Adaptive Hash Algorithm
+- REST API: RESTful設計原則
 
 ---
 
