@@ -599,10 +599,10 @@ frontend/src/
 ## 16. 実装手順
 
 ### Phase 1: バックエンド基盤（2-3時間）
-- [ ] データモデルの定義（Admin, JWTClaims）
-- [ ] Repository層の実装（データベースアクセス）
-- [ ] Service層の実装（認証ロジック、JWT生成）
-- [ ] ミドルウェアの実装（JWT認証、ロール検証）
+- [x] データモデルの定義（Admin, JWTClaims）
+- [x] Repository層の実装（データベースアクセス）
+- [x] Service層の実装（認証ロジック、JWT生成）
+- [x] ミドルウェアの実装（JWT認証、ロール検証）
 
 ### Phase 2: バックエンドAPI（1-2時間）
 - [ ] Handler層の実装（ログインエンドポイント）
