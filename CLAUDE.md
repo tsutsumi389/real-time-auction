@@ -344,9 +344,10 @@ When creating implementation plans for new features or screens, follow these gui
     - Example values
 
 16. **Implementation Steps** (実装手順)
-    - Phase-by-phase breakdown
-    - Time estimates
-    - Dependencies
+    - Phase-by-phase breakdown with checkboxes (`- [ ]` format)
+    - Time estimates per phase
+    - Dependencies between phases
+    - Total estimated time
 
 17. **Success Criteria** (成功基準)
     - Checklist of completion requirements
