@@ -1049,7 +1049,11 @@ func (s *PointService) ReservePoints(ctx context.Context, bidderID string, aucti
 
 ```bash
 # golang-migrate を使用
-migrate -path migrations -database "postgresql://auction_user:password@localhost:5432/auction_db?sslmode=disable" up
+migrate -path migrations -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" up
+
+# または環境変数を使用
+export DB_PASSWORD="your_secure_password"
+migrate -path migrations -database "postgresql://auction_user:${DB_PASSWORD}@localhost:5432/auction_db?sslmode=disable" up
 ```
 
 ## セキュリティ考慮事項
