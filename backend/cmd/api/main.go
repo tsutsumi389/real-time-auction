@@ -80,9 +80,9 @@ func main() {
 			systemAdmin.Use(middleware.RequireSystemAdmin())
 			{
 				// 管理者一覧取得
-				systemAdmin.GET("/admins", adminHandler.GetAdminList)
+				systemAdmin.GET("/admin/admins", adminHandler.GetAdminList)
 				// 管理者状態変更
-				systemAdmin.PATCH("/admins/:id/status", adminHandler.UpdateAdminStatus)
+				systemAdmin.PATCH("/admin/admins/:id/status", adminHandler.UpdateAdminStatus)
 			}
 		}
 	}

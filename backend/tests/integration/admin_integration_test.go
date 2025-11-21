@@ -49,8 +49,8 @@ func setupAdminTestRouter(db *gorm.DB) *gin.Engine {
 			systemAdmin := protected.Group("")
 			systemAdmin.Use(middleware.RequireSystemAdmin())
 			{
-				systemAdmin.GET("/admins", adminHandler.GetAdminList)
-				systemAdmin.PATCH("/admins/:id/status", adminHandler.UpdateAdminStatus)
+				systemAdmin.GET("/admin/admins", adminHandler.GetAdminList)
+				systemAdmin.PATCH("/admin/admins/:id/status", adminHandler.UpdateAdminStatus)
 			}
 		}
 	}

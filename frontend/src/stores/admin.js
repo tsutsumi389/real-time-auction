@@ -39,12 +39,16 @@ export const useAdminStore = defineStore('admin', () => {
     error.value = null
 
     try {
+      // Build sort parameter in the format expected by backend: {field}_{direction}
+      const sortField = params.sort || filters.value.sort
+      const sortOrder = params.order || filters.value.order
+      const sortParam = `${sortField}_${sortOrder}`
+
       const requestParams = {
-        search: params.search || filters.value.search,
+        keyword: params.search || filters.value.search,
         role: params.role || filters.value.role,
         status: params.status || filters.value.status,
-        sort: params.sort || filters.value.sort,
-        order: params.order || filters.value.order,
+        sort: sortParam,
         page: params.page || pagination.value.currentPage,
         limit: params.limit || pagination.value.itemsPerPage,
       }
@@ -61,10 +65,10 @@ export const useAdminStore = defineStore('admin', () => {
 
       admins.value = response.admins
       pagination.value = {
-        currentPage: response.pagination.current_page,
+        currentPage: response.pagination.page,
         totalPages: response.pagination.total_pages,
-        totalItems: response.pagination.total_items,
-        itemsPerPage: response.pagination.items_per_page,
+        totalItems: response.pagination.total,
+        itemsPerPage: response.pagination.limit,
       }
 
       loading.value = false
