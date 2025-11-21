@@ -151,6 +151,8 @@ func isValidSortMode(sort string) bool {
 	validSorts := []string{
 		"id_asc", "id_desc",
 		"email_asc", "email_desc",
+		"role_asc", "role_desc",
+		"status_asc", "status_desc",
 		"created_at_asc", "created_at_desc",
 	}
 

@@ -98,6 +98,14 @@ func (r *AdminRepository) FindAdminsWithFilters(req *domain.AdminListRequest) ([
 		query = query.Order("email ASC")
 	case "email_desc":
 		query = query.Order("email DESC")
+	case "role_asc":
+		query = query.Order("role ASC")
+	case "role_desc":
+		query = query.Order("role DESC")
+	case "status_asc":
+		query = query.Order("status ASC")
+	case "status_desc":
+		query = query.Order("status DESC")
 	case "created_at_asc":
 		query = query.Order("created_at ASC")
 	case "created_at_desc":

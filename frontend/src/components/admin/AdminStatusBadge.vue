@@ -2,7 +2,7 @@
   <span
     :class="[
       'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-      status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800',
+      statusClass,
     ]"
   >
     {{ label }}
@@ -16,11 +16,33 @@ const props = defineProps({
   status: {
     type: String,
     required: true,
-    validator: (value) => ['active', 'inactive'].includes(value),
+    validator: (value) => ['active', 'suspended', 'deleted'].includes(value),
   },
 })
 
 const label = computed(() => {
-  return props.status === 'active' ? '有効' : '停止中'
+  switch (props.status) {
+    case 'active':
+      return '有効'
+    case 'suspended':
+      return '停止中'
+    case 'deleted':
+      return '削除済み'
+    default:
+      return props.status
+  }
+})
+
+const statusClass = computed(() => {
+  switch (props.status) {
+    case 'active':
+      return 'bg-green-100 text-green-800'
+    case 'suspended':
+      return 'bg-yellow-100 text-yellow-800'
+    case 'deleted':
+      return 'bg-gray-100 text-gray-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
 })
 </script>

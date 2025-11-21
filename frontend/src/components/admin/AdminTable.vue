@@ -103,6 +103,7 @@
                   編集
                 </button>
                 <button
+                  v-if="admin.status !== 'deleted'"
                   @click="$emit('status-change', admin)"
                   class="text-red-600 hover:text-red-900"
                   :aria-label="`${admin.email}のアカウントを${admin.status === 'active' ? '停止' : '復活'}`"

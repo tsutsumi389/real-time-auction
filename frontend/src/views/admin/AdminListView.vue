@@ -129,7 +129,7 @@ async function handleStatusChange() {
   if (!selectedAdmin.value) return
 
   statusChanging.value = true
-  const newStatus = selectedAdmin.value.status === 'active' ? 'inactive' : 'active'
+  const newStatus = selectedAdmin.value.status === 'active' ? 'suspended' : 'active'
 
   const success = await adminStore.changeAdminStatus(selectedAdmin.value.id, newStatus)
 
