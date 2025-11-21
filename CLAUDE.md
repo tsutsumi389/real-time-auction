@@ -184,24 +184,6 @@ Services: postgres, redis, api, ws, frontend, nginx
 - Health checks ensure DB readiness before backend starts
 - Volume mounts enable hot reload for api, ws, frontend
 
-## Current Implementation Status
-
-**Implemented:**
-- Docker development environment
-- Database schema with 4 migrations (tables, triggers, views, seed data)
-- Basic Go servers (health check endpoints only)
-- Vue 3 + Vite scaffold
-- Nginx routing configuration
-
-**Not Implemented (Priority Order):**
-1. Database models (GORM structs in internal/domain)
-2. JWT authentication middleware
-3. WebSocket hub/client implementation (Gorilla WebSocket)
-4. Repository layer (PostgreSQL + Redis)
-5. Business logic services (bid validation, point operations)
-6. REST API endpoints
-7. Frontend UI (login, auction list, bidding interface)
-
 ## Critical Implementation Notes
 
 ### WebSocket Server Design (Not Yet Implemented)
