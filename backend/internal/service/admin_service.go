@@ -30,6 +30,20 @@ func NewAdminService(adminRepo repository.AdminRepositoryInterface) *AdminServic
 	}
 }
 
+// GetAdminByID retrieves a single admin by ID
+func (s *AdminService) GetAdminByID(id int64) (*domain.Admin, error) {
+	admin, err := s.adminRepo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find admin: %w", err)
+	}
+
+	if admin == nil {
+		return nil, ErrAdminNotFound
+	}
+
+	return admin, nil
+}
+
 // GetAdminList retrieves a paginated list of admins with filters
 func (s *AdminService) GetAdminList(req *domain.AdminListRequest) (*domain.AdminListResponse, error) {
 	// Validate and set defaults

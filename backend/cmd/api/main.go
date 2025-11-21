@@ -75,6 +75,9 @@ func main() {
 				})
 			})
 
+			// 現在のユーザー情報取得
+			protected.GET("/admin/me", adminHandler.GetCurrentAdmin)
+
 			// システム管理者専用エンドポイント
 			systemAdmin := protected.Group("")
 			systemAdmin.Use(middleware.RequireSystemAdmin())

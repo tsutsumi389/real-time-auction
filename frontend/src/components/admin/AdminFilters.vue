@@ -41,7 +41,8 @@
         >
           <option value="">すべて</option>
           <option value="active">有効</option>
-          <option value="inactive">停止中</option>
+          <option value="suspended">停止中</option>
+          <option value="deleted">削除済み</option>
         </select>
       </div>
 

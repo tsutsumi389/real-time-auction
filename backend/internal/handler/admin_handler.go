@@ -98,6 +98,48 @@ func (h *AdminHandler) GetAdminList(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// GetCurrentAdmin handles GET /api/admin/me
+func (h *AdminHandler) GetCurrentAdmin(c *gin.Context) {
+	// Get admin ID from context (set by auth middleware)
+	adminID, exists := c.Get("admin_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: "Unauthorized",
+		})
+		return
+	}
+
+	// Convert to int64
+	id, ok := adminID.(int64)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error: "Invalid admin ID format",
+		})
+		return
+	}
+
+	// Get admin from service
+	admin, err := h.adminService.GetAdminByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrAdminNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Admin not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return admin data
+	c.JSON(http.StatusOK, gin.H{
+		"admin": admin,
+	})
+}
+
 // UpdateAdminStatus handles PATCH /api/admins/:id/status
 func (h *AdminHandler) UpdateAdminStatus(c *gin.Context) {
 	// Parse admin ID from URL parameter
