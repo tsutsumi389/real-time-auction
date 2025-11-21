@@ -47,6 +47,24 @@ func (m *MockAdminRepository) Delete(id int64) error {
 	return args.Error(0)
 }
 
+func (m *MockAdminRepository) FindAdminsWithFilters(req *domain.AdminListRequest) ([]domain.Admin, error) {
+	args := m.Called(req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Admin), args.Error(1)
+}
+
+func (m *MockAdminRepository) CountAdminsWithFilters(req *domain.AdminListRequest) (int64, error) {
+	args := m.Called(req)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockAdminRepository) UpdateAdminStatus(id int64, status domain.AdminStatus) error {
+	args := m.Called(id, status)
+	return args.Error(0)
+}
+
 // MockJWTService is a mock implementation of JWTService
 type MockJWTService struct {
 	mock.Mock
