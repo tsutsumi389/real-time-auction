@@ -819,9 +819,9 @@ frontend/src/
 - [ ] 手動テスト（curlまたはPostman）
 
 ### Phase 2: フロントエンド基盤（2-3時間）
-- [ ] adminApi.tsにgetAdminList、updateAdminStatusを実装
-- [ ] adminStore.tsに状態管理を実装
-- [ ] ルーティング設定（/admin/admins）と認証ガード
+- [x] adminApi.tsにgetAdminList、updateAdminStatusを実装
+- [x] adminStore.tsに状態管理を実装
+- [x] ルーティング設定（/admin/admins）と認証ガード
 
 ### Phase 3: フロントエンドUI（4-5時間）
 - [ ] AdminListView.vueの実装
