@@ -1,28 +1,33 @@
 <template>
   <div id="app">
-    <header v-if="!hideLayout" class="header">
-      <h1>🏇 Real-Time Auction System</h1>
-      <p>競走馬セリをモデルとしたリアルタイムオークションシステム</p>
-    </header>
-
-    <main :class="hideLayout ? '' : 'main'">
+    <!-- 管理画面レイアウト -->
+    <component :is="layout">
       <router-view />
-    </main>
-
-    <footer v-if="!hideLayout" class="footer">
-      <p>© 2025 Real-Time Auction System</p>
-    </footer>
+    </component>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import AdminLayout from '@/layouts/AdminLayout.vue'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
 const route = useRoute()
 
-// 現在のルートのメタ情報に基づいてヘッダー/フッターを非表示にするか判定
-const hideLayout = computed(() => route.meta.hideLayout || false)
+// 現在のルートのメタ情報に基づいてレイアウトを決定
+const layout = computed(() => {
+  // hideLayoutがtrueの場合はレイアウトなし
+  if (route.meta.hideLayout) {
+    return 'div'
+  }
+  // 管理画面の場合はAdminLayout
+  if (route.path.startsWith('/admin') && route.name !== 'admin-login') {
+    return AdminLayout
+  }
+  // その他はDefaultLayout
+  return DefaultLayout
+})
 
 onMounted(() => {
   console.log('Real-Time Auction System - Frontend')
