@@ -122,6 +122,20 @@ Migrations in [backend/migrations/](backend/migrations/) define:
 
 ## Frontend (Vue.js 3)
 
+### IMPORTANT: API-First Development
+**Before implementing any frontend feature:**
+1. **Check existing API endpoints** in [backend/internal/handler/](backend/internal/handler/) to understand available routes
+2. **Review API contracts** - Check request/response structures in handler implementations
+3. **Verify middleware** - Check authentication and authorization requirements in [backend/internal/middleware/](backend/internal/middleware/)
+4. **Test endpoints** - Use curl or similar tools to verify API behavior before frontend integration
+5. **Never assume API structure** - Always verify the actual implementation, don't rely on plans or assumptions
+
+**API Documentation Locations:**
+- Handler implementations: [backend/internal/handler/](backend/internal/handler/)
+- Route definitions: [backend/cmd/api/main.go](backend/cmd/api/main.go)
+- Request/Response models: [backend/internal/domain/](backend/internal/domain/)
+- Implementation plans (reference only): [docs/plan/](docs/plan/)
+
 ### Structure
 ```
 frontend/src/
