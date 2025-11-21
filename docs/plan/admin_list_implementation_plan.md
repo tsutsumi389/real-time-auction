@@ -824,13 +824,13 @@ frontend/src/
 - [x] ルーティング設定（/admin/admins）と認証ガード
 
 ### Phase 3: フロントエンドUI（4-5時間）
-- [ ] AdminListView.vueの実装
-- [ ] AdminTable.vueの実装
-- [ ] AdminFilters.vueの実装
-- [ ] AdminSearchBar.vueの実装
-- [ ] AdminStatusBadge.vue、AdminRoleBadge.vueの実装
-- [ ] AdminStatusChangeDialog.vueの実装
-- [ ] ページネーションUIの実装
+- [x] AdminListView.vueの実装
+- [x] AdminTable.vueの実装
+- [x] AdminFilters.vueの実装
+- [x] AdminSearchBar.vueの実装
+- [x] AdminStatusBadge.vue、AdminRoleBadge.vueの実装
+- [x] AdminStatusChangeDialog.vueの実装
+- [x] ページネーションUIの実装
 
 ### Phase 4: テストと検証（2-3時間）
 - [ ] バックエンドユニットテストの作成
