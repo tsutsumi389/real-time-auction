@@ -22,12 +22,24 @@ const router = createRouter({
       name: 'admin-dashboard',
       component: () => import('../views/admin/DashboardView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/admins',
+      name: 'admin-list',
+      component: () => import('../views/admin/AdminListView.vue'),
+      meta: { requiresAuth: true, requireSystemAdmin: true }
+    },
+    {
+      path: '/admin/admins/:id/edit',
+      name: 'admin-edit',
+      component: () => import('../views/admin/AdminEditView.vue'),
+      meta: { requiresAuth: true, requireSystemAdmin: true }
     }
   ]
 })
 
 // グローバル認証ガード
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
   // ユーザー情報が未ロードの場合、トークンから復元を試みる
@@ -43,6 +55,13 @@ router.beforeEach(async (to, from, next) => {
         name: 'admin-login',
         query: { redirect: to.fullPath }
       })
+      return
+    }
+
+    // システム管理者権限が必要なルート
+    if (to.meta.requireSystemAdmin && !authStore.isSystemAdmin) {
+      // 権限不足の場合はダッシュボードへリダイレクト
+      next({ name: 'admin-dashboard' })
       return
     }
   }

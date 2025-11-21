@@ -52,3 +52,32 @@ func (a *Admin) IsSuspended() bool {
 func (a *Admin) IsDeleted() bool {
 	return a.Status == StatusDeleted
 }
+
+// Pagination represents pagination information for list responses
+type Pagination struct {
+	Total      int64 `json:"total"`
+	Page       int   `json:"page"`
+	Limit      int   `json:"limit"`
+	TotalPages int   `json:"total_pages"`
+}
+
+// AdminListRequest represents the request parameters for admin list endpoint
+type AdminListRequest struct {
+	Page    int           `form:"page"`
+	Limit   int           `form:"limit"`
+	Keyword string        `form:"keyword"`
+	Role    AdminRole     `form:"role"`
+	Status  []AdminStatus `form:"status"`
+	Sort    string        `form:"sort"`
+}
+
+// AdminListResponse represents the response for admin list endpoint
+type AdminListResponse struct {
+	Admins     []Admin    `json:"admins"`
+	Pagination Pagination `json:"pagination"`
+}
+
+// UpdateAdminStatusRequest represents the request body for status update
+type UpdateAdminStatusRequest struct {
+	Status AdminStatus `json:"status" binding:"required"`
+}
