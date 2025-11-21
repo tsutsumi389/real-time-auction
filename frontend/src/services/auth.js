@@ -11,7 +11,7 @@ import apiClient from './api'
  * @returns {Promise<object>} レスポンス（token, admin）
  */
 export async function login(email, password) {
-  const response = await apiClient.post('/admin/login', {
+  const response = await apiClient.post('/auth/admin/login', {
     email,
     password,
   })
