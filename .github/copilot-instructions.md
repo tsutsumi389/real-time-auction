@@ -6,9 +6,82 @@
 
 **Key Architectural Principles:**
 - **Separated Services**: REST API (`cmd/api`) と WebSocket (`cmd/ws`) を独立したGoサーバーで実装
-- **Auctioneer-Driven**: 主催者が開始価格と次の入札価格を決定・開示（タイマーレス）
+- **Auctioneer-Driven**: 主催者が開始価格と次の入札価格を決定・開示(タイマーレス)
 - **3-Role System**: `system_admin` (全権限)、`auctioneer` (オークション管理)、`bidder` (入札のみ)
-- **Point-Based**: 仮想ポイントで入札（実際の金銭取引なし）
+- **Point-Based**: 仮想ポイントで入札(実際の金銭取引なし)
+
+## Communication Guidelines
+
+### Language Policy
+- **コード**: 英語 (変数名、関数名、コメント)
+- **ドキュメント**: 日本語 (README、設計書、仕様書)
+- **コミットメッセージ**: 日本語
+- **プルリクエスト**: 日本語 (タイトル、説明文)
+- **コードレビュー**: 日本語
+- **Issue**: 日本語
+
+### Commit Message Format
+```
+[カテゴリ] 変更内容の要約
+
+詳細説明(必要に応じて)
+
+- 変更点1
+- 変更点2
+```
+
+**カテゴリ例:**
+- `[追加]` - 新機能追加
+- `[修正]` - バグ修正
+- `[更新]` - 既存機能の改善
+- `[削除]` - 機能やコードの削除
+- `[リファクタ]` - コード整理
+- `[ドキュメント]` - ドキュメントのみの変更
+- `[設定]` - 設定ファイルの変更
+
+**例:**
+```
+[追加] JWT認証ミドルウェアを実装
+
+GinフレームワークでJWT検証を行うミドルウェアを追加
+- トークン検証ロジック
+- ロールベースのアクセス制御
+- エラーハンドリング
+```
+
+### Pull Request Template
+```markdown
+## 変更内容
+この変更の目的と概要を記載
+
+## 変更の種類
+- [ ] 新機能追加
+- [ ] バグ修正
+- [ ] リファクタリング
+- [ ] ドキュメント更新
+- [ ] その他
+
+## 実装詳細
+- 実装した機能や修正内容の詳細
+- 技術的な判断理由
+
+## テスト
+- [ ] ユニットテスト追加
+- [ ] 手動テスト完了
+- [ ] 動作確認環境: (例: `make up` で起動確認)
+
+## 関連Issue
+Closes #番号
+
+## レビューポイント
+特に確認してほしい点を記載
+```
+
+### Code Review Guidelines
+- **指摘は具体的に**: 「ここを修正してください」ではなく「○○の理由で△△に変更することを提案します」
+- **ポジティブなフィードバック**: 良いコードには「👍 良い実装ですね」などのコメント
+- **質問形式も活用**: 「なぜこの実装を選択しましたか?」など、議論を促す
+- **重要度を明示**: `[必須]`, `[提案]`, `[質問]` などのプレフィックスを使用
 
 ## Development Workflow
 
@@ -71,6 +144,7 @@ pkg/                 # 共通パッケージ (config, logger, validator)
 - **Context**: goroutineには必ず `context.Context` を渡す
 - **Logging**: `pkg/logger` を使用 (標準出力ではなく構造化ログ)
 - **環境変数**: `os.Getenv()` でフォールバック値を提供
+- **コメント**: 英語で記載 (例: `// Validate user input before processing`)
 
 ### Data Flow Example (入札処理)
 1. Client → WebSocket: `{"type":"auction:bid", "auction_id":1, "price":150}`
@@ -109,6 +183,7 @@ src/
 ### Code Conventions
 - **Composition API** のみ使用 (Options API禁止)
 - **TypeScript未導入**: 現在はJavaScriptのみ (将来的にTS化予定)
+- **コメント**: 英語で記載 (例: `// Fetch auction data from API`)
 
 ## Nginx (Reverse Proxy)
 
@@ -182,11 +257,11 @@ price_history (id, auction_id, price, opened_by, opened_at)
 ### Auctioneer-Driven Price Management
 主催者が価格を**開示**する独自システム:
 1. 主催者: 開始価格設定 → `POST /api/auctions/:id/start` → Redis: `SET auction:{id}:current_price`
-2. 入札者: 開示価格で入札 → WebSocket: `auction:bid` イベント → リクエストに `price` 含める（開示価格と一致確認）
+2. 入札者: 開示価格で入札 → WebSocket: `auction:bid` イベント → リクエストに `price` 含める(開示価格と一致確認)
 3. 主催者: 次の価格開示 → `POST /api/auctions/:id/open-price` → 前の価格で入札があったか確認 (`has_bid`)
 4. 入札なし → 前の価格で入札したユーザーを落札者として確定 → `auction:ended` イベント
 
-**重要**: 入札者は開示された価格でしか入札できない（自由な価格入札は不可）。
+**重要**: 入札者は開示された価格でしか入札できない(自由な価格入札は不可)。
 
 ### Role-Based Access Control
 - **system_admin**: ユーザー管理、ポイント付与、全体状況確認
