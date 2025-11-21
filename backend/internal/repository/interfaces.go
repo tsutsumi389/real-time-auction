@@ -9,4 +9,7 @@ type AdminRepositoryInterface interface {
 	Create(admin *domain.Admin) error
 	Update(admin *domain.Admin) error
 	Delete(id int64) error
+	FindAdminsWithFilters(req *domain.AdminListRequest) ([]domain.Admin, error)
+	CountAdminsWithFilters(req *domain.AdminListRequest) (int64, error)
+	UpdateAdminStatus(id int64, status domain.AdminStatus) error
 }

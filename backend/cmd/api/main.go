@@ -35,9 +35,11 @@ func main() {
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
 	authService := service.NewAuthService(adminRepo, jwtService)
+	adminService := service.NewAdminService(adminRepo)
 
 	// ハンドラ初期化
 	authHandler := handler.NewAuthHandler(authService)
+	adminHandler := handler.NewAdminHandler(adminService)
 
 	// Ginルーター初期化
 	router := gin.Default()
@@ -72,6 +74,16 @@ func main() {
 					"message": "pong",
 				})
 			})
+
+			// システム管理者専用エンドポイント
+			systemAdmin := protected.Group("")
+			systemAdmin.Use(middleware.RequireSystemAdmin())
+			{
+				// 管理者一覧取得
+				systemAdmin.GET("/admins", adminHandler.GetAdminList)
+				// 管理者状態変更
+				systemAdmin.PATCH("/admins/:id/status", adminHandler.UpdateAdminStatus)
+			}
 		}
 	}
 

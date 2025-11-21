@@ -12,3 +12,9 @@ type JWTServiceInterface interface {
 	GenerateTokenForAdmin(admin *domain.Admin) (string, error)
 	ValidateToken(tokenString string) (*domain.JWTClaims, error)
 }
+
+// AdminServiceInterface defines the interface for admin service operations
+type AdminServiceInterface interface {
+	GetAdminList(req *domain.AdminListRequest) (*domain.AdminListResponse, error)
+	UpdateAdminStatus(id int64, status domain.AdminStatus) (*domain.Admin, error)
+}
