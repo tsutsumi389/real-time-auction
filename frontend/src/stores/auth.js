@@ -43,13 +43,13 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await apiLogin(email, password)
 
       // トークンを保存
-      saveToken(response.token, response.expires_in)
+      saveToken(response.token)
 
       // ユーザー情報を設定
       user.value = {
-        adminId: response.admin.id,
-        email: response.admin.email,
-        role: response.admin.role,
+        adminId: response.user.id,
+        email: response.user.email,
+        role: response.user.role,
       }
 
       loading.value = false
@@ -103,9 +103,9 @@ export const useAuthStore = defineStore('auth', () => {
       // APIでユーザー情報を検証
       const response = await getCurrentUser()
       user.value = {
-        adminId: response.admin.id,
-        email: response.admin.email,
-        role: response.admin.role,
+        adminId: response.user.id,
+        email: response.user.email,
+        role: response.user.role,
       }
 
       loading.value = false

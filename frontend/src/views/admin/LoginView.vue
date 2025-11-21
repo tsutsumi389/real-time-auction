@@ -100,7 +100,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 function validateEmail() {
   errors.email = ''
 
-  if (!formData.email) {
+  if (!formData.email || formData.email.trim() === '') {
     errors.email = 'メールアドレスを入力してください'
     return false
   }
@@ -119,7 +119,7 @@ function validateEmail() {
 function validatePassword() {
   errors.password = ''
 
-  if (!formData.password) {
+  if (!formData.password || formData.password.trim() === '') {
     errors.password = 'パスワードを入力してください'
     return false
   }
