@@ -3,14 +3,14 @@
     <!-- モバイル用オーバーレイ -->
     <div
       v-if="isOpen"
-      class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 lg:hidden"
+      class="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden"
       @click="$emit('close')"
     ></div>
 
     <!-- サイドバー -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-auto',
+        'fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0',
         isOpen ? 'translate-x-0' : '-translate-x-full',
       ]"
     >
