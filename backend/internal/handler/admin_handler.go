@@ -80,7 +80,8 @@ func (h *AdminHandler) GetAdminList(c *gin.Context) {
 		case errors.Is(err, service.ErrInvalidPage),
 			errors.Is(err, service.ErrInvalidLimit),
 			errors.Is(err, service.ErrInvalidSortMode),
-			errors.Is(err, service.ErrInvalidStatus):
+			errors.Is(err, service.ErrInvalidStatus),
+			errors.Is(err, service.ErrInvalidRole):
 			c.JSON(http.StatusBadRequest, ErrorResponse{
 				Error: err.Error(),
 			})

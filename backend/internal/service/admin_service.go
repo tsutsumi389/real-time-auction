@@ -12,6 +12,7 @@ import (
 var (
 	ErrAdminNotFound   = errors.New("admin not found")
 	ErrInvalidStatus   = errors.New("invalid status value")
+	ErrInvalidRole     = errors.New("invalid role value")
 	ErrInvalidPage     = errors.New("page must be greater than 0")
 	ErrInvalidLimit    = errors.New("limit must be between 1 and 100")
 	ErrInvalidSortMode = errors.New("invalid sort mode")
@@ -115,7 +116,7 @@ func (s *AdminService) validateAdminListRequest(req *domain.AdminListRequest) er
 
 	// Validate role if specified
 	if req.Role != "" && !isValidRole(req.Role) {
-		return errors.New("invalid role value")
+		return ErrInvalidRole
 	}
 
 	// Validate statuses if specified
