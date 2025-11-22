@@ -223,25 +223,6 @@ price_history (id, auction_id, price, opened_by, opened_at)
   - Pub/Sub: `auction:started`, `auction:bid`, `auction:price_open`, `auction:ended`
   - ロック: 入札時の排他制御
 
-## Current Development Status
-
-**Implemented:**
-- ✅ Docker開発環境 (docker-compose.yml)
-- ✅ Makefile による開発ワークフロー
-- ✅ 基本的なGoサーバー構造 (`cmd/api`, `cmd/ws`)
-- ✅ Vue 3 + Vite基盤
-- ✅ Nginx リバースプロキシ設定
-
-**Not Yet Implemented (最優先タスク):**
-- ❌ PostgreSQL スキーマ定義 & マイグレーション
-- ❌ JWT認証ミドルウェア
-- ❌ WebSocket実装 (Gorilla WebSocket、hub.go、client.go)
-- ❌ GORM リポジトリ層 (`internal/repository/postgres`)
-- ❌ Redis リポジトリ層 (`internal/repository/redis`)
-- ❌ ビジネスロジック (`internal/service`)
-- ❌ REST APIエンドポイント実装
-- ❌ フロントエンド画面実装
-
 ## Critical Implementation Notes
 
 ### WebSocket Server Design
