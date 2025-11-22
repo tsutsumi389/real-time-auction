@@ -161,8 +161,9 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 
 // モーダルを開いたときに履歴を取得
-watch(() => props.modelValue, async (newValue) => {
-  if (newValue && props.bidder) {
+watch(() => props.modelValue, async (newValue, oldValue) => {
+  // モーダルが開かれたとき（false → true）のみ履歴を取得
+  if (newValue && !oldValue && props.bidder) {
     await fetchHistory(1)
   }
 })
