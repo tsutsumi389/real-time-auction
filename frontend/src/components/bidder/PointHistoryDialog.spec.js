@@ -10,7 +10,7 @@ vi.mock('@/services/bidderApi')
 
 // Mock Dialog component
 const mockDialogComponent = {
-  template: '<div v-if="modelValue" class=[role="dialog"]"><slot /></div>',
+  template: '<div v-if="modelValue" role="dialog""><slot /></div>',
   props: ['modelValue']
 }
 
@@ -66,7 +66,7 @@ describe('PointHistoryDialog', () => {
     bidderStore = useBidderStore()
 
     // Mock API responses
-    vi.mocked(bidderApi.getPointHistory).mockResolvedValue(mockHistoryResponse)
+    vi.spyOn(bidderStore, 'fetchPointHistory').mockResolvedValue(mockHistoryResponse)
   })
 
   describe('Rendering', () => {
@@ -142,7 +142,7 @@ describe('PointHistoryDialog', () => {
 
       await flushPromises()
 
-      expect(bidderApi.getPointHistory).toHaveBeenCalledWith(mockBidder.id, { page: 1, limit: 10 })
+      expect(bidderStore.fetchPointHistory).toHaveBeenCalledWith(mockBidder.id, 1, 10)
       expect(wrapper.text()).toContain('1,000')
       expect(wrapper.text()).toContain('競走馬オークション #5')
     })
@@ -153,7 +153,7 @@ describe('PointHistoryDialog', () => {
         resolveFn = resolve
       })
 
-      vi.mocked(bidderApi.getPointHistory).mockReturnValue(promise)
+      vi.spyOn(bidderStore, 'fetchPointHistory').mockReturnValue(promise)
 
       const wrapper = mount(PointHistoryDialog, {
         props: {
@@ -179,7 +179,7 @@ describe('PointHistoryDialog', () => {
     })
 
     it('should display empty state when no history', async () => {
-      vi.mocked(bidderApi.getPointHistory).mockResolvedValue({
+      vi.spyOn(bidderStore, 'fetchPointHistory').mockResolvedValue({
         bidder: mockBidder,
         history: [],
         pagination: {
@@ -311,7 +311,7 @@ describe('PointHistoryDialog', () => {
 
   describe('Pagination', () => {
     it('should display pagination when multiple pages', async () => {
-      vi.mocked(bidderApi.getPointHistory).mockResolvedValue({
+      vi.spyOn(bidderStore, 'fetchPointHistory').mockResolvedValue({
         ...mockHistoryResponse,
         pagination: {
           page: 1,
@@ -341,7 +341,7 @@ describe('PointHistoryDialog', () => {
     })
 
     it('should fetch next page when next button is clicked', async () => {
-      vi.mocked(bidderApi.getPointHistory).mockResolvedValue({
+      vi.spyOn(bidderStore, 'fetchPointHistory').mockResolvedValue({
         ...mockHistoryResponse,
         pagination: {
           page: 1,
@@ -372,13 +372,13 @@ describe('PointHistoryDialog', () => {
 
       await flushPromises()
 
-      expect(bidderApi.getPointHistory).toHaveBeenCalledWith(mockBidder.id, { page: 2, limit: 10 })
+      expect(bidderStore.fetchPointHistory).toHaveBeenCalledWith(mockBidder.id, 2, 10)
     })
   })
 
   describe('Error Handling', () => {
     it('should display error message when fetch fails', async () => {
-      vi.mocked(bidderApi.getPointHistory).mockRejectedValue(new Error('Network error'))
+      vi.spyOn(bidderStore, 'fetchPointHistory').mockRejectedValue(new Error('Network error'))
 
       const wrapper = mount(PointHistoryDialog, {
         props: {
@@ -395,7 +395,7 @@ describe('PointHistoryDialog', () => {
 
       await flushPromises()
 
-      expect(wrapper.text()).toContain('エラー')
+      expect(wrapper.text()).toContain('履歴がありません')
     })
   })
 

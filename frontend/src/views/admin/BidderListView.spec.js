@@ -80,7 +80,7 @@ describe('BidderListView Integration Tests', () => {
       email: 'bidder1@example.com',
       display_name: '田中太郎',
       status: 'active',
-      total_points: 10000,
+      points: 10000,
       created_at: '2025-01-01T00:00:00Z',
       updated_at: '2025-01-01T00:00:00Z'
     },
@@ -89,7 +89,7 @@ describe('BidderListView Integration Tests', () => {
       email: 'bidder2@example.com',
       display_name: '佐藤花子',
       status: 'active',
-      total_points: 5000,
+      points: 5000,
       created_at: '2025-01-02T00:00:00Z',
       updated_at: '2025-01-02T00:00:00Z'
     },

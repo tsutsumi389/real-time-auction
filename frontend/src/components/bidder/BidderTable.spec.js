@@ -437,7 +437,7 @@ describe('BidderTable', () => {
         },
       })
 
-      const idCell = wrapper.findAll('td')[0]
+      const idCell = wrapper.findAll('td')[0].find('span')
       expect(idCell.attributes('title')).toBe('abc12345-def6-7890-abcd-ef1234567890')
     })
   })

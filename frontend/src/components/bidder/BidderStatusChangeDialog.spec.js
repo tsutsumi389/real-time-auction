@@ -23,7 +23,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: false,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -35,7 +34,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -47,7 +45,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -59,7 +56,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -73,7 +69,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -85,7 +80,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -97,7 +91,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -111,7 +104,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -124,7 +116,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -139,7 +130,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: suspendedBidder,
-          REMOVED: 'active',
         },
       })
 
@@ -151,7 +141,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: suspendedBidder,
-          REMOVED: 'active',
         },
       })
 
@@ -163,7 +152,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: suspendedBidder,
-          REMOVED: 'active',
         },
       })
 
@@ -177,7 +165,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: suspendedBidder,
-          REMOVED: 'active',
         },
       })
 
@@ -190,7 +177,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: suspendedBidder,
-          REMOVED: 'active',
         },
       })
 
@@ -205,7 +191,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -220,7 +205,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -236,7 +220,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -254,7 +237,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -268,7 +250,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -283,7 +264,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -297,7 +277,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -314,7 +293,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -332,7 +310,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -346,7 +323,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: activeBidder,
-          REMOVED: 'suspended',
         },
       })
 
@@ -361,7 +337,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: null,
-          REMOVED: 'suspended',
         },
       })
 
@@ -374,7 +349,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: undefined,
-          REMOVED: 'suspended',
         },
       })
 
@@ -392,7 +366,6 @@ describe('BidderStatusChangeDialog', () => {
         props: {
           modelValue: true,
           bidder: bidderWithoutName,
-          REMOVED: 'suspended',
         },
       })
 

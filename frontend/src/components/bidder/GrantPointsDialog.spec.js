@@ -4,7 +4,7 @@ import GrantPointsDialog from './GrantPointsDialog.vue'
 
 // Mock Dialog component
 const mockDialogComponent = {
-  template: '<div v-if="modelValue" class=[role="dialog"]"><slot /></div>',
+  template: '<div v-if="modelValue" role="dialog""><slot /></div>',
   props: ['modelValue']
 }
 
@@ -267,7 +267,7 @@ describe('GrantPointsDialog', () => {
       await wrapper.setProps({ modelValue: false })
       await wrapper.setProps({ modelValue: true })
 
-      expect(input.element.value).toBe('')
+      expect(input.element.value).toBe('0')
     })
   })
 
