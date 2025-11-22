@@ -47,6 +47,13 @@ const router = createRouter({
       component: () => import('../views/admin/BidderListView.vue'),
       meta: { requiresAuth: true, requireSystemAdmin: true }
     }
+    // Uncomment when BidderRegisterView is created in Phase 4
+    // {
+    //   path: '/admin/bidders/new',
+    //   name: 'bidder-register',
+    //   component: () => import('../views/admin/BidderRegisterView.vue'),
+    //   meta: { requiresAuth: true, requireSystemAdmin: true }
+    // }
   ]
 })
 
