@@ -1153,15 +1153,15 @@ frontend/src/
 - [x] ルーティング設定（/admin/bidders）と認証ガード
 
 ### Phase 3: フロントエンドUI（6-8時間）
-- [ ] BidderListView.vueの実装
-- [ ] BidderTable.vueの実装
-- [ ] BidderFilters.vueの実装
-- [ ] BidderSearchBar.vueの実装
-- [ ] BidderStatusBadge.vueの実装
-- [ ] GrantPointsDialog.vueの実装
-- [ ] PointHistoryDialog.vueの実装
-- [ ] BidderStatusChangeDialog.vueの実装
-- [ ] ページネーションUIの実装
+- [x] BidderListView.vueの実装
+- [x] BidderTable.vueの実装
+- [x] BidderFilters.vueの実装
+- [x] BidderSearchBar.vueの実装
+- [x] BidderStatusBadge.vueの実装
+- [x] GrantPointsDialog.vueの実装
+- [x] PointHistoryDialog.vueの実装
+- [x] BidderStatusChangeDialog.vueの実装
+- [x] ページネーションUIの実装
 
 ### Phase 4: テストと検証（3-4時間）
 - [ ] バックエンドユニットテストの作成
