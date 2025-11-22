@@ -20,3 +20,12 @@ type AdminServiceInterface interface {
 	GetAdminList(req *domain.AdminListRequest) (*domain.AdminListResponse, error)
 	UpdateAdminStatus(id int64, status domain.AdminStatus) (*domain.Admin, error)
 }
+
+// BidderServiceInterface defines the interface for bidder service operations
+type BidderServiceInterface interface {
+	GetBidderByID(id string) (*domain.Bidder, error)
+	GetBidderList(req *domain.BidderListRequest) (*domain.BidderListResponse, error)
+	GrantPoints(bidderID string, points int64, adminID int64) (*domain.GrantPointsResponse, error)
+	GetPointHistory(bidderID string, page int, limit int) (*domain.PointHistoryListResponse, error)
+	UpdateBidderStatus(id string, status domain.BidderStatus) (*domain.Bidder, error)
+}

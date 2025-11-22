@@ -111,10 +111,12 @@ export const useAuthStore = defineStore('auth', () => {
       // ネットワークエラーの場合でもトークンが有効であれば継続利用
       try {
         const response = await getCurrentUser()
-        user.value = {
-          adminId: response.user.id,
-          email: response.user.email,
-          role: response.user.role,
+        if (response?.user) {
+          user.value = {
+            adminId: response.user.id,
+            email: response.user.email,
+            role: response.user.role,
+          }
         }
       } catch (apiError) {
         // APIエラー（401/403）の場合のみトークンを削除
@@ -125,7 +127,7 @@ export const useAuthStore = defineStore('auth', () => {
           return false
         }
         // その他のエラー（ネットワークエラーなど）はトークンの情報を継続使用
-        console.warn('Failed to verify user with API, using token data:', apiError.message)
+        console.warn('Failed to verify user with API, using token data:', apiError?.message || 'Unknown error')
       }
 
       loading.value = false
