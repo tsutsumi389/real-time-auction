@@ -953,10 +953,10 @@ frontend/src/
 - [x] バリデーション関数の実装
 
 ### Phase 2: バックエンドAPI（1-2時間）
-- [ ] Handler層の実装（POST /api/admin/bidders）
-- [ ] ルーティング設定（system_adminロール検証ミドルウェア適用）
-- [ ] エラーハンドリングの実装
-- [ ] 手動テスト（curlまたはPostman）
+- [x] Handler層の実装（POST /api/admin/bidders）
+- [x] ルーティング設定（system_adminロール検証ミドルウェア適用）
+- [x] エラーハンドリングの実装
+- [x] 手動テスト（curlまたはPostman）
 
 ### Phase 3: フロントエンド基盤（2-3時間）
 - [ ] API Clientの実装（bidderApi.ts）

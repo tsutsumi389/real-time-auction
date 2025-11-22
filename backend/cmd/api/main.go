@@ -92,6 +92,8 @@ func main() {
 				// 管理者状態変更
 				systemAdmin.PATCH("/admin/admins/:id/status", adminHandler.UpdateAdminStatus)
 
+				// 入札者登録
+				systemAdmin.POST("/admin/bidders", bidderHandler.RegisterBidder)
 				// 入札者一覧取得
 				systemAdmin.GET("/admin/bidders", bidderHandler.GetBidderList)
 				// 入札者へのポイント付与

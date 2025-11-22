@@ -23,6 +23,56 @@ func NewBidderHandler(bidderService service.BidderServiceInterface) *BidderHandl
 	}
 }
 
+// RegisterBidder handles POST /api/admin/bidders
+func (h *BidderHandler) RegisterBidder(c *gin.Context) {
+	// Parse request body
+	var req domain.BidderCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body",
+		})
+		return
+	}
+
+	// Get admin ID from JWT claims
+	claims, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: "Unauthorized",
+		})
+		return
+	}
+
+	jwtClaims, ok := claims.(*domain.JWTClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: "Invalid token claims",
+		})
+		return
+	}
+
+	// Call service
+	response, err := h.bidderService.RegisterBidder(&req, jwtClaims.UserID)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrEmailAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Error: "Email already exists",
+			})
+		default:
+			// Log internal errors but don't expose details to client
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusCreated, response)
+}
+
 // GetBidderList handles GET /api/admin/bidders
 func (h *BidderHandler) GetBidderList(c *gin.Context) {
 	// Parse query parameters
