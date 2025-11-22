@@ -786,9 +786,9 @@ frontend/src/
 - [ ] 手動テスト（curlまたはPostman）
 
 ### Phase 3: フロントエンド基盤（2-3時間）
-- [ ] API Clientの実装（adminApi.ts）
-- [ ] バリデーション関数の実装（validation.ts）
-- [ ] ルーティング設定（認証ガード、ロール検証ガード）
+- [x] API Clientの実装（adminApi.js）
+- [x] バリデーション関数の実装（validation.js）
+- [x] ルーティング設定（認証ガード、ロール検証ガード）
 
 ### Phase 4: フロントエンドUI（3-4時間）
 - [ ] Shadcn UIコンポーネントの追加（RadioGroup、Separator）

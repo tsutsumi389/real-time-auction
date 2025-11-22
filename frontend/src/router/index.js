@@ -34,6 +34,12 @@ const router = createRouter({
       name: 'admin-edit',
       component: () => import('../views/admin/AdminEditView.vue'),
       meta: { requiresAuth: true, requireSystemAdmin: true }
+    },
+    {
+      path: '/admin/admins/new',
+      name: 'admin-register',
+      component: () => import('../views/admin/AdminRegisterView.vue'),
+      meta: { requiresAuth: true, requireSystemAdmin: true }
     }
   ]
 })

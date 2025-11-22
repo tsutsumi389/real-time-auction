@@ -33,3 +33,17 @@ export async function updateAdminStatus(adminId, status) {
   })
   return response.data
 }
+
+/**
+ * 新しい管理者を登録
+ * @param {object} adminData - 管理者情報
+ * @param {string} adminData.email - メールアドレス
+ * @param {string} adminData.password - パスワード
+ * @param {string} adminData.display_name - 表示名（任意）
+ * @param {string} adminData.role - ロール（system_admin/auctioneer）
+ * @returns {Promise<object>} レスポンス（admin）
+ */
+export async function registerAdmin(adminData) {
+  const response = await apiClient.post('/admin/admins', adminData)
+  return response.data
+}
