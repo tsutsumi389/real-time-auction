@@ -1148,9 +1148,9 @@ frontend/src/
 - [x] 手動テスト（curlまたはPostman）
 
 ### Phase 2: フロントエンド基盤（3-4時間）
-- [ ] bidderApi.tsにgetBidderList、grantPoints、getPointHistory、updateBidderStatusを実装
-- [ ] bidderStore.tsに状態管理を実装
-- [ ] ルーティング設定（/admin/bidders）と認証ガード
+- [x] bidderApi.tsにgetBidderList、grantPoints、getPointHistory、updateBidderStatusを実装
+- [x] bidderStore.tsに状態管理を実装
+- [x] ルーティング設定（/admin/bidders）と認証ガード
 
 ### Phase 3: フロントエンドUI（6-8時間）
 - [ ] BidderListView.vueの実装
