@@ -60,6 +60,14 @@ func (m *MockBidderService) UpdateBidderStatus(id string, status domain.BidderSt
 	return args.Get(0).(*domain.Bidder), args.Error(1)
 }
 
+func (m *MockBidderService) RegisterBidder(req *domain.BidderCreateRequest, adminID int64) (*domain.BidderResponse, error) {
+	args := m.Called(req, adminID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.BidderResponse), args.Error(1)
+}
+
 func TestBidderHandler_GetBidderList(t *testing.T) {
 	t.Run("Success - Default parameters", func(t *testing.T) {
 		mockBidderService := new(MockBidderService)
@@ -860,6 +868,387 @@ func TestBidderHandler_UpdateBidderStatus(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "Invalid status value", response.Error)
+
+		mockBidderService.AssertExpectations(t)
+	})
+}
+
+func TestBidderHandler_RegisterBidder(t *testing.T) {
+	t.Run("Success - Valid registration with initial points", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		// Add middleware to set claims
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		displayName := "Test Bidder"
+		initialPoints := int64(1000)
+
+		createReq := domain.BidderCreateRequest{
+			Email:         "bidder@example.com",
+			Password:      "password123",
+			DisplayName:   &displayName,
+			InitialPoints: &initialPoints,
+		}
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       createReq.Email,
+			DisplayName: createReq.DisplayName,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     initialPoints,
+				AvailablePoints: initialPoints,
+				ReservedPoints:  0,
+			},
+		}
+
+		mockBidderService.On("RegisterBidder", mock.MatchedBy(func(req *domain.BidderCreateRequest) bool {
+			return req.Email == createReq.Email && req.Password == createReq.Password
+		}), int64(1)).Return(expectedResponse, nil)
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+
+		var response domain.BidderResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, createReq.Email, response.Email)
+		assert.Equal(t, initialPoints, response.Points.TotalPoints)
+
+		mockBidderService.AssertExpectations(t)
+	})
+
+	t.Run("Success - Valid registration without initial points", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		displayName := "Test Bidder"
+
+		createReq := domain.BidderCreateRequest{
+			Email:         "bidder@example.com",
+			Password:      "password123",
+			DisplayName:   &displayName,
+			InitialPoints: nil, // No initial points
+		}
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       createReq.Email,
+			DisplayName: createReq.DisplayName,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     0,
+				AvailablePoints: 0,
+				ReservedPoints:  0,
+			},
+		}
+
+		mockBidderService.On("RegisterBidder", mock.Anything, int64(1)).Return(expectedResponse, nil)
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+
+		var response domain.BidderResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, createReq.Email, response.Email)
+		assert.Equal(t, int64(0), response.Points.TotalPoints)
+
+		mockBidderService.AssertExpectations(t)
+	})
+
+	t.Run("Error - Invalid JSON", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBufferString("invalid json"))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Invalid request body", response.Error)
+	})
+
+	t.Run("Error - No JWT claims", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		displayName := "Test Bidder"
+		createReq := domain.BidderCreateRequest{
+			Email:       "bidder@example.com",
+			Password:    "password123",
+			DisplayName: &displayName,
+		}
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	})
+
+	t.Run("Error - Email already exists", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		createReq := domain.BidderCreateRequest{
+			Email:    "existing@example.com",
+			Password: "password123",
+		}
+
+		mockBidderService.On("RegisterBidder", mock.Anything, int64(1)).
+			Return(nil, service.ErrEmailAlreadyExists)
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Email already exists", response.Error)
+
+		mockBidderService.AssertExpectations(t)
+	})
+
+	t.Run("Error - Email validation failed (caught by binding)", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		createReq := domain.BidderCreateRequest{
+			Email:    "invalid-email", // Invalid format
+			Password: "password123",
+		}
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Invalid request body", response.Error)
+	})
+
+	t.Run("Error - Password too short (caught by binding)", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		createReq := domain.BidderCreateRequest{
+			Email:    "bidder@example.com",
+			Password: "short", // Less than 8 characters
+		}
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Invalid request body", response.Error)
+	})
+
+	t.Run("Error - Negative initial points (caught by binding)", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		negativePoints := int64(-100)
+		createReq := domain.BidderCreateRequest{
+			Email:         "bidder@example.com",
+			Password:      "password123",
+			InitialPoints: &negativePoints,
+		}
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Invalid request body", response.Error)
+	})
+
+	t.Run("Error - Internal server error", func(t *testing.T) {
+		mockBidderService := new(MockBidderService)
+		handler := NewBidderHandler(mockBidderService)
+		router := setupTestRouter()
+
+		router.Use(func(c *gin.Context) {
+			claims := &domain.JWTClaims{
+				UserID:   1,
+				Email:    "admin@example.com",
+				Role:     domain.RoleSystemAdmin,
+				UserType: domain.UserTypeAdmin,
+			}
+			c.Set("claims", claims)
+			c.Next()
+		})
+
+		router.POST("/api/admin/bidders", handler.RegisterBidder)
+
+		createReq := domain.BidderCreateRequest{
+			Email:    "bidder@example.com",
+			Password: "password123",
+		}
+
+		mockBidderService.On("RegisterBidder", mock.Anything, int64(1)).
+			Return(nil, errors.New("database connection error"))
+
+		reqBody, _ := json.Marshal(createReq)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admin/bidders", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Internal server error", response.Error)
 
 		mockBidderService.AssertExpectations(t)
 	})

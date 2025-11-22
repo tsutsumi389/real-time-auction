@@ -77,6 +77,14 @@ func (m *MockBidderRepository) UpdateBidderStatus(id string, status domain.Bidde
 	return args.Error(0)
 }
 
+func (m *MockBidderRepository) CreateBidderWithPoints(bidder *domain.Bidder, initialPoints int64, adminID int64) (*domain.BidderResponse, error) {
+	args := m.Called(bidder, initialPoints, adminID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.BidderResponse), args.Error(1)
+}
+
 func TestBidderService_GetBidderByID(t *testing.T) {
 	t.Run("Success - Bidder found", func(t *testing.T) {
 		mockBidderRepo := new(MockBidderRepository)
@@ -663,6 +671,324 @@ func TestBidderService_UpdateBidderStatus(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, result)
 		assert.Equal(t, ErrBidderNotFound, err)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+}
+
+func TestBidderService_RegisterBidder(t *testing.T) {
+	t.Run("Success - Valid registration with initial points", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		displayName := "Test Bidder"
+		initialPoints := int64(1000)
+		adminID := int64(1)
+
+		req := &domain.BidderCreateRequest{
+			Email:         "bidder@example.com",
+			Password:      "password123",
+			DisplayName:   &displayName,
+			InitialPoints: &initialPoints,
+		}
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       req.Email,
+			DisplayName: req.DisplayName,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     initialPoints,
+				AvailablePoints: initialPoints,
+				ReservedPoints:  0,
+			},
+		}
+
+		// Check email is not taken
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, nil)
+
+		// Create bidder with points
+		mockBidderRepo.On("CreateBidderWithPoints",
+			mock.MatchedBy(func(bidder *domain.Bidder) bool {
+				return bidder.Email == req.Email && bidder.Status == domain.BidderStatusActive
+			}),
+			initialPoints,
+			adminID,
+		).Return(expectedResponse, nil)
+
+		result, err := bidderService.RegisterBidder(req, adminID)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, req.Email, result.Email)
+		assert.Equal(t, initialPoints, result.Points.TotalPoints)
+		assert.Equal(t, initialPoints, result.Points.AvailablePoints)
+		assert.Equal(t, int64(0), result.Points.ReservedPoints)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success - Valid registration without initial points", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		displayName := "Test Bidder"
+		adminID := int64(1)
+
+		req := &domain.BidderCreateRequest{
+			Email:         "bidder@example.com",
+			Password:      "password123",
+			DisplayName:   &displayName,
+			InitialPoints: nil, // No initial points
+		}
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       req.Email,
+			DisplayName: req.DisplayName,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     0,
+				AvailablePoints: 0,
+				ReservedPoints:  0,
+			},
+		}
+
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockBidderRepo.On("CreateBidderWithPoints",
+			mock.Anything,
+			int64(0),
+			adminID,
+		).Return(expectedResponse, nil)
+
+		result, err := bidderService.RegisterBidder(req, adminID)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, req.Email, result.Email)
+		assert.Equal(t, int64(0), result.Points.TotalPoints)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success - Display name defaults to nil", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		adminID := int64(1)
+
+		req := &domain.BidderCreateRequest{
+			Email:         "bidder@example.com",
+			Password:      "password123",
+			DisplayName:   nil, // No display name
+			InitialPoints: nil,
+		}
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       req.Email,
+			DisplayName: nil,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     0,
+				AvailablePoints: 0,
+				ReservedPoints:  0,
+			},
+		}
+
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockBidderRepo.On("CreateBidderWithPoints", mock.Anything, int64(0), adminID).Return(expectedResponse, nil)
+
+		result, err := bidderService.RegisterBidder(req, adminID)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Nil(t, result.DisplayName)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Email already exists", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		req := &domain.BidderCreateRequest{
+			Email:    "existing@example.com",
+			Password: "password123",
+		}
+
+		existingBidder := &domain.Bidder{
+			ID:    "existing-id",
+			Email: req.Email,
+		}
+
+		mockBidderRepo.On("FindByEmail", req.Email).Return(existingBidder, nil)
+
+		result, err := bidderService.RegisterBidder(req, int64(1))
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, ErrEmailAlreadyExists, err)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Invalid email format", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		req := &domain.BidderCreateRequest{
+			Email:    "invalid-email",
+			Password: "password123",
+		}
+
+		// Note: Currently validation is handled at handler layer by Gin binding
+		// Service layer will process even with invalid email format
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, nil)
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       req.Email,
+			DisplayName: nil,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     0,
+				AvailablePoints: 0,
+				ReservedPoints:  0,
+			},
+		}
+
+		mockBidderRepo.On("CreateBidderWithPoints", mock.Anything, int64(0), int64(1)).Return(expectedResponse, nil)
+
+		result, err := bidderService.RegisterBidder(req, int64(1))
+
+		// Service layer doesn't validate email format currently
+		// It's validated at handler layer by Gin binding
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Password too short", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		req := &domain.BidderCreateRequest{
+			Email:    "bidder@example.com",
+			Password: "short", // Less than 8 characters
+		}
+
+		// Note: Currently validation is handled at handler layer by Gin binding
+		// Service layer will process even with short password
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, nil)
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       req.Email,
+			DisplayName: nil,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     0,
+				AvailablePoints: 0,
+				ReservedPoints:  0,
+			},
+		}
+
+		mockBidderRepo.On("CreateBidderWithPoints", mock.Anything, int64(0), int64(1)).Return(expectedResponse, nil)
+
+		result, err := bidderService.RegisterBidder(req, int64(1))
+
+		// Service layer doesn't validate password length currently
+		// It's validated at handler layer by Gin binding
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Negative initial points", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		negativePoints := int64(-100)
+		req := &domain.BidderCreateRequest{
+			Email:         "bidder@example.com",
+			Password:      "password123",
+			InitialPoints: &negativePoints,
+		}
+
+		// Note: Currently validation is handled at handler layer by Gin binding
+		// Service layer treats negative points as 0
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, nil)
+
+		expectedResponse := &domain.BidderResponse{
+			ID:          "generated-uuid",
+			Email:       req.Email,
+			DisplayName: nil,
+			Status:      domain.BidderStatusActive,
+			Points: domain.PointsInfo{
+				TotalPoints:     0,
+				AvailablePoints: 0,
+				ReservedPoints:  0,
+			},
+		}
+
+		// Service will use 0 for negative initial points
+		mockBidderRepo.On("CreateBidderWithPoints", mock.Anything, int64(0), int64(1)).Return(expectedResponse, nil)
+
+		result, err := bidderService.RegisterBidder(req, int64(1))
+
+		// Service layer doesn't validate negative points currently
+		// It's validated at handler layer by Gin binding
+		// RegisterBidder will use 0 if InitialPoints is negative
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, int64(0), result.Points.TotalPoints)
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Repository error when checking email", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		req := &domain.BidderCreateRequest{
+			Email:    "bidder@example.com",
+			Password: "password123",
+		}
+
+		repositoryError := errors.New("database connection error")
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, repositoryError)
+
+		result, err := bidderService.RegisterBidder(req, int64(1))
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "failed to check email")
+
+		mockBidderRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Repository error when creating bidder", func(t *testing.T) {
+		mockBidderRepo := new(MockBidderRepository)
+		bidderService := NewBidderService(mockBidderRepo)
+
+		req := &domain.BidderCreateRequest{
+			Email:    "bidder@example.com",
+			Password: "password123",
+		}
+
+		mockBidderRepo.On("FindByEmail", req.Email).Return(nil, nil)
+
+		repositoryError := errors.New("transaction failed")
+		mockBidderRepo.On("CreateBidderWithPoints", mock.Anything, int64(0), int64(1)).Return(nil, repositoryError)
+
+		result, err := bidderService.RegisterBidder(req, int64(1))
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "failed to create bidder")
 
 		mockBidderRepo.AssertExpectations(t)
 	})
