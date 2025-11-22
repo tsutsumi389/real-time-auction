@@ -1,0 +1,426 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { setActivePinia, createPinia } from 'pinia'
+import PointHistoryDialog from './PointHistoryDialog.vue'
+import { useBidderStore } from '@/stores/bidder'
+import * as bidderApi from '@/services/bidderApi'
+
+// Mock bidderApi
+vi.mock('@/services/bidderApi')
+
+// Mock Dialog component
+const mockDialogComponent = {
+  template: '<div v-if="open" class="dialog-mock"><slot /></div>',
+  props: ['open']
+}
+
+// Mock PointTypeBadge component
+const mockPointTypeBadge = {
+  template: '<span class="point-type-badge-mock">{{ type }}</span>',
+  props: ['type']
+}
+
+describe('PointHistoryDialog', () => {
+  let bidderStore
+
+  const mockBidder = {
+    id: 'abc12345-def6-7890-abcd-ef1234567890',
+    email: 'bidder1@example.com',
+    display_name: '田中太郎',
+  }
+
+  const mockHistoryResponse = {
+    bidder: mockBidder,
+    history: [
+      {
+        id: 1,
+        type: 'grant',
+        points: 1000,
+        balance_before: 10000,
+        balance_after: 11000,
+        auction_id: null,
+        auction_title: null,
+        created_at: '2025-01-10T12:00:00Z',
+      },
+      {
+        id: 2,
+        type: 'reserve',
+        points: -5000,
+        balance_before: 11000,
+        balance_after: 6000,
+        auction_id: 5,
+        auction_title: '競走馬オークション #5',
+        created_at: '2025-01-09T10:30:00Z',
+      },
+    ],
+    pagination: {
+      page: 1,
+      total_pages: 1,
+      total: 2,
+      limit: 10,
+    },
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    bidderStore = useBidderStore()
+
+    // Mock API responses
+    vi.mocked(bidderApi.getPointHistory).mockResolvedValue(mockHistoryResponse)
+  })
+
+  describe('Rendering', () => {
+    it('should not render when closed', () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: false,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      expect(wrapper.find('.dialog-mock').exists()).toBe(false)
+    })
+
+    it('should render when open', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.find('.dialog-mock').exists()).toBe(true)
+    })
+
+    it('should display bidder information', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('bidder1@example.com')
+      expect(wrapper.text()).toContain('田中太郎')
+    })
+
+    it('should fetch and display point history on open', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(bidderApi.getPointHistory).toHaveBeenCalledWith(mockBidder.id, { page: 1, limit: 10 })
+      expect(wrapper.text()).toContain('1,000')
+      expect(wrapper.text()).toContain('競走馬オークション #5')
+    })
+
+    it('should display loading state while fetching', async () => {
+      let resolveFn
+      const promise = new Promise((resolve) => {
+        resolveFn = resolve
+      })
+
+      vi.mocked(bidderApi.getPointHistory).mockReturnValue(promise)
+
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      // Should show loading
+      expect(wrapper.text()).toContain('読み込み中')
+
+      resolveFn(mockHistoryResponse)
+      await flushPromises()
+
+      // Loading should be gone
+      expect(wrapper.text()).not.toContain('読み込み中')
+    })
+
+    it('should display empty state when no history', async () => {
+      vi.mocked(bidderApi.getPointHistory).mockResolvedValue({
+        bidder: mockBidder,
+        history: [],
+        pagination: {
+          page: 1,
+          total_pages: 0,
+          total: 0,
+          limit: 10,
+        },
+      })
+
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('履歴がありません')
+    })
+  })
+
+  describe('History Details', () => {
+    it('should display point type badges', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('grant')
+      expect(wrapper.text()).toContain('reserve')
+    })
+
+    it('should display points with sign and comma separator', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('+1,000')
+      expect(wrapper.text()).toContain('-5,000')
+    })
+
+    it('should display auction title when available', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('競走馬オークション #5')
+    })
+
+    it('should display "-" when no auction', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      const rows = wrapper.findAll('tbody tr')
+      expect(rows[0].text()).toContain('-')
+    })
+
+    it('should format date correctly', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toMatch(/\d{4}\/\d{2}\/\d{2}/)
+    })
+  })
+
+  describe('Pagination', () => {
+    it('should display pagination when multiple pages', async () => {
+      vi.mocked(bidderApi.getPointHistory).mockResolvedValue({
+        ...mockHistoryResponse,
+        pagination: {
+          page: 1,
+          total_pages: 5,
+          total: 50,
+          limit: 10,
+        },
+      })
+
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('1-10')
+      expect(wrapper.text()).toContain('50')
+    })
+
+    it('should fetch next page when next button is clicked', async () => {
+      vi.mocked(bidderApi.getPointHistory).mockResolvedValue({
+        ...mockHistoryResponse,
+        pagination: {
+          page: 1,
+          total_pages: 5,
+          total: 50,
+          limit: 10,
+        },
+      })
+
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+      vi.clearAllMocks()
+
+      const nextButton = wrapper.findAll('button').find((btn) => btn.text().includes('次へ'))
+      await nextButton.trigger('click')
+
+      await flushPromises()
+
+      expect(bidderApi.getPointHistory).toHaveBeenCalledWith(mockBidder.id, { page: 2, limit: 10 })
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should display error message when fetch fails', async () => {
+      vi.mocked(bidderApi.getPointHistory).mockRejectedValue(new Error('Network error'))
+
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('エラー')
+    })
+  })
+
+  describe('Dialog Closing', () => {
+    it('should emit update:open event when close button is clicked', async () => {
+      const wrapper = mount(PointHistoryDialog, {
+        props: {
+          open: true,
+          bidder: mockBidder,
+        },
+        global: {
+          stubs: {
+            Dialog: mockDialogComponent,
+            PointTypeBadge: mockPointTypeBadge,
+          },
+        },
+      })
+
+      await flushPromises()
+
+      const closeButton = wrapper.findAll('button').find((btn) => btn.text().includes('閉じる'))
+      await closeButton.trigger('click')
+
+      expect(wrapper.emitted('update:open')).toBeTruthy()
+      expect(wrapper.emitted('update:open')[0]).toEqual([false])
+    })
+  })
+})
