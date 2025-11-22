@@ -102,7 +102,7 @@ export function decodeToken() {
 
 /**
  * トークンからユーザー情報を取得
- * @returns {object|null} ユーザー情報（admin_id, email, role）
+ * @returns {object|null} ユーザー情報（user_id, email, role）
  */
 export function getUserFromToken() {
   const payload = decodeToken()
@@ -111,7 +111,7 @@ export function getUserFromToken() {
   }
 
   return {
-    adminId: payload.admin_id,
+    adminId: payload.user_id,
     email: payload.email,
     role: payload.role,
   }
