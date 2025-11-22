@@ -16,7 +16,6 @@ var (
 	ErrInvalidPoints         = errors.New("points must be greater than 0")
 	ErrPointsExceedMaximum   = errors.New("points exceed maximum limit")
 	ErrInvalidBidderSortMode = errors.New("invalid sort mode for bidders")
-	ErrEmailAlreadyExists    = errors.New("email already exists")
 )
 
 const (

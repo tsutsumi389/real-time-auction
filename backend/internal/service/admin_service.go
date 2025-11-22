@@ -16,7 +16,6 @@ var (
 	ErrInvalidPage     = errors.New("page must be greater than 0")
 	ErrInvalidLimit    = errors.New("limit must be between 1 and 100")
 	ErrInvalidSortMode = errors.New("invalid sort mode")
-	ErrEmailAlreadyExists = errors.New("email already exists")
 )
 
 // AdminService handles admin-related business logic
