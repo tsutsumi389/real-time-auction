@@ -21,9 +21,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should not render when open is false', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: false,
+          modelValue: false,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -33,9 +33,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should render when open is true', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -45,9 +45,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should display bidder email', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -57,9 +57,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should display bidder display name', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -71,9 +71,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show correct title for suspension', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -83,9 +83,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show warning message for suspension', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -95,9 +95,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show red warning icon for suspension', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -109,9 +109,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show correct button text for suspension', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -122,9 +122,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should have red button for suspension', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -137,9 +137,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show correct title for activation', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: suspendedBidder,
-          newStatus: 'active',
+          REMOVED: 'active',
         },
       })
 
@@ -149,9 +149,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should not show warning message for activation', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: suspendedBidder,
-          newStatus: 'active',
+          REMOVED: 'active',
         },
       })
 
@@ -161,9 +161,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show green success icon for activation', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: suspendedBidder,
-          newStatus: 'active',
+          REMOVED: 'active',
         },
       })
 
@@ -175,9 +175,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show correct button text for activation', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: suspendedBidder,
-          newStatus: 'active',
+          REMOVED: 'active',
         },
       })
 
@@ -188,9 +188,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should have green button for activation', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: suspendedBidder,
-          newStatus: 'active',
+          REMOVED: 'active',
         },
       })
 
@@ -203,9 +203,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should emit confirm event when clicking confirm button', async () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -215,36 +215,36 @@ describe('BidderStatusChangeDialog', () => {
       expect(wrapper.emitted('confirm')).toBeTruthy()
     })
 
-    it('should emit update:open with false when clicking cancel button', async () => {
+    it('should emit update:modelValue with false when clicking cancel button', async () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
       const cancelButton = wrapper.findAll('button')[1]
       await cancelButton.trigger('click')
 
-      expect(wrapper.emitted('update:open')).toBeTruthy()
-      expect(wrapper.emitted('update:open')[0]).toEqual([false])
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+      expect(wrapper.emitted('update:modelValue')[0]).toEqual([false])
     })
 
-    it('should emit update:open when clicking backdrop', async () => {
+    it('should emit update:modelValue when clicking backdrop', async () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
       const backdrop = wrapper.find('.bg-gray-500')
       await backdrop.trigger('click')
 
-      expect(wrapper.emitted('update:open')).toBeTruthy()
-      expect(wrapper.emitted('update:open')[0]).toEqual([false])
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+      expect(wrapper.emitted('update:modelValue')[0]).toEqual([false])
     })
   })
 
@@ -252,9 +252,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should show loading spinner when loading', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -266,9 +266,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should disable confirm button when loading', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -281,9 +281,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should disable cancel button when loading', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -295,9 +295,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should not close dialog when loading', async () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -305,16 +305,16 @@ describe('BidderStatusChangeDialog', () => {
       const cancelButton = wrapper.findAll('button')[1]
       await cancelButton.trigger('click')
 
-      // loadingがtrueの場合、update:openは発行されない
-      expect(wrapper.emitted('update:open')).toBeFalsy()
+      // loadingがtrueの場合、update:modelValueは発行されない
+      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
     })
 
     it('should not close dialog via backdrop when loading', async () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
           loading: true,
         },
       })
@@ -322,7 +322,7 @@ describe('BidderStatusChangeDialog', () => {
       const backdrop = wrapper.find('.bg-gray-500')
       await backdrop.trigger('click')
 
-      expect(wrapper.emitted('update:open')).toBeFalsy()
+      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
     })
   })
 
@@ -330,9 +330,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should have proper ARIA attributes', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -344,9 +344,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should have modal title with id', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: activeBidder,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -359,9 +359,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should handle null bidder gracefully', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: null,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -372,9 +372,9 @@ describe('BidderStatusChangeDialog', () => {
     it('should handle undefined bidder gracefully', () => {
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: undefined,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 
@@ -390,9 +390,9 @@ describe('BidderStatusChangeDialog', () => {
 
       const wrapper = mount(BidderStatusChangeDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: bidderWithoutName,
-          newStatus: 'suspended',
+          REMOVED: 'suspended',
         },
       })
 

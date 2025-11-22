@@ -10,8 +10,8 @@ vi.mock('@/services/bidderApi')
 
 // Mock Dialog component
 const mockDialogComponent = {
-  template: '<div v-if="open" class="dialog-mock"><slot /></div>',
-  props: ['open']
+  template: '<div v-if="modelValue" class=[role="dialog"]"><slot /></div>',
+  props: ['modelValue']
 }
 
 // Mock PointTypeBadge component
@@ -35,7 +35,7 @@ describe('PointHistoryDialog', () => {
       {
         id: 1,
         type: 'grant',
-        points: 1000,
+        amount: 1000,
         balance_before: 10000,
         balance_after: 11000,
         auction_id: null,
@@ -45,7 +45,7 @@ describe('PointHistoryDialog', () => {
       {
         id: 2,
         type: 'reserve',
-        points: -5000,
+        amount: -5000,
         balance_before: 11000,
         balance_after: 6000,
         auction_id: 5,
@@ -73,29 +73,29 @@ describe('PointHistoryDialog', () => {
     it('should not render when closed', () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: false,
+          modelValue: false,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
       })
 
-      expect(wrapper.find('.dialog-mock').exists()).toBe(false)
+      expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     })
 
     it('should render when open', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -103,18 +103,18 @@ describe('PointHistoryDialog', () => {
 
       await flushPromises()
 
-      expect(wrapper.find('.dialog-mock').exists()).toBe(true)
+      expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
     })
 
     it('should display bidder information', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -129,12 +129,12 @@ describe('PointHistoryDialog', () => {
     it('should fetch and display point history on open', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -157,12 +157,12 @@ describe('PointHistoryDialog', () => {
 
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -192,12 +192,12 @@ describe('PointHistoryDialog', () => {
 
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -213,12 +213,12 @@ describe('PointHistoryDialog', () => {
     it('should display point type badges', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -233,12 +233,12 @@ describe('PointHistoryDialog', () => {
     it('should display points with sign and comma separator', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -253,12 +253,12 @@ describe('PointHistoryDialog', () => {
     it('should display auction title when available', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -272,12 +272,12 @@ describe('PointHistoryDialog', () => {
     it('should display "-" when no auction', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -292,12 +292,12 @@ describe('PointHistoryDialog', () => {
     it('should format date correctly', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -323,12 +323,12 @@ describe('PointHistoryDialog', () => {
 
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -353,12 +353,12 @@ describe('PointHistoryDialog', () => {
 
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -382,12 +382,12 @@ describe('PointHistoryDialog', () => {
 
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -400,15 +400,15 @@ describe('PointHistoryDialog', () => {
   })
 
   describe('Dialog Closing', () => {
-    it('should emit update:open event when close button is clicked', async () => {
+    it('should emit update:modelValue event when close button is clicked', async () => {
       const wrapper = mount(PointHistoryDialog, {
         props: {
-          open: true,
+          modelValue: true,
           bidder: mockBidder,
         },
         global: {
           stubs: {
-            Dialog: mockDialogComponent,
+            
             PointTypeBadge: mockPointTypeBadge,
           },
         },
@@ -419,8 +419,8 @@ describe('PointHistoryDialog', () => {
       const closeButton = wrapper.findAll('button').find((btn) => btn.text().includes('閉じる'))
       await closeButton.trigger('click')
 
-      expect(wrapper.emitted('update:open')).toBeTruthy()
-      expect(wrapper.emitted('update:open')[0]).toEqual([false])
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+      expect(wrapper.emitted('update:modelValue')[0]).toEqual([false])
     })
   })
 })

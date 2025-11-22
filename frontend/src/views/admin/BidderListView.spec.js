@@ -363,7 +363,7 @@ describe('BidderListView Integration Tests', () => {
 
       // Get the bidder before granting points
       const bidder = bidderStore.bidders[0]
-      expect(bidder.total_points).toBe(10000)
+      expect(bidder.points).toBe(10000)
 
       // Grant points
       const result = await bidderStore.addPoints('abc12345-def6-7890-abcd-ef1234567890', 1000)
@@ -402,7 +402,7 @@ describe('BidderListView Integration Tests', () => {
 
       // Verify the bidder points were NOT updated in the store
       const bidder = bidderStore.bidders.find(b => b.id === 'abc12345-def6-7890-abcd-ef1234567890')
-      expect(bidder.total_points).toBe(10000)
+      expect(bidder.points).toBe(10000)
     })
   })
 

@@ -15,7 +15,7 @@ describe('BidderTable', () => {
       email: 'bidder1@example.com',
       display_name: '田中太郎',
       status: 'active',
-      total_points: 10000,
+      points: 10000,
       created_at: '2025-01-01T00:00:00Z',
     },
     {
@@ -23,7 +23,7 @@ describe('BidderTable', () => {
       email: 'bidder2@example.com',
       display_name: null,
       status: 'suspended',
-      total_points: 5000,
+      points: 5000,
       created_at: '2025-01-02T00:00:00Z',
     },
   ]
@@ -61,7 +61,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -81,7 +81,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -101,7 +101,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -118,7 +118,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -136,7 +136,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -157,7 +157,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -177,7 +177,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -194,7 +194,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -216,7 +216,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -224,8 +224,8 @@ describe('BidderTable', () => {
       const editButton = wrapper.findAll('button').find((btn) => btn.text().includes('詳細'))
       await editButton.trigger('click')
 
-      expect(wrapper.emitted('edit')).toBeTruthy()
-      expect(wrapper.emitted('edit')[0]).toEqual(['abc12345-def6-7890-abcd-ef1234567890'])
+      expect(wrapper.emitted('edit')[0]).toBeTruthy()
+      expect(wrapper.emitted('edit')[0][0]).toBe('abc12345-def6-7890-abcd-ef1234567890')
     })
 
     it('should emit grant-points event when clicking grant points button', async () => {
@@ -236,7 +236,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -244,11 +244,11 @@ describe('BidderTable', () => {
       const grantButton = wrapper.findAll('button').find((btn) => btn.text().includes('pt付与'))
       await grantButton.trigger('click')
 
-      expect(wrapper.emitted('grant-points')).toBeTruthy()
-      expect(wrapper.emitted('grant-points')[0]).toEqual([mockBidders[0]])
+      expect(wrapper.emitted('grant-points')[0]).toBeTruthy()
+      expect(wrapper.emitted('grant-points')[0][0]).toEqual(mockBidders[0])
     })
 
-    it('should emit view-history event when clicking history button', async () => {
+    it('should emit show-history event when clicking history button', async () => {
       const wrapper = mount(BidderTable, {
         props: {
           bidders: mockBidders,
@@ -256,7 +256,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -264,8 +264,8 @@ describe('BidderTable', () => {
       const historyButton = wrapper.findAll('button').find((btn) => btn.text().includes('履歴'))
       await historyButton.trigger('click')
 
-      expect(wrapper.emitted('view-history')).toBeTruthy()
-      expect(wrapper.emitted('view-history')[0]).toEqual([mockBidders[0]])
+      expect(wrapper.emitted('show-history')[0]).toBeTruthy()
+      expect(wrapper.emitted('show-history')[0][0]).toEqual(mockBidders[0])
     })
 
     it('should emit status-change event when clicking status button', async () => {
@@ -276,7 +276,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -284,8 +284,8 @@ describe('BidderTable', () => {
       const statusButton = wrapper.findAll('button').find((btn) => btn.text() === '停止')
       await statusButton.trigger('click')
 
-      expect(wrapper.emitted('status-change')).toBeTruthy()
-      expect(wrapper.emitted('status-change')[0]).toEqual([mockBidders[0]])
+      expect(wrapper.emitted('status-change')[0]).toBeTruthy()
+      expect(wrapper.emitted('status-change')[0][0]).toEqual(mockBidders[0])
     })
 
     it('should show "停止" button for active bidder', () => {
@@ -296,7 +296,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -313,7 +313,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -335,7 +335,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -357,7 +357,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -376,7 +376,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -396,13 +396,13 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
 
       const editButton = wrapper.findAll('button').find((btn) => btn.text().includes('詳細'))
-      expect(editButton.attributes('aria-label')).toContain('詳細を表示')
+      expect(editButton.attributes('aria-label')).toContain('編集')
     })
 
     it('should have correct aria-label for grant points button', () => {
@@ -413,7 +413,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
@@ -432,7 +432,7 @@ describe('BidderTable', () => {
         },
         global: {
           stubs: {
-            Badge: mockBadgeComponent,
+            AdminStatusBadge: mockBadgeComponent,
           },
         },
       })
