@@ -36,6 +36,22 @@ func (m *MockAdminService) UpdateAdminStatus(id int64, status domain.AdminStatus
 	return args.Get(0).(*domain.Admin), args.Error(1)
 }
 
+func (m *MockAdminService) RegisterAdmin(req *domain.AdminCreateRequest) (*domain.Admin, error) {
+	args := m.Called(req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Admin), args.Error(1)
+}
+
+func (m *MockAdminService) GetAdminByID(id int64) (*domain.Admin, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Admin), args.Error(1)
+}
+
 func TestAdminHandler_GetAdminList(t *testing.T) {
 	now := time.Now()
 
@@ -586,6 +602,316 @@ func TestAdminHandler_UpdateAdminStatus(t *testing.T) {
 
 		reqBody, _ := json.Marshal(updateReq)
 		req, _ := http.NewRequest(http.MethodPatch, "/api/admins/1/status", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Internal server error", response.Error)
+
+		mockService.AssertExpectations(t)
+	})
+}
+
+func TestAdminHandler_RegisterAdmin(t *testing.T) {
+	now := time.Now()
+
+	t.Run("Success - Register admin with all fields", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := domain.AdminCreateRequest{
+			Email:       "newadmin@example.com",
+			Password:    "password123",
+			DisplayName: "New Admin",
+			Role:        domain.RoleAuctioneer,
+		}
+
+		expectedAdmin := &domain.Admin{
+			ID:          10,
+			Email:       "newadmin@example.com",
+			DisplayName: "New Admin",
+			Role:        domain.RoleAuctioneer,
+			Status:      domain.StatusActive,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+
+		mockService.On("RegisterAdmin", &reqBody).Return(expectedAdmin, nil)
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+
+		var response domain.Admin
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(10), response.ID)
+		assert.Equal(t, "newadmin@example.com", response.Email)
+		assert.Equal(t, "New Admin", response.DisplayName)
+		assert.Equal(t, domain.RoleAuctioneer, response.Role)
+		assert.Equal(t, domain.StatusActive, response.Status)
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("Success - Register admin without display_name", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		expectedAdmin := &domain.Admin{
+			ID:        11,
+			Email:     "admin@example.com",
+			Role:      domain.RoleSystemAdmin,
+			Status:    domain.StatusActive,
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+
+		mockService.On("RegisterAdmin", &reqBody).Return(expectedAdmin, nil)
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+
+		var response domain.Admin
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Empty(t, response.DisplayName)
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("Error - Invalid request body", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBufferString("invalid json"))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Contains(t, response.Error, "Invalid request body")
+	})
+
+	t.Run("Error - Missing required email", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := map[string]interface{}{
+			"password": "password123",
+			"role":     "system_admin",
+		}
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Contains(t, response.Error, "Invalid request body")
+	})
+
+	t.Run("Error - Invalid email format", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := map[string]interface{}{
+			"email":    "invalid-email",
+			"password": "password123",
+			"role":     "system_admin",
+		}
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Contains(t, response.Error, "Invalid request body")
+	})
+
+	t.Run("Error - Password too short", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := map[string]interface{}{
+			"email":    "admin@example.com",
+			"password": "short",
+			"role":     "system_admin",
+		}
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Contains(t, response.Error, "Invalid request body")
+	})
+
+	t.Run("Error - Invalid role", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := map[string]interface{}{
+			"email":    "admin@example.com",
+			"password": "password123",
+			"role":     "invalid_role",
+		}
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Contains(t, response.Error, "Invalid request body")
+	})
+
+	t.Run("Error - Email already exists", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := domain.AdminCreateRequest{
+			Email:    "existing@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		mockService.On("RegisterAdmin", &reqBody).Return(nil, service.ErrEmailAlreadyExists)
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Email already exists", response.Error)
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("Error - Invalid role (service error)", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		mockService.On("RegisterAdmin", &reqBody).Return(nil, service.ErrInvalidRole)
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Invalid role value", response.Error)
+
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("Error - Internal server error", func(t *testing.T) {
+		mockService := new(MockAdminService)
+		handler := NewAdminHandler(mockService)
+		router := setupTestRouter()
+		router.POST("/api/admins", handler.RegisterAdmin)
+
+		reqBody := domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		mockService.On("RegisterAdmin", &reqBody).Return(nil, errors.New("database error"))
+
+		reqBodyJSON, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/api/admins", bytes.NewBuffer(reqBodyJSON))
 		req.Header.Set("Content-Type", "application/json")
 
 		w := httptest.NewRecorder()

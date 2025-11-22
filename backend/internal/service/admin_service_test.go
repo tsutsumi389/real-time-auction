@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/tsutsumi389/real-time-auction/internal/domain"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // MockAdminRepositoryInterface is a mock implementation of AdminRepositoryInterface
@@ -535,5 +536,268 @@ func TestValidationHelpers(t *testing.T) {
 		assert.True(t, isValidSortMode("created_at_desc"))
 		assert.False(t, isValidSortMode("invalid_sort"))
 		assert.False(t, isValidSortMode("name_asc"))
+	})
+}
+
+func TestAdminService_RegisterAdmin(t *testing.T) {
+	now := time.Now()
+
+	t.Run("Success - Register admin with all fields", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:       "newadmin@example.com",
+			Password:    "password123",
+			DisplayName: "New Admin",
+			Role:        domain.RoleAuctioneer,
+		}
+
+		mockRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockRepo.On("Create", mock.MatchedBy(func(admin *domain.Admin) bool {
+			return admin.Email == req.Email &&
+				admin.DisplayName == req.DisplayName &&
+				admin.Role == req.Role &&
+				admin.Status == domain.StatusActive &&
+				admin.PasswordHash != "" && admin.PasswordHash != req.Password
+		})).Return(nil)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, admin)
+		assert.Equal(t, req.Email, admin.Email)
+		assert.Equal(t, req.DisplayName, admin.DisplayName)
+		assert.Equal(t, req.Role, admin.Role)
+		assert.Equal(t, domain.StatusActive, admin.Status)
+		assert.NotEmpty(t, admin.PasswordHash)
+		assert.NotEqual(t, req.Password, admin.PasswordHash)
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success - Register admin without display_name", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		mockRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockRepo.On("Create", mock.MatchedBy(func(admin *domain.Admin) bool {
+			return admin.Email == req.Email &&
+				admin.DisplayName == "" &&
+				admin.Role == req.Role
+		})).Return(nil)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, admin)
+		assert.Empty(t, admin.DisplayName)
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success - Password is hashed with bcrypt", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		plainPassword := "password123"
+		req := &domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: plainPassword,
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		var capturedPasswordHash string
+		mockRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockRepo.On("Create", mock.Anything).Run(func(args mock.Arguments) {
+			admin := args.Get(0).(*domain.Admin)
+			capturedPasswordHash = admin.PasswordHash
+		}).Return(nil)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, admin)
+
+		// Verify password was hashed with bcrypt
+		err = bcrypt.CompareHashAndPassword([]byte(capturedPasswordHash), []byte(plainPassword))
+		assert.NoError(t, err, "Password should be verifiable with bcrypt")
+
+		// Verify password is not stored in plain text
+		assert.NotEqual(t, plainPassword, capturedPasswordHash)
+
+		// Verify bcrypt hash format (starts with $2a$ or $2b$)
+		assert.True(t, len(capturedPasswordHash) >= 60, "Bcrypt hash should be at least 60 characters")
+		assert.True(t, capturedPasswordHash[0] == '$', "Bcrypt hash should start with $")
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success - Status is set to active", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		mockRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockRepo.On("Create", mock.MatchedBy(func(admin *domain.Admin) bool {
+			return admin.Status == domain.StatusActive
+		})).Return(nil)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, domain.StatusActive, admin.Status)
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Invalid role", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.AdminRole("invalid_role"),
+		}
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.Error(t, err)
+		assert.Nil(t, admin)
+		assert.Equal(t, ErrInvalidRole, err)
+	})
+
+	t.Run("Error - Email already exists", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "existing@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		existingAdmin := &domain.Admin{
+			ID:          1,
+			Email:       req.Email,
+			DisplayName: "Existing Admin",
+			Role:        domain.RoleSystemAdmin,
+			Status:      domain.StatusActive,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+
+		mockRepo.On("FindByEmail", req.Email).Return(existingAdmin, nil)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.Error(t, err)
+		assert.Nil(t, admin)
+		assert.Equal(t, ErrEmailAlreadyExists, err)
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - FindByEmail database error", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		dbError := errors.New("database connection error")
+		mockRepo.On("FindByEmail", req.Email).Return(nil, dbError)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.Error(t, err)
+		assert.Nil(t, admin)
+		assert.Contains(t, err.Error(), "failed to check email existence")
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Error - Create database error", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "admin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		createError := errors.New("create failed")
+		mockRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockRepo.On("Create", mock.Anything).Return(createError)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.Error(t, err)
+		assert.Nil(t, admin)
+		assert.Contains(t, err.Error(), "failed to create admin")
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success - Register system_admin role", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "sysadmin@example.com",
+			Password: "password123",
+			Role:     domain.RoleSystemAdmin,
+		}
+
+		mockRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockRepo.On("Create", mock.MatchedBy(func(admin *domain.Admin) bool {
+			return admin.Role == domain.RoleSystemAdmin
+		})).Return(nil)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, domain.RoleSystemAdmin, admin.Role)
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Success - Register auctioneer role", func(t *testing.T) {
+		mockRepo := new(MockAdminRepositoryInterface)
+		service := NewAdminService(mockRepo)
+
+		req := &domain.AdminCreateRequest{
+			Email:    "auctioneer@example.com",
+			Password: "password123",
+			Role:     domain.RoleAuctioneer,
+		}
+
+		mockRepo.On("FindByEmail", req.Email).Return(nil, nil)
+		mockRepo.On("Create", mock.MatchedBy(func(admin *domain.Admin) bool {
+			return admin.Role == domain.RoleAuctioneer
+		})).Return(nil)
+
+		admin, err := service.RegisterAdmin(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, domain.RoleAuctioneer, admin.Role)
+
+		mockRepo.AssertExpectations(t)
 	})
 }
