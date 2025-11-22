@@ -48,9 +48,14 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
-  // ユーザー情報が未ロードの場合、トークンから復元を試みる
-  if (!authStore.user && !authStore.loading) {
-    await authStore.restoreUser()
+  // ローディング中は待機
+  if (authStore.loading) {
+    // ローディングが完了するまで待つ（最大5秒）
+    let attempts = 0
+    while (authStore.loading && attempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      attempts++
+    }
   }
 
   // 認証が必要なルート

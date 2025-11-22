@@ -94,24 +94,45 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
 
     try {
-      // トークンからユーザー情報を取得
+      // まずトークンからユーザー情報を取得して即座に設定
       const tokenUser = getUserFromToken()
+
       if (tokenUser) {
         user.value = tokenUser
+      } else {
+        // トークンが不正な場合はクリア
+        removeToken()
+        user.value = null
+        loading.value = false
+        return false
       }
 
-      // APIでユーザー情報を検証
-      const response = await getCurrentUser()
-      user.value = {
-        adminId: response.user.id,
-        email: response.user.email,
-        role: response.user.role,
+      // バックグラウンドでAPIによる検証を実行
+      // ネットワークエラーの場合でもトークンが有効であれば継続利用
+      try {
+        const response = await getCurrentUser()
+        user.value = {
+          adminId: response.user.id,
+          email: response.user.email,
+          role: response.user.role,
+        }
+      } catch (apiError) {
+        // APIエラー（401/403）の場合のみトークンを削除
+        if (apiError.response && (apiError.response.status === 401 || apiError.response.status === 403)) {
+          removeToken()
+          user.value = null
+          loading.value = false
+          return false
+        }
+        // その他のエラー（ネットワークエラーなど）はトークンの情報を継続使用
+        console.warn('Failed to verify user with API, using token data:', apiError.message)
       }
 
       loading.value = false
       return true
     } catch (err) {
-      // トークンが無効な場合はクリア
+      // トークンデコードエラーなど予期しないエラー
+      console.error('Unexpected error during restore:', err)
       removeToken()
       user.value = null
       loading.value = false

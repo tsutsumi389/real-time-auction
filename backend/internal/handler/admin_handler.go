@@ -100,8 +100,8 @@ func (h *AdminHandler) GetAdminList(c *gin.Context) {
 
 // GetCurrentAdmin handles GET /api/admin/me
 func (h *AdminHandler) GetCurrentAdmin(c *gin.Context) {
-	// Get admin ID from context (set by auth middleware)
-	adminID, exists := c.Get("admin_id")
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, ErrorResponse{
 			Error: "Unauthorized",
@@ -110,10 +110,10 @@ func (h *AdminHandler) GetCurrentAdmin(c *gin.Context) {
 	}
 
 	// Convert to int64
-	id, ok := adminID.(int64)
+	id, ok := userID.(int64)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Error: "Invalid admin ID format",
+			Error: "Invalid user ID format",
 		})
 		return
 	}
