@@ -1139,13 +1139,13 @@ frontend/src/
 ## 20. 実装手順
 
 ### Phase 1: バックエンドAPI（5-6時間）
-- [ ] Domain層にBidder、BidderPoints、PointHistory構造体を定義
-- [ ] Domain層にBidderListRequest、BidderListResponse、GrantPointsRequest、PointHistoryResponse構造体を定義
-- [ ] Repository層にフィルタ付き一覧取得、総件数取得、ポイント付与、ポイント履歴取得、状態更新メソッドを実装
-- [ ] Service層に一覧取得、ポイント付与、ポイント履歴取得、状態変更ロジックを実装
-- [ ] Handler層に一覧取得、ポイント付与、ポイント履歴取得、状態変更エンドポイントを実装
-- [ ] ルーティング設定とミドルウェア適用
-- [ ] 手動テスト（curlまたはPostman）
+- [x] Domain層にBidder、BidderPoints、PointHistory構造体を定義
+- [x] Domain層にBidderListRequest、BidderListResponse、GrantPointsRequest、PointHistoryResponse構造体を定義
+- [x] Repository層にフィルタ付き一覧取得、総件数取得、ポイント付与、ポイント履歴取得、状態更新メソッドを実装
+- [x] Service層に一覧取得、ポイント付与、ポイント履歴取得、状態変更ロジックを実装
+- [x] Handler層に一覧取得、ポイント付与、ポイント履歴取得、状態変更エンドポイントを実装
+- [x] ルーティング設定とミドルウェア適用
+- [x] 手動テスト（curlまたはPostman）
 
 ### Phase 2: フロントエンド基盤（3-4時間）
 - [ ] bidderApi.tsにgetBidderList、grantPoints、getPointHistory、updateBidderStatusを実装
