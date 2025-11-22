@@ -526,102 +526,21 @@ CREATE TRIGGER update_items_updated_at BEFORE UPDATE ON items
 
 ### 2. bidder_points 自動作成
 
-```sql
-CREATE OR REPLACE FUNCTION create_bidder_points()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO bidder_points (bidder_id, total_points, available_points, reserved_points)
-    VALUES (NEW.id, 0, 0, 0);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+**注意**: このトリガーは削除されました。バックエンドのアプリケーション層で実装されます。
 
-CREATE TRIGGER trigger_create_bidder_points AFTER INSERT ON bidders
-    FOR EACH ROW EXECUTE FUNCTION create_bidder_points();
-```
+~~削除済み: `trigger_create_bidder_points` および `create_bidder_points()` 関数~~
 
 ### 3. 入札時の is_winning 更新
 
-```sql
-CREATE OR REPLACE FUNCTION update_bid_winning_status()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- 同じオークションの過去の入札をすべて is_winning = FALSE に
-    UPDATE bids 
-    SET is_winning = FALSE 
-    WHERE auction_id = NEW.auction_id AND id != NEW.id;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+**注意**: このトリガーは削除されました。バックエンドのアプリケーション層で実装されます。
 
-CREATE TRIGGER trigger_update_bid_winning_status AFTER INSERT ON bids
-    FOR EACH ROW EXECUTE FUNCTION update_bid_winning_status();
-```
+~~削除済み: `trigger_update_bid_winning_status` および `update_bid_winning_status()` 関数~~
 
 ### 4. ポイント履歴自動記録
 
-```sql
-CREATE OR REPLACE FUNCTION record_point_history()
-RETURNS TRIGGER AS $$
-DECLARE
-    point_type VARCHAR(50);
-    point_amount BIGINT;
-BEGIN
-    -- 変更内容に基づいてポイント種別と金額を判定
-    IF NEW.total_points > OLD.total_points THEN
-        -- ポイント付与
-        point_type := 'grant';
-        point_amount := NEW.total_points - OLD.total_points;
-    ELSIF NEW.reserved_points > OLD.reserved_points THEN
-        -- 入札時の予約
-        point_type := 'reserve';
-        point_amount := -(NEW.reserved_points - OLD.reserved_points);
-    ELSIF NEW.reserved_points < OLD.reserved_points AND NEW.available_points > OLD.available_points THEN
-        -- 予約解放
-        point_type := 'release';
-        point_amount := NEW.available_points - OLD.available_points;
-    ELSIF NEW.reserved_points < OLD.reserved_points AND NEW.available_points = OLD.available_points THEN
-        -- 落札時の消費
-        point_type := 'consume';
-        point_amount := -(OLD.reserved_points - NEW.reserved_points);
-    ELSE
-        -- その他の変更（通常は発生しない）
-        RETURN NEW;
-    END IF;
+**注意**: このトリガーは削除されました。バックエンドのアプリケーション層で実装されます。
 
-    -- 履歴レコードの挿入
-    INSERT INTO point_history (
-        bidder_id,
-        amount,
-        type,
-        balance_before,
-        balance_after,
-        reserved_before,
-        reserved_after,
-        total_before,
-        total_after
-    ) VALUES (
-        NEW.bidder_id,
-        point_amount,
-        point_type,
-        OLD.available_points,
-        NEW.available_points,
-        OLD.reserved_points,
-        NEW.reserved_points,
-        OLD.total_points,
-        NEW.total_points
-    );
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_record_point_history AFTER UPDATE ON bidder_points
-    FOR EACH ROW 
-    WHEN (OLD.* IS DISTINCT FROM NEW.*)
-    EXECUTE FUNCTION record_point_history();
-```
+~~削除済み: `trigger_record_point_history` および `record_point_history()` 関数~~
 
 ## ビュー
 

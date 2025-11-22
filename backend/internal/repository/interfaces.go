@@ -25,4 +25,5 @@ type BidderRepositoryInterface interface {
 	GetPointHistory(bidderID string, page int, limit int) ([]domain.PointHistoryWithAuction, error)
 	CountPointHistory(bidderID string) (int64, error)
 	UpdateBidderStatus(id string, status domain.BidderStatus) error
+	CreateBidderWithPoints(bidder *domain.Bidder, initialPoints int64, adminID int64) (*domain.BidderResponse, error)
 }

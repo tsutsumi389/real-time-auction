@@ -46,6 +46,12 @@ const router = createRouter({
       name: 'bidder-list',
       component: () => import('../views/admin/BidderListView.vue'),
       meta: { requiresAuth: true, requireSystemAdmin: true }
+    },
+    {
+      path: '/admin/bidders/new',
+      name: 'bidder-register',
+      component: () => import('../views/admin/BidderRegisterView.vue'),
+      meta: { requiresAuth: true, requireSystemAdmin: true }
     }
   ]
 })

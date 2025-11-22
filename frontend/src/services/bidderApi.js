@@ -5,6 +5,20 @@
 import apiClient from './api'
 
 /**
+ * 入札者を登録
+ * @param {object} data - 登録データ
+ * @param {string} data.email - メールアドレス
+ * @param {string} data.password - パスワード（8文字以上）
+ * @param {string} data.display_name - 表示名（任意）
+ * @param {number} data.initial_points - 初期ポイント（任意、0以上）
+ * @returns {Promise<object>} レスポンス（id, email, display_name, status, points, created_at, updated_at）
+ */
+export async function registerBidder(data) {
+  const response = await apiClient.post('/admin/bidders', data)
+  return response.data
+}
+
+/**
  * 入札者一覧を取得
  * @param {object} params - クエリパラメータ
  * @param {string} params.keyword - 検索キーワード（メールアドレス、表示名、UUID）

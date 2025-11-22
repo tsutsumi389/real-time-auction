@@ -253,3 +253,73 @@ func (r *BidderRepository) UpdateBidderStatus(id string, status domain.BidderSta
 		Where("id = ?", id).
 		Update("status", status).Error
 }
+
+// CreateBidderWithPoints creates a new bidder with initial points (within a transaction)
+func (r *BidderRepository) CreateBidderWithPoints(bidder *domain.Bidder, initialPoints int64, adminID int64) (*domain.BidderResponse, error) {
+	var response *domain.BidderResponse
+
+	// Execute within a transaction
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		// Create bidder
+		if err := tx.Create(bidder).Error; err != nil {
+			return fmt.Errorf("failed to create bidder: %w", err)
+		}
+
+		// Create bidder_points record manually (trigger has been removed)
+		bidderPoints := &domain.BidderPoints{
+			BidderID:        bidder.ID,
+			TotalPoints:     initialPoints,
+			AvailablePoints: initialPoints,
+			ReservedPoints:  0,
+		}
+
+		if err := tx.Create(bidderPoints).Error; err != nil {
+			return fmt.Errorf("failed to create bidder points: %w", err)
+		}
+
+		// Create point_history record if initial points > 0 (trigger has been removed)
+		if initialPoints > 0 {
+			reason := "初期ポイント付与"
+			pointHistory := &domain.PointHistory{
+				BidderID:       bidder.ID,
+				Amount:         initialPoints,
+				Type:           domain.PointHistoryTypeGrant,
+				Reason:         &reason,
+				AdminID:        &adminID,
+				BalanceBefore:  0,
+				BalanceAfter:   initialPoints,
+				ReservedBefore: 0,
+				ReservedAfter:  0,
+				TotalBefore:    0,
+				TotalAfter:     initialPoints,
+			}
+
+			if err := tx.Create(pointHistory).Error; err != nil {
+				return fmt.Errorf("failed to create point history: %w", err)
+			}
+		}
+
+		// Build response
+		response = &domain.BidderResponse{
+			ID:          bidder.ID,
+			Email:       bidder.Email,
+			DisplayName: bidder.DisplayName,
+			Status:      bidder.Status,
+			Points: domain.PointsInfo{
+				TotalPoints:     bidderPoints.TotalPoints,
+				AvailablePoints: bidderPoints.AvailablePoints,
+				ReservedPoints:  bidderPoints.ReservedPoints,
+			},
+			CreatedAt: bidder.CreatedAt,
+			UpdatedAt: bidder.UpdatedAt,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
