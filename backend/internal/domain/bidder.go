@@ -142,3 +142,29 @@ type PointHistoryListResponse struct {
 type UpdateBidderStatusRequest struct {
 	Status BidderStatus `json:"status" binding:"required"`
 }
+
+// BidderCreateRequest represents the request body for creating a new bidder
+type BidderCreateRequest struct {
+	Email         string  `json:"email" binding:"required,email"`
+	Password      string  `json:"password" binding:"required,min=8"`
+	DisplayName   *string `json:"display_name"`
+	InitialPoints *int64  `json:"initial_points" binding:"omitempty,min=0"`
+}
+
+// BidderResponse represents the response for a single bidder with points
+type BidderResponse struct {
+	ID          string        `json:"id"`
+	Email       string        `json:"email"`
+	DisplayName *string       `json:"display_name"`
+	Status      BidderStatus  `json:"status"`
+	Points      PointsInfo    `json:"points"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
+}
+
+// PointsInfo represents the points information for a bidder
+type PointsInfo struct {
+	TotalPoints     int64 `json:"total_points"`
+	AvailablePoints int64 `json:"available_points"`
+	ReservedPoints  int64 `json:"reserved_points"`
+}

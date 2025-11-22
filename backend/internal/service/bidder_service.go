@@ -7,14 +7,16 @@ import (
 
 	"github.com/tsutsumi389/real-time-auction/internal/domain"
 	"github.com/tsutsumi389/real-time-auction/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	ErrBidderNotFound       = errors.New("bidder not found")
-	ErrInvalidBidderStatus  = errors.New("invalid bidder status value")
-	ErrInvalidPoints        = errors.New("points must be greater than 0")
-	ErrPointsExceedMaximum  = errors.New("points exceed maximum limit")
+	ErrBidderNotFound        = errors.New("bidder not found")
+	ErrInvalidBidderStatus   = errors.New("invalid bidder status value")
+	ErrInvalidPoints         = errors.New("points must be greater than 0")
+	ErrPointsExceedMaximum   = errors.New("points exceed maximum limit")
 	ErrInvalidBidderSortMode = errors.New("invalid sort mode for bidders")
+	ErrEmailAlreadyExists    = errors.New("email already exists")
 )
 
 const (
@@ -31,6 +33,46 @@ func NewBidderService(bidderRepo repository.BidderRepositoryInterface) *BidderSe
 	return &BidderService{
 		bidderRepo: bidderRepo,
 	}
+}
+
+// RegisterBidder creates a new bidder with initial points
+func (s *BidderService) RegisterBidder(req *domain.BidderCreateRequest, adminID int64) (*domain.BidderResponse, error) {
+	// Check if email already exists
+	existingBidder, err := s.bidderRepo.FindByEmail(req.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check email: %w", err)
+	}
+	if existingBidder != nil {
+		return nil, ErrEmailAlreadyExists
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Prepare initial points value
+	initialPoints := int64(0)
+	if req.InitialPoints != nil && *req.InitialPoints > 0 {
+		initialPoints = *req.InitialPoints
+	}
+
+	// Create bidder
+	bidder := &domain.Bidder{
+		Email:        req.Email,
+		PasswordHash: string(hashedPassword),
+		DisplayName:  req.DisplayName,
+		Status:       domain.BidderStatusActive,
+	}
+
+	// Create bidder with points in a transaction (handled by repository)
+	response, err := s.bidderRepo.CreateBidderWithPoints(bidder, initialPoints, adminID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create bidder: %w", err)
+	}
+
+	return response, nil
 }
 
 // GetBidderByID retrieves a single bidder by ID
