@@ -1,9 +1,17 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- ヘッダー -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">管理者一覧</h1>
-        <p class="mt-2 text-sm text-gray-600">システム管理者とオークショニアのアカウント管理</p>
+      <div class="mb-8 flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">管理者一覧</h1>
+          <p class="mt-2 text-sm text-gray-600">システム管理者とオークショニアのアカウント管理</p>
+        </div>
+        <Button @click="handleRegister" class="ml-4">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          新規登録
+        </Button>
       </div>
 
       <!-- エラー表示 -->
@@ -69,6 +77,7 @@ import AdminFilters from '@/components/admin/AdminFilters.vue'
 import AdminTable from '@/components/admin/AdminTable.vue'
 import AdminStatusChangeDialog from '@/components/admin/AdminStatusChangeDialog.vue'
 import Pagination from '@/components/Pagination.vue'
+import Button from '@/components/ui/Button.vue'
 
 const router = useRouter()
 const adminStore = useAdminStore()
@@ -116,6 +125,11 @@ function handleSort(field) {
 // 編集画面へ遷移
 function handleEdit(adminId) {
   router.push({ name: 'admin-edit', params: { id: adminId } })
+}
+
+// 新規登録画面へ遷移
+function handleRegister() {
+  router.push({ name: 'admin-register' })
 }
 
 // 状態変更モーダルを開く
