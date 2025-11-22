@@ -16,6 +16,7 @@ var (
 	ErrInvalidPage     = errors.New("page must be greater than 0")
 	ErrInvalidLimit    = errors.New("limit must be between 1 and 100")
 	ErrInvalidSortMode = errors.New("invalid sort mode")
+	ErrEmailAlreadyExists = errors.New("email already exists")
 )
 
 // AdminService handles admin-related business logic
@@ -28,6 +29,45 @@ func NewAdminService(adminRepo repository.AdminRepositoryInterface) *AdminServic
 	return &AdminService{
 		adminRepo: adminRepo,
 	}
+}
+
+// RegisterAdmin creates a new admin account
+func (s *AdminService) RegisterAdmin(req *domain.AdminCreateRequest) (*domain.Admin, error) {
+	// Validate role
+	if !isValidRole(req.Role) {
+		return nil, ErrInvalidRole
+	}
+
+	// Check if email already exists
+	existingAdmin, err := s.adminRepo.FindByEmail(req.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check email existence: %w", err)
+	}
+	if existingAdmin != nil {
+		return nil, ErrEmailAlreadyExists
+	}
+
+	// Hash password
+	hashedPassword, err := HashPassword(req.Password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Create admin object
+	admin := &domain.Admin{
+		Email:        req.Email,
+		PasswordHash: hashedPassword,
+		DisplayName:  req.DisplayName,
+		Role:         req.Role,
+		Status:       domain.StatusActive,
+	}
+
+	// Save to database
+	if err := s.adminRepo.Create(admin); err != nil {
+		return nil, fmt.Errorf("failed to create admin: %w", err)
+	}
+
+	return admin, nil
 }
 
 // GetAdminByID retrieves a single admin by ID

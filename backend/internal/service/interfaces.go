@@ -15,6 +15,7 @@ type JWTServiceInterface interface {
 
 // AdminServiceInterface defines the interface for admin service operations
 type AdminServiceInterface interface {
+	RegisterAdmin(req *domain.AdminCreateRequest) (*domain.Admin, error)
 	GetAdminByID(id int64) (*domain.Admin, error)
 	GetAdminList(req *domain.AdminListRequest) (*domain.AdminListResponse, error)
 	UpdateAdminStatus(id int64, status domain.AdminStatus) (*domain.Admin, error)

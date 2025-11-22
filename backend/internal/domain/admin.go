@@ -77,6 +77,14 @@ type AdminListResponse struct {
 	Pagination Pagination `json:"pagination"`
 }
 
+// AdminCreateRequest represents the request body for creating a new admin
+type AdminCreateRequest struct {
+	Email       string    `json:"email" binding:"required,email,max=255"`
+	Password    string    `json:"password" binding:"required,min=8"`
+	DisplayName string    `json:"display_name" binding:"omitempty,max=100"`
+	Role        AdminRole `json:"role" binding:"required,oneof=system_admin auctioneer"`
+}
+
 // UpdateAdminStatusRequest represents the request body for status update
 type UpdateAdminStatusRequest struct {
 	Status AdminStatus `json:"status" binding:"required"`

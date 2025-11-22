@@ -774,10 +774,10 @@ frontend/src/
 ## 16. 実装手順
 
 ### Phase 1: バックエンド基盤（2-3時間）
-- [ ] データモデルの定義（AdminCreateRequest, AdminResponse）
-- [ ] Repository層の実装（CreateAdmin, FindByEmail）
-- [ ] Service層の実装（RegisterAdmin、メール重複チェック、パスワードハッシュ化）
-- [ ] バリデーション関数の実装
+- [x] データモデルの定義（AdminCreateRequest, AdminResponse）
+- [x] Repository層の実装（CreateAdmin, FindByEmail）
+- [x] Service層の実装（RegisterAdmin、メール重複チェック、パスワードハッシュ化）
+- [x] バリデーション関数の実装
 
 ### Phase 2: バックエンドAPI（1-2時間）
 - [ ] Handler層の実装（POST /api/admins）
