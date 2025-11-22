@@ -140,6 +140,43 @@ func (h *AdminHandler) GetCurrentAdmin(c *gin.Context) {
 	})
 }
 
+// RegisterAdmin handles POST /api/admins
+func (h *AdminHandler) RegisterAdmin(c *gin.Context) {
+	// Parse request body
+	var req domain.AdminCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Call service
+	admin, err := h.adminService.RegisterAdmin(&req)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrEmailAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Error: "Email already exists",
+			})
+		case errors.Is(err, service.ErrInvalidRole):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Invalid role value",
+			})
+		default:
+			// Log internal errors but don't expose details to client
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusCreated, admin)
+}
+
 // UpdateAdminStatus handles PATCH /api/admins/:id/status
 func (h *AdminHandler) UpdateAdminStatus(c *gin.Context) {
 	// Parse admin ID from URL parameter

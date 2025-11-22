@@ -82,6 +82,8 @@ func main() {
 			systemAdmin := protected.Group("")
 			systemAdmin.Use(middleware.RequireSystemAdmin())
 			{
+				// 管理者登録
+				systemAdmin.POST("/admin/admins", adminHandler.RegisterAdmin)
 				// 管理者一覧取得
 				systemAdmin.GET("/admin/admins", adminHandler.GetAdminList)
 				// 管理者状態変更

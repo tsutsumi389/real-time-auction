@@ -336,13 +336,13 @@
 
 ### 7.1 管理者登録API
 
-**エンドポイント**: `POST /api/admins`
+**エンドポイント**: `POST /api/admin/admins`
 
 **認証**: 必須（JWT、system_adminロール）
 
 **リクエスト形式**:
 ```
-POST /api/admins
+POST /api/admin/admins
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 
@@ -406,13 +406,13 @@ Content-Type: application/json
 
 ### 7.3 メールアドレス重複チェックAPI（オプション）
 
-**エンドポイント**: `GET /api/admins/check-email?email=<EMAIL>`
+**エンドポイント**: `GET /api/admin/admins/check-email?email=<EMAIL>`
 
 **認証**: 必須（JWT、system_adminロール）
 
 **リクエスト形式**:
 ```
-GET /api/admins/check-email?email=test@example.com
+GET /api/admin/admins/check-email?email=test@example.com
 Authorization: Bearer <JWT_TOKEN>
 ```
 
@@ -780,9 +780,9 @@ frontend/src/
 - [x] バリデーション関数の実装
 
 ### Phase 2: バックエンドAPI（1-2時間）
-- [ ] Handler層の実装（POST /api/admins）
-- [ ] ルーティング設定（system_adminロール検証ミドルウェア適用）
-- [ ] エラーハンドリングの実装
+- [x] Handler層の実装（POST /api/admin/admins）
+- [x] ルーティング設定（system_adminロール検証ミドルウェア適用）
+- [x] エラーハンドリングの実装
 - [ ] 手動テスト（curlまたはPostman）
 
 ### Phase 3: フロントエンド基盤（2-3時間）
