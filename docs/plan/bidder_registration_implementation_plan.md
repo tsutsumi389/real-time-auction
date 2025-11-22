@@ -947,10 +947,10 @@ frontend/src/
 ## 16. 実装手順
 
 ### Phase 1: バックエンド基盤（2-3時間）
-- [ ] データモデルの定義（BidderCreateRequest, BidderResponse, PointsInfo, BidderPointsCreate, PointHistoryCreate）
-- [ ] Repository層の実装（CreateBidder, FindByEmail, CreateBidderPoints, CreatePointHistory）
-- [ ] Service層の実装（RegisterBidder、メール重複チェック、パスワードハッシュ化、ポイントレコード作成、履歴記録）
-- [ ] バリデーション関数の実装
+- [x] データモデルの定義（BidderCreateRequest, BidderResponse, PointsInfo, BidderPointsCreate, PointHistoryCreate）
+- [x] Repository層の実装（CreateBidder, FindByEmail, CreateBidderPoints, CreatePointHistory）
+- [x] Service層の実装（RegisterBidder、メール重複チェック、パスワードハッシュ化、ポイントレコード作成、履歴記録）
+- [x] バリデーション関数の実装
 
 ### Phase 2: バックエンドAPI（1-2時間）
 - [ ] Handler層の実装（POST /api/admin/bidders）
