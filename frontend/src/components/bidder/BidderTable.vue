@@ -89,8 +89,8 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {{ bidder.display_name || '（未設定）' }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ formatPoints(bidder.total_points) }}
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
+              {{ formatPoints(bidder.points) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
               <AdminStatusBadge :status="bidder.status" />
@@ -175,7 +175,7 @@ function formatId(uuid) {
 
 // ポイントを3桁区切りで表示
 function formatPoints(points) {
-  return points.toLocaleString('ja-JP')
+  return (points || 0).toLocaleString('ja-JP')
 }
 
 function formatDate(dateString) {

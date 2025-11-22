@@ -35,7 +35,7 @@
                     <span class="font-medium">表示名:</span> {{ bidder?.display_name || '（未設定）' }}
                   </p>
                   <p class="text-sm text-gray-700 mt-1">
-                    <span class="font-medium">現在のポイント:</span> {{ formatPoints(bidder?.total_points || 0) }}
+                    <span class="font-medium">現在のポイント:</span> {{ formatPoints(bidder?.points || 0) }}
                   </p>
                 </div>
 
@@ -61,7 +61,7 @@
                 <div v-if="points > 0 && !pointsError" class="bg-blue-50 p-3 rounded">
                   <p class="text-sm text-blue-700">
                     <span class="font-medium">付与後のポイント:</span>
-                    {{ formatPoints((bidder?.total_points || 0) + points) }}
+                    {{ formatPoints((bidder?.points || 0) + points) }}
                   </p>
                 </div>
               </div>

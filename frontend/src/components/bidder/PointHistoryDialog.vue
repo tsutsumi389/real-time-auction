@@ -29,7 +29,7 @@
                 <span class="font-medium">表示名:</span> {{ bidder?.display_name || '（未設定）' }}
               </p>
               <p class="text-sm text-gray-700 mt-1">
-                <span class="font-medium">現在のポイント:</span> {{ formatPoints(bidder?.total_points || 0) }}
+                <span class="font-medium">現在のポイント:</span> {{ formatPoints(bidder?.points || 0) }}
               </p>
             </div>
 
