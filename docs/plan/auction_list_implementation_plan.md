@@ -1042,16 +1042,16 @@ frontend/src/
 - [x] ルーティング設定（/admin/auctions）と認証ガード
 
 ### Phase 3: フロントエンドUI（5-6時間）
-- [ ] AuctionListView.vueの実装
-- [ ] AuctionTable.vueの実装
-- [ ] AuctionTableRow.vueの実装
-- [ ] AuctionFilters.vueの実装
-- [ ] AuctionSearchBar.vueの実装
-- [ ] AuctionStatusBadge.vueの実装
-- [ ] AuctionStartDialog.vueの実装
-- [ ] AuctionEndDialog.vueの実装
-- [ ] AuctionCancelDialog.vueの実装
-- [ ] ページネーションUIの実装
+- [x] AuctionListView.vueの実装
+- [x] AuctionTable.vueの実装
+- [x] AuctionTableRow.vueの実装
+- [x] AuctionFilters.vueの実装
+- [x] AuctionSearchBar.vueの実装
+- [x] AuctionStatusBadge.vueの実装
+- [x] AuctionStartDialog.vueの実装
+- [x] AuctionEndDialog.vueの実装
+- [x] AuctionCancelDialog.vueの実装
+- [x] ページネーションUIの実装
 
 ### Phase 4: テストと検証（3-4時間）
 - [ ] バックエンドユニットテストの作成

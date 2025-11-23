@@ -16,4 +16,8 @@ var (
 	ErrInvalidAuctionStatus      = errors.New("invalid auction status")
 	ErrAuctionNotPending         = errors.New("auction is not in pending status")
 	ErrAuctionNotActive          = errors.New("auction is not in active status")
+	ErrInvalidPage               = errors.New("invalid page number")
+	ErrInvalidLimit              = errors.New("invalid limit")
+	ErrInvalidSortMode           = errors.New("invalid sort mode")
+	ErrInvalidStatus             = errors.New("invalid status")
 )

@@ -70,12 +70,12 @@ export const useAuctionStore = defineStore('auction', () => {
 
       const response = await getAuctionList(filteredParams)
 
-      auctions.value = response.auctions
+      auctions.value = response.auctions || []
       pagination.value = {
-        currentPage: response.pagination.page,
-        totalPages: response.pagination.total_pages,
-        totalItems: response.pagination.total,
-        itemsPerPage: response.pagination.limit,
+        currentPage: response.pagination?.page || 1,
+        totalPages: response.pagination?.total_pages || 1,
+        totalItems: response.pagination?.total || 0,
+        itemsPerPage: response.pagination?.limit || 20,
       }
 
       loading.value = false
@@ -83,6 +83,7 @@ export const useAuctionStore = defineStore('auction', () => {
     } catch (err) {
       loading.value = false
       error.value = err.message || 'オークション一覧の取得に失敗しました'
+      auctions.value = []
       return false
     }
   }
