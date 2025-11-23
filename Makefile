@@ -54,6 +54,11 @@ setup: ## 初回セットアップ (.env作成)
 up: setup ## 全サービスを起動
 	$(COMPOSE) up -d
 	@echo ""
+	@echo "Installing frontend dependencies..."
+	@$(COMPOSE) exec -T $(SERVICE_FRONTEND) npm install || true
+	@echo "Restarting frontend service..."
+	@$(COMPOSE) restart $(SERVICE_FRONTEND)
+	@echo ""
 	@echo "✓ Services are starting..."
 	@echo ""
 	@echo "Access URLs:"
