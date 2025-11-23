@@ -903,10 +903,10 @@ frontend/src/
 - [x] バリデーションヘルパーの実装
 
 ### Phase 3: フロントエンドUI（6-8時間）
-- [ ] AuctionCreateView.vueの実装
-- [ ] AuctionBasicInfo.vueの実装
-- [ ] ItemList.vueの実装
-- [ ] ItemForm.vueの実装（商品名と商品説明のみ）
+- [x] AuctionCreateView.vueの実装
+- [x] AuctionBasicInfo.vueの実装
+- [x] ItemList.vueの実装
+- [x] ItemForm.vueの実装（商品名と商品説明のみ）
 
 ### Phase 4: テストと検証（2-3時間）
 - [ ] バックエンドユニットテストの作成
