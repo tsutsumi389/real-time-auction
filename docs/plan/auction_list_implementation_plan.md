@@ -1029,11 +1029,11 @@ frontend/src/
 ## 20. 実装手順
 
 ### Phase 1: バックエンドAPI（4-5時間）
-- [ ] Domain層にAuctionListRequest、AuctionListResponse、AuctionWithDetails、Pagination構造体を定義
-- [ ] Repository層にフィルタ付き一覧取得、総件数取得、状態更新メソッドを実装
-- [ ] Service層に一覧取得、開始、終了、中止ロジックを実装
-- [ ] Handler層に一覧取得、開始、終了、中止エンドポイントを実装
-- [ ] ルーティング設定とミドルウェア適用
+- [x] Domain層にAuctionListRequest、AuctionListResponse、AuctionWithDetails、Pagination構造体を定義
+- [x] Repository層にフィルタ付き一覧取得、総件数取得、状態更新メソッドを実装
+- [x] Service層に一覧取得、開始、終了、中止ロジックを実装
+- [x] Handler層に一覧取得、開始、終了、中止エンドポイントを実装
+- [x] ルーティング設定とミドルウェア適用
 - [ ] 手動テスト（curlまたはPostman）
 
 ### Phase 2: フロントエンド基盤（2-3時間）
