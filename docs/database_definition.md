@@ -226,7 +226,7 @@ ALTER TABLE bidder_points ADD CONSTRAINT chk_bidder_points_balance
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
-| id | BIGSERIAL | NO | - | オークションID (主キー) |
+| id | UUID | NO | gen_random_uuid() | オークションID (主キー) |
 | title | VARCHAR(200) | NO | - | オークションタイトル |
 | description | TEXT | YES | NULL | オークション説明 |
 | status | VARCHAR(20) | NO | 'pending' | 状態 (pending/active/ended/cancelled) |
@@ -264,8 +264,8 @@ ALTER TABLE auctions ADD CONSTRAINT chk_auctions_dates
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
-| id | BIGSERIAL | NO | - | 商品ID (主キー) |
-| auction_id | BIGINT | NO | - | オークションID (外部キー) |
+| id | UUID | NO | gen_random_uuid() | 商品ID (主キー) |
+| auction_id | UUID | NO | - | オークションID (外部キー) |
 | name | VARCHAR(200) | NO | - | 商品名 |
 | description | TEXT | YES | NULL | 商品説明 |
 | metadata | JSONB | YES | NULL | 商品詳細情報 (JSON形式、自由フォーマット) |
@@ -325,7 +325,7 @@ ALTER TABLE items ADD CONSTRAINT fk_items_auction
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
 | id | BIGSERIAL | NO | - | メディアID (主キー) |
-| item_id | BIGINT | NO | - | 商品ID (外部キー) |
+| item_id | UUID | NO | - | 商品ID (外部キー) |
 | media_type | VARCHAR(20) | NO | - | メディア種別 (image/video) |
 | url | VARCHAR(500) | NO | - | メディアURL (S3等) |
 | thumbnail_url | VARCHAR(500) | YES | NULL | サムネイルURL (動画の場合) |
@@ -365,7 +365,7 @@ INSERT INTO item_media (item_id, media_type, url, display_order) VALUES
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
 | id | BIGSERIAL | NO | - | 入札ID (主キー) |
-| auction_id | BIGINT | NO | - | オークションID (外部キー) |
+| auction_id | UUID | NO | - | オークションID (外部キー) |
 | bidder_id | UUID | NO | - | 入札者ID (外部キー) |
 | price | BIGINT | NO | - | 入札価格 |
 | bid_at | TIMESTAMPTZ | NO | NOW() | 入札日時 |
@@ -400,7 +400,7 @@ ALTER TABLE bids ADD CONSTRAINT chk_bids_price_positive
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
 | id | BIGSERIAL | NO | - | 履歴ID (主キー) |
-| auction_id | BIGINT | NO | - | オークションID (外部キー) |
+| auction_id | UUID | NO | - | オークションID (外部キー) |
 | price | BIGINT | NO | - | 開示価格 |
 | opened_by | BIGINT | NO | - | 開示者ID (外部キー: admins) |
 | opened_at | TIMESTAMPTZ | NO | NOW() | 開示日時 |
@@ -433,7 +433,7 @@ ALTER TABLE price_history ADD CONSTRAINT chk_price_history_price_positive
 | amount | BIGINT | NO | - | ポイント増減量 (正: 増加、負: 減少) |
 | type | VARCHAR(50) | NO | - | 種別 (grant/reserve/release/consume/refund) |
 | reason | TEXT | YES | NULL | 理由・備考 |
-| related_auction_id | BIGINT | YES | NULL | 関連オークションID (外部キー) |
+| related_auction_id | UUID | YES | NULL | 関連オークションID (外部キー) |
 | related_bid_id | BIGINT | YES | NULL | 関連入札ID (外部キー) |
 | admin_id | BIGINT | YES | NULL | 実行管理者ID (外部キー: admins) |
 | balance_before | BIGINT | NO | - | 操作前の利用可能ポイント |
