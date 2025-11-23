@@ -10,12 +10,8 @@ import (
 )
 
 var (
-	ErrAdminNotFound   = errors.New("admin not found")
-	ErrInvalidStatus   = errors.New("invalid status value")
-	ErrInvalidRole     = errors.New("invalid role value")
-	ErrInvalidPage     = errors.New("page must be greater than 0")
-	ErrInvalidLimit    = errors.New("limit must be between 1 and 100")
-	ErrInvalidSortMode = errors.New("invalid sort mode")
+	ErrAdminNotFound = errors.New("admin not found")
+	ErrInvalidRole   = errors.New("invalid role value")
 )
 
 // AdminService handles admin-related business logic
