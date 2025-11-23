@@ -230,32 +230,18 @@ ALTER TABLE bidder_points ADD CONSTRAINT chk_bidder_points_balance
 | title | VARCHAR(200) | NO | - | オークションタイトル |
 | description | TEXT | YES | NULL | オークション説明 |
 | status | VARCHAR(20) | NO | 'pending' | 状態 (pending/active/ended/cancelled) |
-| starting_price | BIGINT | YES | NULL | 開始価格 |
-| current_price | BIGINT | YES | NULL | 現在の開示価格 |
-| winner_id | UUID | YES | NULL | 落札者ID (外部キー) |
-| started_at | TIMESTAMPTZ | YES | NULL | 開始日時 |
-| ended_at | TIMESTAMPTZ | YES | NULL | 終了日時 |
 | created_at | TIMESTAMPTZ | NO | NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NO | NOW() | 更新日時 |
 
 **インデックス**
 ```sql
 CREATE INDEX idx_auctions_status ON auctions(status);
-CREATE INDEX idx_auctions_started_at ON auctions(started_at);
-CREATE INDEX idx_auctions_ended_at ON auctions(ended_at);
-CREATE INDEX idx_auctions_winner ON auctions(winner_id);
 ```
 
 **制約**
 ```sql
-ALTER TABLE auctions ADD CONSTRAINT fk_auctions_winner 
-  FOREIGN KEY (winner_id) REFERENCES bidders(id) ON DELETE SET NULL;
 ALTER TABLE auctions ADD CONSTRAINT chk_auctions_status 
   CHECK (status IN ('pending', 'active', 'ended', 'cancelled'));
-ALTER TABLE auctions ADD CONSTRAINT chk_auctions_price_positive 
-  CHECK (starting_price IS NULL OR starting_price > 0);
-ALTER TABLE auctions ADD CONSTRAINT chk_auctions_dates 
-  CHECK (ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at);
 ```
 
 ### 5. items (商品)
@@ -269,6 +255,11 @@ ALTER TABLE auctions ADD CONSTRAINT chk_auctions_dates
 | name | VARCHAR(200) | NO | - | 商品名 |
 | description | TEXT | YES | NULL | 商品説明 |
 | metadata | JSONB | YES | NULL | 商品詳細情報 (JSON形式、自由フォーマット) |
+| starting_price | BIGINT | YES | NULL | 開始価格 |
+| current_price | BIGINT | YES | NULL | 現在の開示価格 |
+| winner_id | UUID | YES | NULL | 落札者ID (外部キー) |
+| started_at | TIMESTAMPTZ | YES | NULL | 開始日時 |
+| ended_at | TIMESTAMPTZ | YES | NULL | 終了日時 |
 | created_at | TIMESTAMPTZ | NO | NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NO | NOW() | 更新日時 |
 
@@ -276,12 +267,21 @@ ALTER TABLE auctions ADD CONSTRAINT chk_auctions_dates
 ```sql
 CREATE INDEX idx_items_auction ON items(auction_id);
 CREATE INDEX idx_items_metadata ON items USING GIN(metadata);
+CREATE INDEX idx_items_started_at ON items(started_at);
+CREATE INDEX idx_items_ended_at ON items(ended_at);
+CREATE INDEX idx_items_winner ON items(winner_id);
 ```
 
 **制約**
 ```sql
 ALTER TABLE items ADD CONSTRAINT fk_items_auction 
   FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE;
+ALTER TABLE items ADD CONSTRAINT fk_items_winner 
+  FOREIGN KEY (winner_id) REFERENCES bidders(id) ON DELETE SET NULL;
+ALTER TABLE items ADD CONSTRAINT chk_items_price_positive 
+  CHECK (starting_price IS NULL OR starting_price > 0);
+ALTER TABLE items ADD CONSTRAINT chk_items_dates 
+  CHECK (ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at);
 ```
 
 **metadata JSON例（競走馬の場合）**
@@ -360,12 +360,12 @@ INSERT INTO item_media (item_id, media_type, url, display_order) VALUES
 
 ### 7. bids (入札)
 
-入札履歴を管理するテーブル。
+入札履歴を管理するテーブル。商品(item)ごとに入札が記録されます。
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
 | id | BIGSERIAL | NO | - | 入札ID (主キー) |
-| auction_id | UUID | NO | - | オークションID (外部キー) |
+| item_id | UUID | NO | - | 商品ID (外部キー) |
 | bidder_id | UUID | NO | - | 入札者ID (外部キー) |
 | price | BIGINT | NO | - | 入札価格 |
 | bid_at | TIMESTAMPTZ | NO | NOW() | 入札日時 |
@@ -373,16 +373,16 @@ INSERT INTO item_media (item_id, media_type, url, display_order) VALUES
 
 **インデックス**
 ```sql
-CREATE INDEX idx_bids_auction ON bids(auction_id, bid_at DESC);
+CREATE INDEX idx_bids_item ON bids(item_id, bid_at DESC);
 CREATE INDEX idx_bids_bidder ON bids(bidder_id, bid_at DESC);
-CREATE INDEX idx_bids_winning ON bids(auction_id, is_winning) WHERE is_winning = TRUE;
-CREATE INDEX idx_bids_auction_bidder ON bids(auction_id, bidder_id);
+CREATE INDEX idx_bids_winning ON bids(item_id, is_winning) WHERE is_winning = TRUE;
+CREATE INDEX idx_bids_item_bidder ON bids(item_id, bidder_id);
 ```
 
 **制約**
 ```sql
-ALTER TABLE bids ADD CONSTRAINT fk_bids_auction 
-  FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE;
+ALTER TABLE bids ADD CONSTRAINT fk_bids_item 
+  FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE;
 ALTER TABLE bids ADD CONSTRAINT fk_bids_bidder 
   FOREIGN KEY (bidder_id) REFERENCES bidders(id) ON DELETE CASCADE;
 ALTER TABLE bids ADD CONSTRAINT chk_bids_price_positive 
@@ -390,12 +390,13 @@ ALTER TABLE bids ADD CONSTRAINT chk_bids_price_positive
 ```
 
 **説明**
-- `is_winning`: オークション終了時、TRUEのレコードが落札入札となる
+- `is_winning`: 商品のオークション終了時、TRUEのレコードが落札入札となる
 - 同一価格で複数入札があった場合、最も早い `bid_at` が優先
+- `item_id`: 入札対象の商品を直接参照
 
 ### 8. price_history (価格開示履歴)
 
-主催者による価格開示の履歴を管理するテーブル。
+主催者による価格開示の履歴を管理するテーブル。商品(item)ごとに価格開示が記録されます（将来的にitem_idカラム追加を検討）。
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 |
 |---------|---------|------|-----------|------|
@@ -553,20 +554,22 @@ SELECT
     a.title,
     a.description,
     a.status,
-    a.current_price,
-    a.started_at,
+    i.id AS item_id,
     i.name AS item_name,
+    i.current_price,
+    i.started_at,
+    i.ended_at,
     (SELECT url FROM item_media WHERE item_id = i.id ORDER BY display_order LIMIT 1) AS main_image_url,
     COUNT(DISTINCT b.bidder_id) AS bidder_count,
     MAX(b.bid_at) AS last_bid_at,
     bd.display_name AS winner_name
 FROM auctions a
 LEFT JOIN items i ON a.id = i.auction_id
-LEFT JOIN bids b ON a.id = b.auction_id
-LEFT JOIN bidders bd ON a.winner_id = bd.id
+LEFT JOIN bids b ON i.id = b.item_id
+LEFT JOIN bidders bd ON i.winner_id = bd.id
 WHERE a.status IN ('active', 'ended')
-GROUP BY a.id, i.id, i.name, bd.display_name
-ORDER BY a.started_at DESC;
+GROUP BY a.id, i.id, i.name, i.current_price, i.started_at, i.ended_at, bd.display_name
+ORDER BY i.started_at DESC;
 ```
 
 ### 2. bidder_auction_summary (入札者ごとのオークション参加状況)
@@ -579,13 +582,13 @@ SELECT
     bd.display_name,
     bp.available_points,
     bp.reserved_points,
-    COUNT(DISTINCT b.auction_id) AS participated_auctions,
-    COUNT(DISTINCT CASE WHEN a.winner_id = bd.id THEN a.id END) AS won_auctions,
-    COALESCE(SUM(CASE WHEN a.winner_id = bd.id THEN a.current_price END), 0) AS total_won_amount
+    COUNT(DISTINCT i.auction_id) AS participated_auctions,
+    COUNT(DISTINCT CASE WHEN i.winner_id = bd.id THEN i.id END) AS won_items,
+    COALESCE(SUM(CASE WHEN i.winner_id = bd.id THEN i.current_price END), 0) AS total_won_amount
 FROM bidders bd
 LEFT JOIN bidder_points bp ON bd.id = bp.bidder_id
 LEFT JOIN bids b ON bd.id = b.bidder_id
-LEFT JOIN auctions a ON b.auction_id = a.id AND a.status = 'ended'
+LEFT JOIN items i ON b.item_id = i.id AND i.ended_at IS NOT NULL
 GROUP BY bd.id, bd.email, bd.display_name, bp.available_points, bp.reserved_points;
 ```
 
@@ -725,8 +728,8 @@ db.SetConnMaxLifetime(time.Hour)
 EXPLAIN ANALYZE
 SELECT b.id, b.price, b.bid_at, b.is_winning, a.title, i.name
 FROM bids b
-JOIN auctions a ON b.auction_id = a.id
-JOIN items i ON a.id = i.auction_id
+JOIN items i ON b.item_id = i.id
+JOIN auctions a ON i.auction_id = a.id
 WHERE b.bidder_id = $1
 ORDER BY b.bid_at DESC
 LIMIT 20;
@@ -739,6 +742,11 @@ SELECT
     i.name AS item_name,
     i.description AS item_description,
     i.metadata AS item_metadata,
+    i.starting_price,
+    i.current_price,
+    i.winner_id,
+    i.started_at AS item_started_at,
+    i.ended_at AS item_ended_at,
     COUNT(DISTINCT b.id) AS total_bids,
     MAX(b.bid_at) AS last_bid_at,
     json_agg(
@@ -752,10 +760,10 @@ SELECT
     ) FILTER (WHERE im.id IS NOT NULL) AS media
 FROM auctions a
 LEFT JOIN items i ON a.id = i.auction_id
-LEFT JOIN bids b ON a.id = b.auction_id
+LEFT JOIN bids b ON i.id = b.item_id
 LEFT JOIN item_media im ON i.id = im.item_id
 WHERE a.id = $1
-GROUP BY a.id, i.id, i.name, i.description, i.metadata;
+GROUP BY a.id, i.id, i.name, i.description, i.metadata, i.starting_price, i.current_price, i.winner_id, i.started_at, i.ended_at;
 
 -- ポイント履歴取得クエリ (入札者ごと、ページング対応)
 EXPLAIN ANALYZE
