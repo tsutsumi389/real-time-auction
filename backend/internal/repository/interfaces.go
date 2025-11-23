@@ -36,4 +36,7 @@ type AuctionRepositoryInterface interface {
 	UpdateAuctionStatus(id string, status domain.AuctionStatus) error
 	CountItemsByAuctionID(auctionID string) (int64, error)
 	FindItemsByAuctionID(auctionID string) ([]domain.Item, error)
+	CreateAuction(auction *domain.Auction) error
+	CreateItems(items []domain.Item) error
+	CreateAuctionWithItems(auction *domain.Auction, items []domain.Item) error
 }

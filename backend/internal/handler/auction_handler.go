@@ -188,3 +188,28 @@ func (h *AuctionHandler) CancelAuction(c *gin.Context) {
 	// Return successful response
 	c.JSON(http.StatusOK, auction)
 }
+
+// CreateAuction handles POST /api/admin/auctions
+func (h *AuctionHandler) CreateAuction(c *gin.Context) {
+	// Parse request body
+	var req domain.CreateAuctionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Call service
+	response, err := h.auctionService.CreateAuction(&req)
+	if err != nil {
+		// Log internal errors but don't expose details to client
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error: "Internal server error",
+		})
+		return
+	}
+
+	// Return successful response with 201 Created
+	c.JSON(http.StatusCreated, response)
+}

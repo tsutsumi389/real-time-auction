@@ -116,6 +116,8 @@ func main() {
 			{
 				// オークション一覧取得
 				adminOrAuctioneer.GET("/admin/auctions", auctionHandler.GetAuctionList)
+				// オークション作成
+				adminOrAuctioneer.POST("/admin/auctions", auctionHandler.CreateAuction)
 				// オークション開始
 				adminOrAuctioneer.POST("/admin/auctions/:id/start", auctionHandler.StartAuction)
 				// オークション終了

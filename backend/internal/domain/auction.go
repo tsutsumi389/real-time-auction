@@ -58,3 +58,28 @@ type AuctionListResponse struct {
 	Auctions   []AuctionWithItemCount `json:"auctions"`
 	Pagination Pagination             `json:"pagination"`
 }
+
+// CreateItemRequest represents an item to be created with an auction
+type CreateItemRequest struct {
+	Name        string `json:"name" binding:"required,max=200"`
+	Description string `json:"description" binding:"max=2000"`
+	LotNumber   int    `json:"lot_number" binding:"required,min=0"`
+}
+
+// CreateAuctionRequest represents the request body for creating an auction
+type CreateAuctionRequest struct {
+	Title       string              `json:"title" binding:"required,max=200"`
+	Description string              `json:"description" binding:"max=2000"`
+	Items       []CreateItemRequest `json:"items" binding:"required,min=1,dive"`
+}
+
+// CreateAuctionResponse represents the response for creating an auction
+type CreateAuctionResponse struct {
+	ID          uuid.UUID     `json:"id"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Status      AuctionStatus `json:"status"`
+	ItemCount   int           `json:"item_count"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
+}
