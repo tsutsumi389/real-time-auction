@@ -1037,9 +1037,9 @@ frontend/src/
 - [ ] 手動テスト（curlまたはPostman）
 
 ### Phase 2: フロントエンド基盤（2-3時間）
-- [ ] auctionApi.tsにgetAuctionList、startAuction、endAuction、cancelAuctionを実装
-- [ ] auctionStore.tsに状態管理を実装
-- [ ] ルーティング設定（/admin/auctions）と認証ガード
+- [x] auctionApi.tsにgetAuctionList、startAuction、endAuction、cancelAuctionを実装
+- [x] auctionStore.tsに状態管理を実装
+- [x] ルーティング設定（/admin/auctions）と認証ガード
 
 ### Phase 3: フロントエンドUI（5-6時間）
 - [ ] AuctionListView.vueの実装

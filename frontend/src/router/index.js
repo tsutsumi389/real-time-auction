@@ -52,6 +52,12 @@ const router = createRouter({
       name: 'bidder-register',
       component: () => import('../views/admin/BidderRegisterView.vue'),
       meta: { requiresAuth: true, requireSystemAdmin: true }
+    },
+    {
+      path: '/admin/auctions',
+      name: 'auction-list',
+      component: () => import('../views/admin/AuctionListView.vue'),
+      meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
     }
   ]
 })
@@ -83,6 +89,13 @@ router.beforeEach(async (to, _from, next) => {
 
     // システム管理者権限が必要なルート
     if (to.meta.requireSystemAdmin && !authStore.isSystemAdmin) {
+      // 権限不足の場合はダッシュボードへリダイレクト
+      next({ name: 'admin-dashboard' })
+      return
+    }
+
+    // システム管理者またはオークショニア権限が必要なルート
+    if (to.meta.requireAdminOrAuctioneer && !authStore.isSystemAdmin && !authStore.isAuctioneer) {
       // 権限不足の場合はダッシュボードへリダイレクト
       next({ name: 'admin-dashboard' })
       return
