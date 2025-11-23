@@ -246,7 +246,7 @@
   - タイトル: 「オークションを公開しますか?」
   - 説明: 「オークションが入札者に公開されます。各商品の開始価格は商品詳細画面で個別に設定してください。」
   - ボタン: [キャンセル] [公開する]
-- 実行後、`POST /api/auctions/:id/start`を呼び出し
+- 実行後、`POST /api/admin/auctions/:id/start`を呼び出し
 - 成功後、`status`が`active`に変更、入札者にオークションが表示される
 
 **重要**: 開始価格はオークションレベルではなく、商品（items）レベルで管理されます。オークション開始前に各商品の`starting_price`を設定する必要があります。
@@ -261,7 +261,7 @@
 - クリックで確認モーダル表示
   - タイトル: 「オークションを終了しますか?」
   - ボタン: [キャンセル] [終了する]
-- 実行後、`POST /api/auctions/:id/end`を呼び出し
+- 実行後、`POST /api/admin/auctions/:id/end`を呼び出し
 - 成功後、`status`が`ended`に変更、オークション終了（入札者には引き続き表示されるが閲覧のみ可能）
 
 **表示条件**:
@@ -274,7 +274,7 @@
   - タイトル: 「オークションを中止しますか?」
   - 説明: 「オークションを中止します。入札者には引き続き表示されます。」
   - ボタン: [キャンセル] [中止する]
-- 実行後、`POST /api/auctions/:id/cancel`を呼び出し
+- 実行後、`POST /api/admin/auctions/:id/cancel`を呼び出し
 - 成功後、`status`が`cancelled`に変更、中止したオークションになる（入札者には引き続き表示されるが閲覧のみ可能）
 
 **表示条件**:
@@ -347,7 +347,7 @@
 4. 確認ボタンをクリック
   ↓
 5. バックエンドAPIにリクエスト送信
-   - POST /api/auctions/:id/start
+   - POST /api/admin/auctions/:id/start
   ↓
 6. バックエンドでデータ更新
    - auctionsテーブルのstatusを'active'に更新
@@ -369,7 +369,7 @@
 3. 確認ボタンをクリック
   ↓
 4. バックエンドAPIにリクエスト送信
-   - POST /api/auctions/:id/end
+   - POST /api/admin/auctions/:id/end
   ↓
 5. バックエンドでデータ更新
    - auctionsテーブルのstatusを'ended'に更新
@@ -514,7 +514,7 @@ WHERE
 
 ### 11.1 一覧取得API
 
-**エンドポイント**: `GET /api/auctions`
+**エンドポイント**: `GET /api/admin/auctions`
 
 **クエリパラメータ**:
 
@@ -530,7 +530,7 @@ WHERE
 
 **リクエスト例**:
 ```
-GET /api/auctions?page=1&limit=20&keyword=春季&status=active&sort=started_at_desc
+GET /api/admin/auctions?page=1&limit=20&keyword=春季&status=active&sort=started_at_desc
 Authorization: Bearer {JWT_TOKEN}
 ```
 
@@ -575,11 +575,11 @@ Authorization: Bearer {JWT_TOKEN}
 
 ### 11.2 オークション開始API
 
-**エンドポイント**: `POST /api/auctions/:id/start`
+**エンドポイント**: `POST /api/admin/auctions/:id/start`
 
 **リクエスト形式**:
 ```
-POST /api/auctions/550e8400-e29b-41d4-a716-446655440000/start
+POST /api/admin/auctions/550e8400-e29b-41d4-a716-446655440000/start
 Authorization: Bearer {JWT_TOKEN}
 Content-Type: application/json
 
@@ -615,11 +615,11 @@ Content-Type: application/json
 
 ### 11.3 オークション終了API
 
-**エンドポイント**: `POST /api/auctions/:id/end`
+**エンドポイント**: `POST /api/admin/auctions/:id/end`
 
 **リクエスト形式**:
 ```
-POST /api/auctions/550e8400-e29b-41d4-a716-446655440000/end
+POST /api/admin/auctions/550e8400-e29b-41d4-a716-446655440000/end
 Authorization: Bearer {JWT_TOKEN}
 ```
 
@@ -642,13 +642,13 @@ Authorization: Bearer {JWT_TOKEN}
 
 ### 11.4 オークション中止API
 
-**エンドポイント**: `POST /api/auctions/:id/cancel`
+**エンドポイント**: `POST /api/admin/auctions/:id/cancel`
 
 **権限**: system_adminのみ
 
 **リクエスト形式**:
 ```
-POST /api/auctions/550e8400-e29b-41d4-a716-446655440000/cancel
+POST /api/admin/auctions/550e8400-e29b-41d4-a716-446655440000/cancel
 Authorization: Bearer {JWT_TOKEN}
 ```
 
