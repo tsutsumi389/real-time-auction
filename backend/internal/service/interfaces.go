@@ -37,4 +37,5 @@ type AuctionServiceInterface interface {
 	StartAuction(id string) (*domain.AuctionWithItemCount, error)
 	EndAuction(id string) (*domain.AuctionWithItemCount, error)
 	CancelAuction(id string) (*domain.AuctionWithItemCount, error)
+	CreateAuction(req *domain.CreateAuctionRequest) (*domain.CreateAuctionResponse, error)
 }

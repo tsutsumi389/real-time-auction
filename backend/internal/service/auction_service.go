@@ -229,3 +229,42 @@ func (s *AuctionService) CancelAuction(id string) (*domain.AuctionWithItemCount,
 		UpdatedAt:   auction.UpdatedAt,
 	}, nil
 }
+
+// CreateAuction creates a new auction with items
+func (s *AuctionService) CreateAuction(req *domain.CreateAuctionRequest) (*domain.CreateAuctionResponse, error) {
+	// Create auction entity
+	auction := &domain.Auction{
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      domain.AuctionStatusPending,
+	}
+
+	// Create item entities
+	items := make([]domain.Item, len(req.Items))
+	for i, itemReq := range req.Items {
+		items[i] = domain.Item{
+			Name:        itemReq.Name,
+			Description: itemReq.Description,
+			LotNumber:   itemReq.LotNumber,
+		}
+	}
+
+	// Create auction with items in transaction
+	err := s.auctionRepo.CreateAuctionWithItems(auction, items)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build response
+	response := &domain.CreateAuctionResponse{
+		ID:          auction.ID,
+		Title:       auction.Title,
+		Description: auction.Description,
+		Status:      auction.Status,
+		ItemCount:   len(items),
+		CreatedAt:   auction.CreatedAt,
+		UpdatedAt:   auction.UpdatedAt,
+	}
+
+	return response, nil
+}

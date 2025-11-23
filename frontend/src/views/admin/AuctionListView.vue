@@ -1,9 +1,17 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- ヘッダー -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">オークション一覧</h1>
-      <p class="mt-2 text-sm text-gray-600">オークションの管理と状態変更</p>
+    <div class="mb-8 flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">オークション一覧</h1>
+        <p class="mt-2 text-sm text-gray-600">オークションの管理と状態変更</p>
+      </div>
+      <router-link
+        to="/admin/auctions/new"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        + 新規オークション作成
+      </router-link>
     </div>
 
     <!-- エラー表示 -->

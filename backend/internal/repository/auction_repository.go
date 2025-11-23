@@ -203,3 +203,39 @@ func (r *AuctionRepository) FindItemsByAuctionID(auctionID string) ([]domain.Ite
 
 	return items, nil
 }
+
+// CreateAuction creates a new auction
+func (r *AuctionRepository) CreateAuction(auction *domain.Auction) error {
+	return r.db.Create(auction).Error
+}
+
+// CreateItems creates multiple items for an auction
+func (r *AuctionRepository) CreateItems(items []domain.Item) error {
+	if len(items) == 0 {
+		return nil
+	}
+	return r.db.Create(&items).Error
+}
+
+// CreateAuctionWithItems creates an auction with items in a transaction
+func (r *AuctionRepository) CreateAuctionWithItems(auction *domain.Auction, items []domain.Item) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Create auction
+		if err := tx.Create(auction).Error; err != nil {
+			return err
+		}
+
+		// Create items if provided
+		if len(items) > 0 {
+			// Set auction_id for all items
+			for i := range items {
+				items[i].AuctionID = auction.ID
+			}
+			if err := tx.Create(&items).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}

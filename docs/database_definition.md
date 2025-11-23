@@ -255,6 +255,7 @@ ALTER TABLE auctions ADD CONSTRAINT chk_auctions_status
 | name | VARCHAR(200) | NO | - | 商品名 |
 | description | TEXT | YES | NULL | 商品説明 |
 | metadata | JSONB | YES | NULL | 商品詳細情報 (JSON形式、自由フォーマット) |
+| lot_number | INT | NO | - | ロット番号 (1から開始、オークション内でユニーク) |
 | starting_price | BIGINT | YES | NULL | 開始価格 |
 | current_price | BIGINT | YES | NULL | 現在の開示価格 |
 | winner_id | UUID | YES | NULL | 落札者ID (外部キー) |
@@ -270,6 +271,7 @@ CREATE INDEX idx_items_metadata ON items USING GIN(metadata);
 CREATE INDEX idx_items_started_at ON items(started_at);
 CREATE INDEX idx_items_ended_at ON items(ended_at);
 CREATE INDEX idx_items_winner ON items(winner_id);
+CREATE INDEX idx_items_auction_lot ON items(auction_id, lot_number);
 ```
 
 **制約**
@@ -282,6 +284,10 @@ ALTER TABLE items ADD CONSTRAINT chk_items_price_positive
   CHECK (starting_price IS NULL OR starting_price > 0);
 ALTER TABLE items ADD CONSTRAINT chk_items_dates 
   CHECK (ended_at IS NULL OR started_at IS NULL OR ended_at >= started_at);
+ALTER TABLE items ADD CONSTRAINT uk_items_auction_lot 
+  UNIQUE (auction_id, lot_number);
+ALTER TABLE items ADD CONSTRAINT chk_items_lot_number_positive 
+  CHECK (lot_number >= 1);
 ```
 
 **metadata JSON例（競走馬の場合）**
