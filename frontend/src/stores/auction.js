@@ -9,6 +9,7 @@ import {
   startAuction,
   endAuction,
   cancelAuction,
+  createAuction,
 } from '@/services/auctionApi'
 
 export const useAuctionStore = defineStore('auction', () => {
@@ -218,6 +219,41 @@ export const useAuctionStore = defineStore('auction', () => {
   }
 
   /**
+   * オークションを作成
+   * @param {object} data - オークション作成データ
+   * @param {string} data.title - オークションタイトル
+   * @param {string} data.description - オークション説明
+   * @param {Array<object>} data.items - 出品物リスト
+   * @returns {Promise<object|null>} 成功した場合は作成されたオークション情報、失敗した場合はnull
+   */
+  async function handleCreateAuction(data) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await createAuction(data)
+
+      // 一覧に新しいオークションを追加（先頭に挿入）
+      auctions.value.unshift({
+        id: response.id,
+        title: response.title,
+        description: response.description,
+        status: response.status,
+        item_count: response.item_count,
+        created_at: response.created_at,
+        updated_at: response.updated_at,
+      })
+
+      loading.value = false
+      return response
+    } catch (err) {
+      loading.value = false
+      error.value = err.message || 'オークションの作成に失敗しました'
+      return null
+    }
+  }
+
+  /**
    * エラーをクリア
    */
   function clearError() {
@@ -236,6 +272,7 @@ export const useAuctionStore = defineStore('auction', () => {
     handleStartAuction,
     handleEndAuction,
     handleCancelAuction,
+    handleCreateAuction,
     setFiltersAndFetch,
     changePage,
     changeSort,

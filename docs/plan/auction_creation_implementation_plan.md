@@ -897,10 +897,10 @@ frontend/src/
 - [ ] 手動テスト（curlまたはPostman）
 
 ### Phase 2: フロントエンド基盤（2-3時間）
-- [ ] auctionApi.tsにcreateAuctionを実装
-- [ ] router/index.tsに`/admin/auctions/new`ルートを追加
-- [ ] ルーティング設定（/admin/auctions/new）と認証ガード
-- [ ] バリデーションヘルパーの実装
+- [x] auctionApi.tsにcreateAuctionを実装
+- [x] router/index.tsに`/admin/auctions/new`ルートを追加
+- [x] ルーティング設定（/admin/auctions/new）と認証ガード
+- [x] バリデーションヘルパーの実装
 
 ### Phase 3: フロントエンドUI（6-8時間）
 - [ ] AuctionCreateView.vueの実装

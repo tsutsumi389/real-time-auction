@@ -50,3 +50,19 @@ export async function cancelAuction(auctionId) {
   const response = await apiClient.post(`/admin/auctions/${auctionId}/cancel`)
   return response.data
 }
+
+/**
+ * オークションを作成
+ * @param {object} data - オークション作成データ
+ * @param {string} data.title - オークションタイトル（必須、最大200文字）
+ * @param {string} data.description - オークション説明（任意、最大2000文字）
+ * @param {Array<object>} data.items - 出品物リスト（必須、最低1つ）
+ * @param {string} data.items[].name - 出品物名（必須、最大200文字）
+ * @param {string} data.items[].description - 出品物説明（任意、最大2000文字）
+ * @param {number} data.items[].lot_number - ロット番号（必須、0以上）
+ * @returns {Promise<object>} レスポンス（id, title, description, status, item_count, created_at, updated_at）
+ */
+export async function createAuction(data) {
+  const response = await apiClient.post('/admin/auctions', data)
+  return response.data
+}
