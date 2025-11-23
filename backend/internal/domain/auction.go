@@ -63,7 +63,7 @@ type AuctionListResponse struct {
 type CreateItemRequest struct {
 	Name        string `json:"name" binding:"required,max=200"`
 	Description string `json:"description" binding:"max=2000"`
-	LotNumber   int    `json:"lot_number" binding:"required,min=0"`
+	LotNumber   int    `json:"lot_number" binding:"required,min=1"`
 }
 
 // CreateAuctionRequest represents the request body for creating an auction

@@ -17,7 +17,7 @@ const basicInfo = ref({
 })
 
 const items = ref([
-  { name: '', description: '', lot_number: 0 }
+  { name: '', description: '', lot_number: 1 }
 ])
 
 // Validation errors
@@ -112,7 +112,7 @@ function validateForm() {
 
 // Item management
 function handleAddItem() {
-  const newLotNumber = items.value.length
+  const newLotNumber = items.value.length + 1
   items.value.push({
     name: '',
     description: '',
