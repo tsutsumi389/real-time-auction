@@ -32,17 +32,20 @@ func main() {
 	// リポジトリ初期化
 	adminRepo := repository.NewAdminRepository(db)
 	bidderRepo := repository.NewBidderRepository(db)
+	auctionRepo := repository.NewAuctionRepository(db)
 
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
 	authService := service.NewAuthService(adminRepo, jwtService)
 	adminService := service.NewAdminService(adminRepo)
 	bidderService := service.NewBidderService(bidderRepo)
+	auctionService := service.NewAuctionService(auctionRepo)
 
 	// ハンドラ初期化
 	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)
 	bidderHandler := handler.NewBidderHandler(bidderService)
+	auctionHandler := handler.NewAuctionHandler(auctionService)
 
 	// Ginルーター初期化
 	router := gin.Default()
@@ -102,6 +105,21 @@ func main() {
 				systemAdmin.GET("/admin/bidders/:id/points/history", bidderHandler.GetPointHistory)
 				// 入札者状態変更
 				systemAdmin.PATCH("/admin/bidders/:id/status", bidderHandler.UpdateBidderStatus)
+
+				// オークション中止（system_adminのみ）
+				systemAdmin.POST("/admin/auctions/:id/cancel", auctionHandler.CancelAuction)
+			}
+
+			// システム管理者と主催者がアクセス可能なエンドポイント
+			adminOrAuctioneer := protected.Group("")
+			adminOrAuctioneer.Use(middleware.RequireAdminOrAuctioneer())
+			{
+				// オークション一覧取得
+				adminOrAuctioneer.GET("/admin/auctions", auctionHandler.GetAuctionList)
+				// オークション開始
+				adminOrAuctioneer.POST("/admin/auctions/:id/start", auctionHandler.StartAuction)
+				// オークション終了
+				adminOrAuctioneer.POST("/admin/auctions/:id/end", auctionHandler.EndAuction)
 			}
 		}
 	}

@@ -118,6 +118,31 @@ func RequireAuctioneer() gin.HandlerFunc {
 	return RequireRole(domain.RoleAuctioneer)
 }
 
+// RequireAdminOrAuctioneer middleware ensures the user is either a system admin or auctioneer
+func RequireAdminOrAuctioneer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("role")
+		if !exists {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Role information not found",
+			})
+			c.Abort()
+			return
+		}
+
+		adminRole, ok := role.(domain.AdminRole)
+		if !ok || (adminRole != domain.RoleSystemAdmin && adminRole != domain.RoleAuctioneer) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Insufficient permissions",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // GetClaims retrieves JWT claims from the context
 func GetClaims(c *gin.Context) (*domain.JWTClaims, bool) {
 	claims, exists := c.Get("claims")
