@@ -1,0 +1,205 @@
+package repository
+
+import (
+	"errors"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/tsutsumi389/real-time-auction/internal/domain"
+	"gorm.io/gorm"
+)
+
+// AuctionRepository handles database operations for Auction entities
+type AuctionRepository struct {
+	db *gorm.DB
+}
+
+// NewAuctionRepository creates a new AuctionRepository instance
+func NewAuctionRepository(db *gorm.DB) *AuctionRepository {
+	return &AuctionRepository{db: db}
+}
+
+// FindByID finds an auction by ID
+func (r *AuctionRepository) FindByID(id string) (*domain.Auction, error) {
+	var auction domain.Auction
+	auctionID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	result := r.db.First(&auction, "id = ?", auctionID)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil // Return nil if not found (not an error condition)
+		}
+		return nil, result.Error
+	}
+
+	return &auction, nil
+}
+
+// FindAuctionsWithFilters retrieves auctions with item counts, filters, sorting, and pagination
+func (r *AuctionRepository) FindAuctionsWithFilters(req *domain.AuctionListRequest) ([]domain.AuctionWithItemCount, error) {
+	var results []domain.AuctionWithItemCount
+
+	query := r.db.Model(&domain.Auction{}).
+		Select(`auctions.id, auctions.title, auctions.description, auctions.status,
+			auctions.created_at, auctions.updated_at, COUNT(items.id) as item_count`).
+		Joins("LEFT JOIN items ON items.auction_id = auctions.id")
+
+	// Apply keyword filter (title and description search with ILIKE)
+	if req.Keyword != "" {
+		query = query.Where("(auctions.title ILIKE ? OR auctions.description ILIKE ?)",
+			"%"+req.Keyword+"%", "%"+req.Keyword+"%")
+	}
+
+	// Apply status filter
+	if req.Status != "" {
+		query = query.Where("auctions.status = ?", req.Status)
+	}
+
+	// Apply date range filters
+	if req.CreatedAfter != "" {
+		createdAfter, err := time.Parse("2006-01-02", req.CreatedAfter)
+		if err == nil {
+			query = query.Where("auctions.created_at >= ?", createdAfter)
+		}
+	}
+
+	if req.UpdatedBefore != "" {
+		updatedBefore, err := time.Parse("2006-01-02", req.UpdatedBefore)
+		if err == nil {
+			// Add 1 day to include the entire day
+			updatedBefore = updatedBefore.Add(24 * time.Hour)
+			query = query.Where("auctions.updated_at < ?", updatedBefore)
+		}
+	}
+
+	// Group by auction fields (required for COUNT aggregate)
+	query = query.Group("auctions.id, auctions.title, auctions.description, auctions.status, auctions.created_at, auctions.updated_at")
+
+	// Apply sorting
+	switch req.Sort {
+	case "created_at_asc":
+		query = query.Order("auctions.created_at ASC")
+	case "created_at_desc":
+		query = query.Order("auctions.created_at DESC")
+	case "updated_at_asc":
+		query = query.Order("auctions.updated_at ASC")
+	case "updated_at_desc":
+		query = query.Order("auctions.updated_at DESC")
+	case "id_asc":
+		query = query.Order("auctions.id ASC")
+	case "id_desc":
+		query = query.Order("auctions.id DESC")
+	default:
+		// Default: created_at descending (newest first)
+		query = query.Order("auctions.created_at DESC")
+	}
+
+	// Apply pagination
+	offset := (req.Page - 1) * req.Limit
+	query = query.Offset(offset).Limit(req.Limit)
+
+	// Execute query
+	result := query.Scan(&results)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return results, nil
+}
+
+// CountAuctionsWithFilters counts auctions matching the filters
+func (r *AuctionRepository) CountAuctionsWithFilters(req *domain.AuctionListRequest) (int64, error) {
+	var count int64
+
+	query := r.db.Model(&domain.Auction{})
+
+	// Apply keyword filter
+	if req.Keyword != "" {
+		query = query.Where("(title ILIKE ? OR description ILIKE ?)",
+			"%"+req.Keyword+"%", "%"+req.Keyword+"%")
+	}
+
+	// Apply status filter
+	if req.Status != "" {
+		query = query.Where("status = ?", req.Status)
+	}
+
+	// Apply date range filters
+	if req.CreatedAfter != "" {
+		createdAfter, err := time.Parse("2006-01-02", req.CreatedAfter)
+		if err == nil {
+			query = query.Where("created_at >= ?", createdAfter)
+		}
+	}
+
+	if req.UpdatedBefore != "" {
+		updatedBefore, err := time.Parse("2006-01-02", req.UpdatedBefore)
+		if err == nil {
+			// Add 1 day to include the entire day
+			updatedBefore = updatedBefore.Add(24 * time.Hour)
+			query = query.Where("updated_at < ?", updatedBefore)
+		}
+	}
+
+	// Execute count query
+	result := query.Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return count, nil
+}
+
+// UpdateAuctionStatus updates the status of an auction
+func (r *AuctionRepository) UpdateAuctionStatus(id string, status domain.AuctionStatus) error {
+	auctionID, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+
+	return r.db.Model(&domain.Auction{}).
+		Where("id = ?", auctionID).
+		Update("status", status).Error
+}
+
+// CountItemsByAuctionID counts items in an auction
+func (r *AuctionRepository) CountItemsByAuctionID(auctionID string) (int64, error) {
+	var count int64
+	id, err := uuid.Parse(auctionID)
+	if err != nil {
+		return 0, err
+	}
+
+	result := r.db.Model(&domain.Item{}).
+		Where("auction_id = ?", id).
+		Count(&count)
+
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return count, nil
+}
+
+// FindItemsByAuctionID retrieves all items for an auction
+func (r *AuctionRepository) FindItemsByAuctionID(auctionID string) ([]domain.Item, error) {
+	var items []domain.Item
+	id, err := uuid.Parse(auctionID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := r.db.Where("auction_id = ?", id).
+		Order("lot_number ASC").
+		Find(&items)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return items, nil
+}

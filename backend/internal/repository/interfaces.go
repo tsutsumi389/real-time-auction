@@ -27,3 +27,13 @@ type BidderRepositoryInterface interface {
 	UpdateBidderStatus(id string, status domain.BidderStatus) error
 	CreateBidderWithPoints(bidder *domain.Bidder, initialPoints int64, adminID int64) (*domain.BidderResponse, error)
 }
+
+// AuctionRepositoryInterface defines the interface for auction repository operations
+type AuctionRepositoryInterface interface {
+	FindByID(id string) (*domain.Auction, error)
+	FindAuctionsWithFilters(req *domain.AuctionListRequest) ([]domain.AuctionWithItemCount, error)
+	CountAuctionsWithFilters(req *domain.AuctionListRequest) (int64, error)
+	UpdateAuctionStatus(id string, status domain.AuctionStatus) error
+	CountItemsByAuctionID(auctionID string) (int64, error)
+	FindItemsByAuctionID(auctionID string) ([]domain.Item, error)
+}

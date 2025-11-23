@@ -30,3 +30,11 @@ type BidderServiceInterface interface {
 	GetPointHistory(bidderID string, page int, limit int) (*domain.PointHistoryListResponse, error)
 	UpdateBidderStatus(id string, status domain.BidderStatus) (*domain.Bidder, error)
 }
+
+// AuctionServiceInterface defines the interface for auction service operations
+type AuctionServiceInterface interface {
+	GetAuctionList(req *domain.AuctionListRequest) (*domain.AuctionListResponse, error)
+	StartAuction(id string) (*domain.AuctionWithItemCount, error)
+	EndAuction(id string) (*domain.AuctionWithItemCount, error)
+	CancelAuction(id string) (*domain.AuctionWithItemCount, error)
+}
