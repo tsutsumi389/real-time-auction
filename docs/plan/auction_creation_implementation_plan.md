@@ -889,11 +889,11 @@ frontend/src/
 ## 16. 実装手順
 
 ### Phase 1: バックエンドAPI（3-4時間）
-- [ ] Domain層にCreateAuctionRequest、CreateAuctionResponse構造体を定義
-- [ ] Repository層にCreateAuction、CreateItemsメソッドを実装
-- [ ] Service層にCreateAuctionロジックを実装（トランザクション管理）
-- [ ] Handler層にCreateAuctionHandlerを実装
-- [ ] ルーティング設定とミドルウェア適用
+- [x] Domain層にCreateAuctionRequest、CreateAuctionResponse構造体を定義
+- [x] Repository層にCreateAuction、CreateItemsメソッドを実装
+- [x] Service層にCreateAuctionロジックを実装（トランザクション管理）
+- [x] Handler層にCreateAuctionHandlerを実装
+- [x] ルーティング設定とミドルウェア適用
 - [ ] 手動テスト（curlまたはPostman）
 
 ### Phase 2: フロントエンド基盤（2-3時間）
