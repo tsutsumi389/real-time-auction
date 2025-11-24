@@ -13,21 +13,23 @@ const auctionStore = useAuctionStore()
 // Form data
 const basicInfo = ref({
   title: '',
-  description: ''
+  description: '',
+  started_at: ''
 })
 
 const items = ref([
-  { name: '', description: '', lot_number: 1 }
+  { name: '', description: '', lot_number: 1, starting_price: null }
 ])
 
 // Validation errors
 const basicInfoErrors = ref({
   title: '',
-  description: ''
+  description: '',
+  started_at: ''
 })
 
 const itemErrors = ref([
-  { name: '', description: '' }
+  { name: '', description: '', starting_price: '' }
 ])
 
 // Form state
@@ -54,13 +56,17 @@ function validateBasicInfoField(field) {
     }
     basicInfoErrors.value.description = ''
     return true
+  } else if (field === 'started_at') {
+    // started_at is optional, no validation needed
+    basicInfoErrors.value.started_at = ''
+    return true
   }
 }
 
 // Validation functions for items
 function validateItemField(index, field) {
   if (!itemErrors.value[index]) {
-    itemErrors.value[index] = { name: '', description: '' }
+    itemErrors.value[index] = { name: '', description: '', starting_price: '' }
   }
 
   if (field === 'name') {
@@ -81,6 +87,14 @@ function validateItemField(index, field) {
     }
     itemErrors.value[index].description = ''
     return true
+  } else if (field === 'starting_price') {
+    const price = items.value[index].starting_price
+    if (price !== null && price !== '' && price < 1) {
+      itemErrors.value[index].starting_price = '開始価格は1以上で入力してください'
+      return false
+    }
+    itemErrors.value[index].starting_price = ''
+    return true
   }
 }
 
@@ -97,12 +111,20 @@ function validateForm() {
     isValid = false
   }
 
+  // Validate started_at
+  if (!validateBasicInfoField('started_at')) {
+    isValid = false
+  }
+
   // Validate items
   items.value.forEach((_, index) => {
     if (!validateItemField(index, 'name')) {
       isValid = false
     }
     if (!validateItemField(index, 'description')) {
+      isValid = false
+    }
+    if (!validateItemField(index, 'starting_price')) {
       isValid = false
     }
   })
@@ -116,9 +138,10 @@ function handleAddItem() {
   items.value.push({
     name: '',
     description: '',
-    lot_number: newLotNumber
+    lot_number: newLotNumber,
+    starting_price: null
   })
-  itemErrors.value.push({ name: '', description: '' })
+  itemErrors.value.push({ name: '', description: '', starting_price: '' })
 }
 
 // Form submission
@@ -133,9 +156,16 @@ async function handleSubmit() {
   isSubmitting.value = true
 
   try {
+    // Format started_at to ISO 8601 if provided
+    let startedAt = null
+    if (basicInfo.value.started_at) {
+      startedAt = new Date(basicInfo.value.started_at).toISOString()
+    }
+
     const formData = {
       title: basicInfo.value.title,
       description: basicInfo.value.description,
+      started_at: startedAt,
       items: items.value
     }
 

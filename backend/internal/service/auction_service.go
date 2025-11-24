@@ -138,6 +138,7 @@ func (s *AuctionService) StartAuction(id string) (*domain.AuctionWithItemCount, 
 		Title:       auction.Title,
 		Description: auction.Description,
 		Status:      domain.AuctionStatusActive,
+		StartedAt:   auction.StartedAt,
 		ItemCount:   itemCount,
 		CreatedAt:   auction.CreatedAt,
 		UpdatedAt:   auction.UpdatedAt,
@@ -181,6 +182,7 @@ func (s *AuctionService) EndAuction(id string) (*domain.AuctionWithItemCount, er
 		Title:       auction.Title,
 		Description: auction.Description,
 		Status:      domain.AuctionStatusEnded,
+		StartedAt:   auction.StartedAt,
 		ItemCount:   itemCount,
 		CreatedAt:   auction.CreatedAt,
 		UpdatedAt:   auction.UpdatedAt,
@@ -224,6 +226,7 @@ func (s *AuctionService) CancelAuction(id string) (*domain.AuctionWithItemCount,
 		Title:       auction.Title,
 		Description: auction.Description,
 		Status:      domain.AuctionStatusCancelled,
+		StartedAt:   auction.StartedAt,
 		ItemCount:   itemCount,
 		CreatedAt:   auction.CreatedAt,
 		UpdatedAt:   auction.UpdatedAt,
@@ -237,15 +240,17 @@ func (s *AuctionService) CreateAuction(req *domain.CreateAuctionRequest) (*domai
 		Title:       req.Title,
 		Description: req.Description,
 		Status:      domain.AuctionStatusPending,
+		StartedAt:   req.StartedAt,
 	}
 
 	// Create item entities
 	items := make([]domain.Item, len(req.Items))
 	for i, itemReq := range req.Items {
 		items[i] = domain.Item{
-			Name:        itemReq.Name,
-			Description: itemReq.Description,
-			LotNumber:   itemReq.LotNumber,
+			Name:          itemReq.Name,
+			Description:   itemReq.Description,
+			LotNumber:     itemReq.LotNumber,
+			StartingPrice: itemReq.StartingPrice,
 		}
 	}
 
@@ -261,6 +266,7 @@ func (s *AuctionService) CreateAuction(req *domain.CreateAuctionRequest) (*domai
 		Title:       auction.Title,
 		Description: auction.Description,
 		Status:      auction.Status,
+		StartedAt:   auction.StartedAt,
 		ItemCount:   len(items),
 		CreatedAt:   auction.CreatedAt,
 		UpdatedAt:   auction.UpdatedAt,

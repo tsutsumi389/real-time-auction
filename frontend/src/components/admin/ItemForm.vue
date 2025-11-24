@@ -8,7 +8,7 @@ const props = defineProps({
   modelValue: {
     type: Object,
     required: true,
-    default: () => ({ name: '', description: '', lot_number: 0 })
+    default: () => ({ name: '', description: '', lot_number: 0, starting_price: null })
   },
   index: {
     type: Number,
@@ -16,7 +16,7 @@ const props = defineProps({
   },
   errors: {
     type: Object,
-    default: () => ({ name: '', description: '' })
+    default: () => ({ name: '', description: '', starting_price: '' })
   },
   canMoveUp: {
     type: Boolean,
@@ -47,12 +47,24 @@ function updateDescription(event) {
   localValue.value = { ...localValue.value, description: event.target.value }
 }
 
+function updateStartingPrice(event) {
+  const value = event.target.value
+  localValue.value = { 
+    ...localValue.value, 
+    starting_price: value === '' ? null : parseInt(value, 10)
+  }
+}
+
 function handleNameBlur() {
   emit('validate', 'name')
 }
 
 function handleDescriptionBlur() {
   emit('validate', 'description')
+}
+
+function handleStartingPriceBlur() {
+  emit('validate', 'starting_price')
 }
 
 function handleMoveUp() {
@@ -143,6 +155,25 @@ function handleDelete() {
           {{ errors.description }}
         </p>
         <p class="text-gray-500 text-sm mt-1">{{ localValue.description.length }}/2000文字</p>
+      </div>
+
+      <!-- Starting Price -->
+      <div>
+        <Label :for="`item-starting-price-${index}`">開始価格</Label>
+        <Input
+          :id="`item-starting-price-${index}`"
+          :value="localValue.starting_price || ''"
+          @input="updateStartingPrice"
+          type="number"
+          placeholder="例: 5000000"
+          min="1"
+          @blur="handleStartingPriceBlur"
+          :class="{ 'border-red-500': errors.starting_price }"
+        />
+        <p v-if="errors.starting_price" class="text-red-500 text-sm mt-1">
+          {{ errors.starting_price }}
+        </p>
+        <p class="text-gray-500 text-sm mt-1">任意、単位: ポイント</p>
       </div>
     </div>
   </div>

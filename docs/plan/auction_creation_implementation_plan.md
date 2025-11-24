@@ -23,8 +23,8 @@
 - **system_admin（システム管理者）**: すべての機能にアクセス可能
 
 ### 1.3 主要機能
-1. オークション基本情報の入力（タイトル、説明）
-2. 商品情報の登録（名前、説明のみ）
+1. オークション基本情報の入力（タイトル、説明、開始日時）
+2. 商品情報の登録（名前、説明、開始価格）
 3. 商品の追加・削除
 4. 表示順序の設定（▲▼ボタン）
 5. バリデーション（必須項目チェック）
@@ -141,11 +141,32 @@
 **バリデーションタイミング:**
 - リアルタイム: フィールドからフォーカスが外れた時（onBlur）
 
+#### 3.1.3 開始日時
+
+| 項目 | 内容 |
+|------|------|
+| **ラベル** | 開始日時 |
+| **入力形式** | datetime-local入力 |
+| **プレースホルダー** | - |
+| **必須/任意** | 任意 |
+| **説明** | 入札者用一覧画面での表示・ソートに使用されます |
+
+**バリデーションルール:**
+- バリデーションなし（任意項目）
+
+**バリデーションタイミング:**
+- なし（任意項目）
+
+**保存形式:**
+- フロントエンド: datetime-local形式（YYYY-MM-DDTHH:mm）
+- API送信時: ISO 8601形式（YYYY-MM-DDTHH:mm:ss.sssZ）
+- データベース: TIMESTAMPTZ型
+
 ---
 
 ### 3.2 商品情報
 
-**重要**: 現在の実装では商品名と商品説明のみをサポート。カテゴリ、詳細情報、メディアは後のフェーズで実装予定。
+**重要**: 現在の実装では商品名、商品説明、開始価格をサポート。カテゴリ、詳細情報、メディアは後のフェーズで実装予定。
 
 #### 3.2.1 商品名
 
@@ -173,6 +194,25 @@
 
 **バリデーションルール:**
 1. 2000文字を超える場合: 「説明は2000文字以内で入力してください」
+
+#### 3.2.3 開始価格
+
+| 項目 | 内容 |
+|------|------|
+| **ラベル** | 開始価格 |
+| **入力形式** | 数値入力 |
+| **プレースホルダー** | 例: 5000000 |
+| **必須/任意** | 任意 |
+| **単位** | ポイント |
+| **最小値** | 1 |
+
+**バリデーションルール:**
+1. 入力がある場合、1以上の整数であること: 「開始価格は1以上で入力してください」
+
+**説明:**
+- オークション作成時に設定可能（任意）
+- 未設定の場合はオークション開始前に別途設定が必要
+- items.starting_priceカラムに保存される
 
 ---
 
@@ -456,6 +496,7 @@
 | title | VARCHAR(200) | NO | - | タイトル |
 | description | TEXT | YES | NULL | 説明 |
 | status | VARCHAR(20) | NO | 'pending' | 状態（pending/active/ended/cancelled） |
+| started_at | TIMESTAMPTZ | YES | NULL | オークション開始日時（入札者用一覧画面で表示・ソートに使用） |
 | created_at | TIMESTAMPTZ | NO | NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NO | NOW() | 更新日時 |
 
@@ -469,7 +510,7 @@
 | description | TEXT | YES | NULL | 商品説明 |
 | metadata | JSONB | YES | NULL | カテゴリ別詳細情報（将来使用） |
 | lot_number | INTEGER | NO | - | ロット番号（同一オークション内での順序） |
-| starting_price | BIGINT | YES | NULL | 開始価格（作成時は未設定） |
+| starting_price | BIGINT | YES | NULL | 開始価格（作成時に設定可能） |
 | current_price | BIGINT | YES | NULL | 現在の開示価格 |
 | winner_id | UUID | YES | NULL | 落札者ID |
 | started_at | TIMESTAMPTZ | YES | NULL | 開始日時 |
@@ -497,15 +538,15 @@
 BEGIN;
 
 -- 1. オークション登録
-INSERT INTO auctions (id, title, description, status)
-VALUES ($1, $2, $3, 'pending')
+INSERT INTO auctions (id, title, description, status, started_at)
+VALUES ($1, $2, $3, 'pending', $4)
 RETURNING id;
 
 -- 2. 商品登録（複数）
-INSERT INTO items (id, auction_id, name, description, lot_number)
+INSERT INTO items (id, auction_id, name, description, lot_number, starting_price)
 VALUES 
-  ($1, $auction_id, $2, $3, 0),
-  ($4, $auction_id, $5, $6, 1),
+  ($1, $auction_id, $2, $3, 0, $4),
+  ($5, $auction_id, $6, $7, 1, $8),
   ...;
 
 COMMIT;
@@ -529,16 +570,19 @@ COMMIT;
 {
   "title": "2025年春季競走馬セリ",
   "description": "2025年春季の競走馬セリを開催します。優良血統の馬が多数出品されます。",
+  "started_at": "2025-06-15T10:00:00+09:00",
   "items": [
     {
       "name": "ディープインパクト産駒",
       "description": "父ディープインパクト、母ジェンティルドンナの優良血統",
-      "lot_number": 0
+      "lot_number": 0,
+      "starting_price": 5000000
     },
     {
       "name": "キタサンブラック産駒",
       "description": "父キタサンブラック、母の父ハーツクライの良血馬",
-      "lot_number": 1
+      "lot_number": 1,
+      "starting_price": 3000000
     }
   ]
 }
@@ -551,6 +595,7 @@ COMMIT;
   "title": "2025年春季競走馬セリ",
   "description": "2025年春季の競走馬セリを開催します。優良血統の馬が多数出品されます。",
   "status": "pending",
+  "started_at": "2025-06-15T10:00:00+09:00",
   "item_count": 2,
   "created_at": "2025-01-01T10:00:00Z",
   "updated_at": "2025-01-01T10:00:00Z"
@@ -904,9 +949,9 @@ frontend/src/
 
 ### Phase 3: フロントエンドUI（6-8時間）
 - [x] AuctionCreateView.vueの実装
-- [x] AuctionBasicInfo.vueの実装
+- [x] AuctionBasicInfo.vueの実装（タイトル、説明、開始日時）
 - [x] ItemList.vueの実装
-- [x] ItemForm.vueの実装（商品名と商品説明のみ）
+- [x] ItemForm.vueの実装（商品名、商品説明、開始価格）
 
 ### Phase 4: テストと検証（2-3時間）
 - [ ] バックエンドユニットテストの作成
