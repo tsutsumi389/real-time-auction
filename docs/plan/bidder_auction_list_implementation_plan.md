@@ -824,8 +824,8 @@ frontend/src/
 ## 20. 実装手順
 
 ### Phase 1: データベースマイグレーション（0.5時間）
-- [ ] auctionsテーブルにstarted_atカラムを追加するマイグレーションを作成
-- [ ] マイグレーション実行とテスト
+- [x] auctionsテーブルにstarted_atカラムを追加するマイグレーションを作成
+- [x] マイグレーション実行とテスト
 
 ### Phase 2: バックエンドAPI（3-4時間）
 - [ ] Domain層にBidderAuctionListRequest、BidderAuctionListResponse、BidderAuctionSummary、Pagination構造体を定義
