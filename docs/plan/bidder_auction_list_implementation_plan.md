@@ -847,17 +847,17 @@ frontend/src/
 - [x] ルーティング設定（/auctions、認証ガードなし）
 
 ### Phase 4: フロントエンドUI（5-6時間）
-- [ ] BidderAuctionListView.vueの実装
-  - [ ] Intersection Observerのセットアップ
-  - [ ] スクロール検知と追加読み込み
-- [ ] AuctionCard.vueの実装（開始日時の表示を含む）
-- [ ] AuctionCardGrid.vueの実装
-- [ ] AuctionFilters.vueの実装
-- [ ] AuctionSearchBar.vueの実装
-- [ ] AuctionStatusBadge.vueの実装
-- [ ] infinite-scroll.vueの実装（Intersection Observer）
-- [ ] loading-spinner.vueの実装
-- [ ] レスポンシブデザインの実装
+- [x] BidderAuctionListView.vueの実装
+  - [x] Intersection Observerのセットアップ
+  - [x] スクロール検知と追加読み込み
+- [x] AuctionCard.vueの実装（開始日時の表示を含む）
+- [x] AuctionCardGrid.vueの実装
+- [x] AuctionFilters.vueの実装
+- [x] AuctionSearchBar.vueの実装
+- [x] AuctionStatusBadge.vueの実装
+- [x] infinite-scroll.vueの実装（Intersection Observer）
+- [x] loading-spinner.vueの実装
+- [x] レスポンシブデザインの実装
 
 ### Phase 5: テストと検証（2-3時間）
 - [ ] バックエンドユニットテストの作成
