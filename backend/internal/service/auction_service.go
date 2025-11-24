@@ -268,3 +268,71 @@ func (s *AuctionService) CreateAuction(req *domain.CreateAuctionRequest) (*domai
 
 	return response, nil
 }
+
+// GetBidderAuctionList retrieves public auctions for bidders with filters, sorting, and offset/limit pagination
+func (s *AuctionService) GetBidderAuctionList(req *domain.BidderAuctionListRequest) (*domain.BidderAuctionListResponse, error) {
+	// Validate and set defaults
+	if req.Offset < 0 {
+		req.Offset = 0
+	}
+	if req.Limit < 1 {
+		req.Limit = 20
+	}
+	if req.Limit > 100 {
+		req.Limit = 100
+	}
+	if req.Sort == "" {
+		req.Sort = "started_at_desc"
+	}
+
+	// Validate sort mode
+	validSortModes := map[string]bool{
+		"started_at_asc":  true,
+		"started_at_desc": true,
+		"updated_at_asc":  true,
+		"updated_at_desc": true,
+	}
+	if !validSortModes[req.Sort] {
+		return nil, ErrInvalidSortMode
+	}
+
+	// Validate status if provided
+	if req.Status != "" {
+		validStatuses := map[domain.AuctionStatus]bool{
+			domain.AuctionStatusActive:    true,
+			domain.AuctionStatusEnded:     true,
+			domain.AuctionStatusCancelled: true,
+		}
+		if !validStatuses[req.Status] {
+			return nil, ErrInvalidStatus
+		}
+	}
+
+	// Get public auctions from repository
+	auctions, err := s.auctionRepo.FindPublicAuctionsWithFilters(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get total count
+	total, err := s.auctionRepo.CountPublicAuctionsWithFilters(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate has_more flag
+	hasMore := total > int64(req.Offset+req.Limit)
+
+	// Build response
+	response := &domain.BidderAuctionListResponse{
+		Auctions: auctions,
+		Pagination: domain.BidderPagination{
+			Total:   total,
+			Offset:  req.Offset,
+			Limit:   req.Limit,
+			HasMore: hasMore,
+		},
+	}
+
+	return response, nil
+}

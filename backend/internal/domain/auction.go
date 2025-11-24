@@ -83,3 +83,39 @@ type CreateAuctionResponse struct {
 	CreatedAt   time.Time     `json:"created_at"`
 	UpdatedAt   time.Time     `json:"updated_at"`
 }
+
+// BidderPagination represents pagination information for bidder auction list (offset/limit style)
+type BidderPagination struct {
+	Total   int64 `json:"total"`
+	Offset  int   `json:"offset"`
+	Limit   int   `json:"limit"`
+	HasMore bool  `json:"has_more"`
+}
+
+// BidderAuctionSummary represents auction summary information for bidders
+type BidderAuctionSummary struct {
+	ID           uuid.UUID     `json:"id"`
+	Title        string        `json:"title"`
+	Description  string        `json:"description"`
+	Status       AuctionStatus `json:"status"`
+	ItemCount    int64         `json:"item_count"`
+	ThumbnailURL *string       `json:"thumbnail_url"`
+	StartedAt    *time.Time    `json:"started_at"`
+	CreatedAt    time.Time     `json:"created_at"`
+	UpdatedAt    time.Time     `json:"updated_at"`
+}
+
+// BidderAuctionListRequest represents the request parameters for bidder auction list endpoint
+type BidderAuctionListRequest struct {
+	Offset  int           `form:"offset"`
+	Limit   int           `form:"limit"`
+	Keyword string        `form:"keyword"`
+	Status  AuctionStatus `form:"status"`
+	Sort    string        `form:"sort"`
+}
+
+// BidderAuctionListResponse represents the response for bidder auction list endpoint
+type BidderAuctionListResponse struct {
+	Auctions   []BidderAuctionSummary `json:"auctions"`
+	Pagination BidderPagination       `json:"pagination"`
+}

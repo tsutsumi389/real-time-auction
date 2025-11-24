@@ -239,3 +239,96 @@ func (r *AuctionRepository) CreateAuctionWithItems(auction *domain.Auction, item
 		return nil
 	})
 }
+
+// FindPublicAuctionsWithFilters retrieves public auctions (non-pending) with filters, sorting, and offset/limit pagination
+func (r *AuctionRepository) FindPublicAuctionsWithFilters(req *domain.BidderAuctionListRequest) ([]domain.BidderAuctionSummary, error) {
+	var results []domain.BidderAuctionSummary
+
+	query := r.db.Model(&domain.Auction{}).
+		Select(`auctions.id, auctions.title, auctions.description, auctions.status,
+			auctions.started_at, auctions.created_at, auctions.updated_at,
+			COUNT(items.id) as item_count,
+			(
+				SELECT im.thumbnail_url
+				FROM items i2
+				LEFT JOIN item_media im ON im.item_id = i2.id AND im.media_type = 'image'
+				WHERE i2.auction_id = auctions.id
+				ORDER BY i2.lot_number ASC, im.display_order ASC
+				LIMIT 1
+			) AS thumbnail_url`).
+		Joins("LEFT JOIN items ON items.auction_id = auctions.id").
+		Where("auctions.status IN ?", []domain.AuctionStatus{
+			domain.AuctionStatusActive,
+			domain.AuctionStatusEnded,
+			domain.AuctionStatusCancelled,
+		})
+
+	// Apply keyword filter (title search with ILIKE)
+	if req.Keyword != "" {
+		query = query.Where("auctions.title ILIKE ?", "%"+req.Keyword+"%")
+	}
+
+	// Apply status filter
+	if req.Status != "" {
+		query = query.Where("auctions.status = ?", req.Status)
+	}
+
+	// Group by auction fields (required for COUNT aggregate)
+	query = query.Group("auctions.id, auctions.title, auctions.description, auctions.status, auctions.started_at, auctions.created_at, auctions.updated_at")
+
+	// Apply sorting
+	switch req.Sort {
+	case "started_at_asc":
+		query = query.Order("auctions.started_at ASC")
+	case "started_at_desc":
+		query = query.Order("auctions.started_at DESC")
+	case "updated_at_asc":
+		query = query.Order("auctions.updated_at ASC")
+	case "updated_at_desc":
+		query = query.Order("auctions.updated_at DESC")
+	default:
+		// Default: started_at descending (newest first)
+		query = query.Order("auctions.started_at DESC")
+	}
+
+	// Apply offset/limit pagination
+	query = query.Offset(req.Offset).Limit(req.Limit)
+
+	// Execute query
+	result := query.Scan(&results)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return results, nil
+}
+
+// CountPublicAuctionsWithFilters counts public auctions (non-pending) matching the filters
+func (r *AuctionRepository) CountPublicAuctionsWithFilters(req *domain.BidderAuctionListRequest) (int64, error) {
+	var count int64
+
+	query := r.db.Model(&domain.Auction{}).
+		Where("status IN ?", []domain.AuctionStatus{
+			domain.AuctionStatusActive,
+			domain.AuctionStatusEnded,
+			domain.AuctionStatusCancelled,
+		})
+
+	// Apply keyword filter
+	if req.Keyword != "" {
+		query = query.Where("title ILIKE ?", "%"+req.Keyword+"%")
+	}
+
+	// Apply status filter
+	if req.Status != "" {
+		query = query.Where("status = ?", req.Status)
+	}
+
+	// Execute count query
+	result := query.Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return count, nil
+}

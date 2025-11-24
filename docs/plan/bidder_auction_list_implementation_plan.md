@@ -828,15 +828,15 @@ frontend/src/
 - [x] マイグレーション実行とテスト
 
 ### Phase 2: バックエンドAPI（3-4時間）
-- [ ] Domain層にBidderAuctionListRequest、BidderAuctionListResponse、BidderAuctionSummary、Pagination構造体を定義
-  - [ ] PaginationにはOffset、Limit、Total、HasMoreフィールドを含める
-  - [ ] BidderAuctionSummaryにStartedAtフィールドを追加
-- [ ] Repository層に公開オークション一覧取得メソッドを実装（OFFSET/LIMIT対応、started_atを含む）
-- [ ] Service層に一覧取得ロジックを実装
-  - [ ] HasMore計算ロジックを実装
-- [ ] Handler層に一覧取得エンドポイントを実装（認証不要）
-- [ ] ルーティング設定（認証ミドルウェアなし）
-- [ ] 手動テスト（curlまたはPostman、offset/limitテスト、started_atソートテスト）
+- [x] Domain層にBidderAuctionListRequest、BidderAuctionListResponse、BidderAuctionSummary、Pagination構造体を定義
+  - [x] PaginationにはOffset、Limit、Total、HasMoreフィールドを含める
+  - [x] BidderAuctionSummaryにStartedAtフィールドを追加
+- [x] Repository層に公開オークション一覧取得メソッドを実装（OFFSET/LIMIT対応、started_atを含む）
+- [x] Service層に一覧取得ロジックを実装
+  - [x] HasMore計算ロジックを実装
+- [x] Handler層に一覧取得エンドポイントを実装（認証不要）
+- [x] ルーティング設定（認証ミドルウェアなし）
+- [x] 手動テスト（curlまたはPostman、offset/limitテスト、started_atソートテスト）
 
 ### Phase 3: フロントエンド基盤（3-4時間）
 - [ ] bidderAuctionApi.tsにgetBidderAuctionListを実装（offset/limit対応）
