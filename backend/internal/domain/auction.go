@@ -22,6 +22,7 @@ type Auction struct {
 	Title       string        `gorm:"type:varchar(200);not null" json:"title"`
 	Description string        `gorm:"type:text" json:"description"`
 	Status      AuctionStatus `gorm:"type:varchar(20);not null;default:'pending'" json:"status"`
+	StartedAt   *time.Time    `gorm:"type:timestamptz" json:"started_at"`
 	CreatedAt   time.Time     `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time     `gorm:"autoUpdateTime" json:"updated_at"`
 }
@@ -37,6 +38,7 @@ type AuctionWithItemCount struct {
 	Title       string        `json:"title"`
 	Description string        `json:"description"`
 	Status      AuctionStatus `json:"status"`
+	StartedAt   *time.Time    `json:"started_at"`
 	ItemCount   int64         `json:"item_count"`
 	CreatedAt   time.Time     `json:"created_at"`
 	UpdatedAt   time.Time     `json:"updated_at"`
@@ -61,15 +63,17 @@ type AuctionListResponse struct {
 
 // CreateItemRequest represents an item to be created with an auction
 type CreateItemRequest struct {
-	Name        string `json:"name" binding:"required,max=200"`
-	Description string `json:"description" binding:"max=2000"`
-	LotNumber   int    `json:"lot_number" binding:"required,min=1"`
+	Name          string `json:"name" binding:"required,max=200"`
+	Description   string `json:"description" binding:"max=2000"`
+	LotNumber     int    `json:"lot_number" binding:"required,min=1"`
+	StartingPrice *int64 `json:"starting_price" binding:"omitempty,min=1"`
 }
 
 // CreateAuctionRequest represents the request body for creating an auction
 type CreateAuctionRequest struct {
 	Title       string              `json:"title" binding:"required,max=200"`
 	Description string              `json:"description" binding:"max=2000"`
+	StartedAt   *time.Time          `json:"started_at"`
 	Items       []CreateItemRequest `json:"items" binding:"required,min=1,dive"`
 }
 
@@ -79,6 +83,7 @@ type CreateAuctionResponse struct {
 	Title       string        `json:"title"`
 	Description string        `json:"description"`
 	Status      AuctionStatus `json:"status"`
+	StartedAt   *time.Time    `json:"started_at"`
 	ItemCount   int           `json:"item_count"`
 	CreatedAt   time.Time     `json:"created_at"`
 	UpdatedAt   time.Time     `json:"updated_at"`
