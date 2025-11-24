@@ -11,29 +11,26 @@
 ## 1. 概要
 
 ### 1.1 目的
-入札者がシステム内の公開されたオークションを閲覧し、参加したいオークションを探すための画面です。**未ログインユーザーでも閲覧可能**で、ログイン済み入札者には自分の入札状況などの追加情報が表示されます。
+入札者がシステム内の公開されたオークションを閲覧し、参加したいオークションを探すための画面です。**すべてのユーザーが同じ情報を閲覧可能**で、ログイン状態に関わらず同じ画面が表示されます。
 
 **重要な設計方針**:
-- 未ログインユーザーでもオークション一覧を閲覧できる（認証不要）
-- ログイン済み入札者には自分の入札状況などの追加情報を表示
+- すべてのユーザーがオークション一覧を閲覧できる（認証不要）
+- ログイン状態に関わらず、すべてのユーザーに同じ情報を表示
 - 管理者用オークション一覧（1.3.1）とは異なり、入札者視点の情報のみ表示
 - `pending`状態のオークションは表示しない（`active`、`ended`、`cancelled`のみ）
+- オークションの開始日時を表示
 
 ### 1.2 対象ユーザー
-- **未ログインユーザー**: オークション閲覧のみ可能
-- **bidder（入札者）**: オークション閲覧に加え、自分の入札状況が表示される
+- **すべてのユーザー（未ログイン・ログイン問わず）**: オークション一覧の閲覧が可能
 
 ### 1.3 主要機能
-1. オークション一覧表示（タイトル、商品数、状態、作成日時）
+1. オークション一覧表示（タイトル、商品数、状態、開始日時）
 2. 商品サムネイル画像の表示
 3. 検索機能（タイトル）
 4. フィルタリング機能（状態別：active / ended / cancelled）
-5. ソート機能（作成日時順、更新日時順）
-6. ページネーション（20件/ページ）
+5. ソート機能（開始日時順、更新日時順）
+6. 無限スクロール（20件ずつ自動読み込み）
 7. オークション詳細画面への遷移
-8. ログイン済み入札者向け追加表示:
-   - 自分の入札状況（入札済み/未入札）
-   - 「自分が参加したオークションのみ」フィルタ
 
 ---
 
@@ -54,7 +51,6 @@
 │ │                                                         │ │
 │ │ フィルタ:                                                │ │
 │ │ 状態: [すべて▾] [公開中] [終了] [中止]                    │ │
-│ │ [ログイン時] 自分が参加したオークション: [✓]              │ │
 │ └─────────────────────────────────────────────────────────┘ │
 │                                                             │
 │ ┌─────────────────────────────────────────────────────────┐ │
@@ -62,18 +58,16 @@
 │ │ │ [画像]│  春季セリ                          [公開中]     │ │
 │ │ │サムネイル│  2025年春季の競走馬セリを開催...            │ │
 │ │ └───────┘  商品数: 15                                   │ │
-│ │            作成日: 2025/01/01                            │ │
-│ │            [ログイン時] 入札状況: 入札済み (3/15商品)      │ │
+│ │            開始日時: 2025/01/01 10:00                    │ │
 │ │            [詳細を見る]                                  │ │
 │ │ ─────────────────────────────────────────────────────── │ │
 │ │ ┌───────┐                                               │ │
 │ │ │ [画像]│  秋季セリ                          [終了]       │ │
 │ │ │サムネイル│  2024年秋季の競走馬セリ（終了）              │ │
 │ │ └───────┘  商品数: 20                                   │ │
-│ │            作成日: 2024/11/01                            │ │
-│ │            [ログイン時] 入札状況: 未参加                  │ │
+│ │            開始日時: 2024/11/01 13:00                    │ │
 │ │            [詳細を見る]                                  │ │
-│ └─────────────────────────────────────────────────────────┘ │
+│ │ └─────────────────────────────────────────────────────────┘ │
 │                                                             │
 │ [スクロール下部に到達すると自動的に次のページを読み込み]        │
 │ [ローディング中...] または [すべて表示しました]               │
@@ -111,8 +105,7 @@
 | **説明** | TEXT | オークション説明（省略表示） | テキスト（最大2行） | 常に表示 |
 | **状態** | VARCHAR(20) | active(公開中)/ended(終了)/cancelled(中止) | バッジ | 常に表示 |
 | **商品数** | INTEGER | 含まれる商品の数 | 「商品数: 15」 | 常に表示 |
-| **作成日時** | TIMESTAMP | オークション作成日時 | 「作成日: YYYY/MM/DD」 | 常に表示 |
-| **入札状況** | - | 自分の入札状況 | 「入札済み (3/15商品)」または「未参加」 | ログイン時のみ表示 |
+| **開始日時** | TIMESTAMP | オークション開始日時 | 「開始日時: YYYY/MM/DD HH:MM」 | 常に表示 |
 
 ### 3.2 バッジの表示仕様
 
@@ -132,11 +125,7 @@
   - オークションに関連付けられた商品の最初の画像（`display_order`が最小）を取得
   - 画像がない場合はプレースホルダー画像を表示
 - **商品数**: オークションに関連付けられた`items`テーブルのレコード数をカウント
-- **入札状況**（ログイン時のみ）:
-  - オークション内の商品に対する自分の入札履歴を確認
-  - 入札済み商品数 / 総商品数を表示
-  - 入札がない場合は「未参加」と表示
-- **日時表示**: タイムゾーンをJST（日本標準時）に変換して表示
+- **日時表示**: タイムゾーンをJST（日本標準時）に変換して表示（YYYY/MM/DD HH:MM形式）
 
 ---
 
@@ -168,17 +157,10 @@
 **デフォルト表示**:
 - 初期表示では`active`のみ表示（公開中オークション）
 
-### 4.3 自分が参加したオークションフィルタ（ログイン時のみ）
+### 4.3 複合フィルタ
 
-- **チェックボックス**: 「自分が参加したオークションのみ」
-- **動作**: チェックONで自分が入札したことのある商品を含むオークションのみ表示
-- **実装**: `bids`テーブルから自分の入札履歴を取得し、関連オークションをフィルタ
-
-### 4.4 複合フィルタ
-
-- 状態フィルタと自分が参加したオークションフィルタは組み合わせ可能
-- 検索キーワードとフィルタも組み合わせ可能
-- 例: 「activeステータス」かつ「自分が参加した」かつ「タイトルに`春`を含む」
+- 検索キーワードとフィルタは組み合わせ可能
+- 例: 「activeステータス」かつ「タイトルに`春`を含む」
 
 ---
 
@@ -188,13 +170,13 @@
 
 | 列名 | ソート順 | デフォルト |
 |------|---------|----------|
-| 作成日時 | 昇順・降順 | 降順（デフォルト） |
+| 開始日時 | 昇順・降順 | 降順（デフォルト） |
 | 更新日時 | 昇順・降順 | - |
 
 ### 5.2 ソート動作
 
 - ドロップダウンメニューでソート順を選択
-- 初期表示: 作成日時降順（最新のオークションが上に表示）
+- 初期表示: 開始日時降順（最新のオークションが上に表示）
 
 ---
 
@@ -279,22 +261,19 @@
    - ログイン状態を保持
   ↓
 3. バックエンドAPIに一覧取得リクエスト送信
-   - デフォルト: offset=0、limit=20、作成日時降順
+   - デフォルト: offset=0、limit=20、開始日時降順
    - デフォルトフィルタ: active状態のみ
-   - ログイン時: JWTトークンをAuthorizationヘッダーに含める（任意）
   ↓
 4. バックエンドでデータ取得
    - auctionsテーブルから`status IN ('active', 'ended', 'cancelled')`のレコードを取得
    - 各オークションの商品数をカウント
    - 各オークションのサムネイル画像を取得
-   - ログイン時: 各オークションの自分の入札状況を取得
    - 総件数をカウント
    - OFFSET/LIMIT処理（offset=0, limit=20）
    - `has_more`フラグを計算（総件数 > offset + limit）
   ↓
 5. フロントエンドで一覧表示
    - カードグリッドにデータをレンダリング
-   - ログイン時: 入札状況を表示
    - Intersection Observerを設定してページ下部を監視
 ```
 
@@ -313,13 +292,11 @@
    - クエリパラメータを作成
   ↓
 4. バックエンドAPIにリクエスト送信
-   - パラメータ: keyword, status, my_auctions, offset=0, limit=20, sort
-   - ログイン時: JWTトークンを含める（my_auctions使用時は必須）
+   - パラメータ: keyword, status, offset=0, limit=20, sort
   ↓
 5. バックエンドでフィルタ処理
    - WHERE句に条件追加
    - ILIKE検索（title）、IN検索（status）
-   - my_auctions=trueの場合: bidsテーブルとJOINして自分の入札履歴をフィルタ
   ↓
 6. フロントエンドで結果表示
    - 新しいデータで一覧を置き換え
@@ -367,22 +344,19 @@
 
 **重要な設計方針**:
 - この画面は未ログインユーザーでもアクセス可能
-- ログイン済みユーザーには追加情報を表示
+- ログイン状態に関わらず、同じ情報を表示
 
 1. **フロントエンド**:
    - 認証ガードは不要
-   - ログイン状態を確認し、ログイン時のみ追加機能を表示
-   - 「自分が参加したオークション」フィルタはログイン時のみ有効
+   - ログイン状態に関わらず、全ユーザーに同じUIを表示
 
 2. **バックエンド**:
    - 一覧取得APIは認証不要
-   - ただし、`my_auctions=true`パラメータが指定された場合はJWT認証必須
-   - 認証済みの場合のみ入札状況を返却
+   - すべてのユーザーに同じデータを返却
 
 ### 9.2 データアクセス制御
 
-- **未ログインユーザー**: `pending`状態のオークションは非表示
-- **ログイン済み入札者**: 自分の入札情報のみ取得可能（他人の入札情報は非表示）
+- **すべてのユーザー**: `pending`状態のオークションは非表示（`active`、`ended`、`cancelled`のみ表示）
 
 ### 9.3 CSRFとXSS対策
 
@@ -403,6 +377,7 @@
 | title | VARCHAR(200) | タイトル | 必須 |
 | description | TEXT | 説明 | 任意 |
 | status | VARCHAR(20) | 状態（pending=非公開/active=公開中/ended=終了/cancelled=中止） | 必須、CHECK制約 |
+| started_at | TIMESTAMP | 開始日時 | 必須 |
 | created_at | TIMESTAMP | 作成日時 | 自動設定 |
 | updated_at | TIMESTAMP | 更新日時 | 自動更新 |
 
@@ -430,27 +405,16 @@
 | display_order | INTEGER | 表示順序 | 必須、デフォルト0 |
 | created_at | TIMESTAMP | 作成日時 | 自動設定 |
 
-**bidsテーブル**（入札履歴、ログイン時の入札状況取得に使用）:
-
-| カラム名 | データ型 | 説明 | 制約 |
-|---------|---------|------|------|
-| id | UUID | 入札ID | 主キー |
-| item_id | UUID | 商品ID | 外部キー（items） |
-| bidder_id | UUID | 入札者ID | 外部キー（bidders） |
-| price | BIGINT | 入札価格 | 必須、正の整数 |
-| bid_at | TIMESTAMP | 入札日時 | 自動設定 |
-| is_winning | BOOLEAN | 現在の最高入札かどうか | デフォルト false |
-
 ### 10.2 クエリ最適化
 
 **一覧取得クエリ例**（商品数、サムネイル画像を含む）:
 ```sql
--- 未ログイン時
 SELECT
     a.id,
     a.title,
     a.description,
     a.status,
+    a.started_at,
     a.created_at,
     a.updated_at,
     COUNT(DISTINCT i.id) AS item_count,
@@ -468,48 +432,15 @@ WHERE
     a.status IN ('active', 'ended', 'cancelled')
     AND (a.title ILIKE '%keyword%' OR 'keyword' IS NULL)
     AND (a.status = 'active' OR 'active' IS NULL)
-GROUP BY a.id, a.title, a.description, a.status, a.created_at, a.updated_at
-ORDER BY a.created_at DESC
-LIMIT 20 OFFSET 0;
-```
-
-**ログイン時の入札状況を含むクエリ例**:
-```sql
--- ログイン時（入札状況を含む）
-SELECT
-    a.id,
-    a.title,
-    a.description,
-    a.status,
-    a.created_at,
-    a.updated_at,
-    COUNT(DISTINCT i.id) AS item_count,
-    (
-        SELECT im.thumbnail_url
-        FROM items i2
-        LEFT JOIN item_media im ON im.item_id = i2.id AND im.media_type = 'image'
-        WHERE i2.auction_id = a.id
-        ORDER BY i2.lot_number ASC, im.display_order ASC
-        LIMIT 1
-    ) AS thumbnail_url,
-    COUNT(DISTINCT CASE WHEN b.bidder_id = $1 THEN i.id END) AS my_bid_count
-FROM auctions a
-LEFT JOIN items i ON i.auction_id = a.id
-LEFT JOIN bids b ON b.item_id = i.id
-WHERE
-    a.status IN ('active', 'ended', 'cancelled')
-    AND (a.title ILIKE '%keyword%' OR 'keyword' IS NULL)
-    AND (a.status = 'active' OR 'active' IS NULL)
-    AND (b.bidder_id = $1 OR $2 = false)  -- my_auctions フィルタ
-GROUP BY a.id, a.title, a.description, a.status, a.created_at, a.updated_at
-ORDER BY a.created_at DESC
+GROUP BY a.id, a.title, a.description, a.status, a.started_at, a.created_at, a.updated_at
+ORDER BY a.started_at DESC
 LIMIT 20 OFFSET 0;
 ```
 
 **パフォーマンスノート**:
 - サムネイル画像取得のためのサブクエリは、オークション数が多い場合にパフォーマンスに影響する可能性があります
 - 必要に応じて、サムネイルURLをキャッシュすることを検討
-- `my_auctions`フィルタ使用時は、bidsテーブルとのJOINが発生するため、インデックスを活用
+- `started_at`カラムにインデックスを作成することでソート性能を向上
 
 ---
 
@@ -519,7 +450,7 @@ LIMIT 20 OFFSET 0;
 
 **エンドポイント**: `GET /api/auctions`
 
-**認証**: 任意（認証なしでもアクセス可能、認証ありの場合は入札状況を返却）
+**認証**: 不要
 
 **クエリパラメータ**:
 
@@ -529,26 +460,19 @@ LIMIT 20 OFFSET 0;
 | limit | integer | × | 取得件数（デフォルト: 20、最大: 100） | 20 |
 | keyword | string | × | タイトル検索キーワード | 春季 |
 | status | string | × | 状態フィルタ（active / ended / cancelled、デフォルト: active） | active |
-| my_auctions | boolean | × | 自分が参加したオークションのみ（デフォルト: false、JWTトークン必須） | true |
-| sort | string | × | ソート順（created_at_asc / created_at_desc / updated_at_asc / updated_at_desc）（デフォルト: created_at_desc） | created_at_desc |
+| sort | string | × | ソート順（started_at_asc / started_at_desc / updated_at_asc / updated_at_desc）（デフォルト: started_at_desc） | started_at_desc |
 
-**リクエスト例（未ログイン、初回読み込み）**:
+**リクエスト例（初回読み込み）**:
 ```
-GET /api/auctions?offset=0&limit=20&keyword=春季&status=active&sort=created_at_desc
-```
-
-**リクエスト例（未ログイン、追加読み込み）**:
-```
-GET /api/auctions?offset=20&limit=20&keyword=春季&status=active&sort=created_at_desc
+GET /api/auctions?offset=0&limit=20&keyword=春季&status=active&sort=started_at_desc
 ```
 
-**リクエスト例（ログイン時）**:
+**リクエスト例（追加読み込み）**:
 ```
-GET /api/auctions?offset=0&limit=20&status=active&my_auctions=true
-Authorization: Bearer {JWT_TOKEN}
+GET /api/auctions?offset=20&limit=20&keyword=春季&status=active&sort=started_at_desc
 ```
 
-**レスポンス形式（成功時、未ログイン）**:
+**レスポンス形式（成功時）**:
 ```json
 {
   "auctions": [
@@ -559,6 +483,7 @@ Authorization: Bearer {JWT_TOKEN}
       "status": "active",
       "item_count": 15,
       "thumbnail_url": "https://example.com/images/auction1-thumbnail.jpg",
+      "started_at": "2025-01-01T10:00:00Z",
       "created_at": "2024-12-01T10:00:00Z",
       "updated_at": "2025-01-01T10:00:00Z"
     },
@@ -569,44 +494,9 @@ Authorization: Bearer {JWT_TOKEN}
       "status": "ended",
       "item_count": 20,
       "thumbnail_url": "https://example.com/images/auction2-thumbnail.jpg",
+      "started_at": "2024-11-01T13:00:00Z",
       "created_at": "2024-11-01T10:00:00Z",
       "updated_at": "2024-12-16T15:00:00Z"
-    }
-  ],
-  "pagination": {
-    "total": 50,
-    "offset": 0,
-    "limit": 20,
-    "has_more": true
-  }
-}
-```
-
-**レスポンス形式（成功時、ログイン時）**:
-```json
-{
-  "auctions": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "title": "春季セリ",
-      "description": "2025年春季の競走馬セリを開催します",
-      "status": "active",
-      "item_count": 15,
-      "thumbnail_url": "https://example.com/images/auction1-thumbnail.jpg",
-      "created_at": "2024-12-01T10:00:00Z",
-      "updated_at": "2025-01-01T10:00:00Z",
-      "my_bid_count": 3
-    },
-    {
-      "id": "660e8400-e29b-41d4-a716-446655440001",
-      "title": "秋季セリ",
-      "description": "2024年秋季の競走馬セリ（終了）",
-      "status": "ended",
-      "item_count": 20,
-      "thumbnail_url": "https://example.com/images/auction2-thumbnail.jpg",
-      "created_at": "2024-11-01T10:00:00Z",
-      "updated_at": "2024-12-16T15:00:00Z",
-      "my_bid_count": 0
     }
   ],
   "pagination": {
@@ -636,7 +526,6 @@ Authorization: Bearer {JWT_TOKEN}
 | HTTPステータス | エラーメッセージ | 発生条件 |
 |--------------|----------------|---------|
 | 400 Bad Request | Invalid query parameters | クエリパラメータが不正 |
-| 401 Unauthorized | Unauthorized | my_auctions=trueだがJWT認証がない |
 | 500 Internal Server Error | Internal server error | サーバー内部エラー |
 
 ---
@@ -653,30 +542,22 @@ Authorization: Bearer {JWT_TOKEN}
 
 **Repository層（データアクセス）**:
 - `FindPublicAuctionsWithFilters()`: 公開されたオークション一覧取得（商品数、サムネイル画像含む、OFFSET/LIMIT対応）
-- `FindPublicAuctionsWithBidStatus()`: ログイン時の一覧取得（入札状況含む、OFFSET/LIMIT対応）
 - `CountPublicAuctionsWithFilters()`: フィルタ付き総件数取得
 - `GetAuctionThumbnail()`: オークションのサムネイル画像取得
-- `GetBidderAuctionBidCount()`: 入札者のオークション内入札商品数取得
 
 **Service層（ビジネスロジック）**:
-- `GetBidderAuctionList()`: 一覧取得処理（認証状態に応じて異なるデータを返却）
+- `GetBidderAuctionList()`: 一覧取得処理
 - `CalculateHasMore()`: has_moreフラグの計算（total > offset + limit）
-- バリデーション（クエリパラメータ、my_auctionsフィルタ時の認証確認）
+- バリデーション（クエリパラメータ）
 
 **Handler層（APIエンドポイント）**:
 - `GetBidderAuctionListHandler`: 一覧取得エンドポイント
 - クエリパラメータのパース
-- 認証状態の確認（任意）
 - レスポンスの生成
 
 ### 12.2 ミドルウェア
 
-- JWT認証ミドルウェア（任意、Authorizationヘッダーがある場合のみ適用）
-
-**重要な実装ポイント**:
-- 認証ミドルウェアを「任意」にする実装が必要
-- JWTトークンがある場合のみ認証を行い、ない場合はスルー
-- `my_auctions=true`パラメータが指定された場合は認証必須、認証がない場合は401エラー
+- 認証ミドルウェア不要（このエンドポイントは認証なしで利用可能）
 
 ### 12.3 使用技術
 
@@ -731,8 +612,7 @@ frontend/src/
    - ログイン状態の確認
 
 2. **オークションカード（AuctionCard.vue）**:
-   - オークション情報の表示（サムネイル、タイトル、説明、状態、商品数等）
-   - 入札状況の表示（ログイン時のみ）
+   - オークション情報の表示（サムネイル、タイトル、説明、状態、商品数、開始日時）
    - 詳細ボタン
    - カードホバー効果
 
@@ -743,7 +623,6 @@ frontend/src/
 
 4. **フィルタコンポーネント（AuctionFilters.vue）**:
    - 状態フィルタ
-   - 自分が参加したオークションフィルタ（ログイン時のみ）
    - フィルタ変更時のイベント発火
 
 5. **検索バーコンポーネント（AuctionSearchBar.vue）**:
@@ -770,7 +649,6 @@ frontend/src/
    - 一覧データの保持（配列）
    - フィルタ・検索条件の保持
    - 無限スクロール状態の保持（offset, has_more, loading）
-   - ログイン状態の確認
    - 初回一覧取得処理
    - 追加データ取得処理（既存データに追加）
    - フィルタ変更時のリセット処理
@@ -820,9 +698,8 @@ frontend/src/
 
 1. **初期表示**:
    - デフォルトフィルタ: `active`状態のみ
-   - ソート: 作成日時降順
+   - ソート: 開始日時降順
    - offset: 0、最初の20件を読み込み
-   - ログイン状態を確認し、ログイン時のみ追加機能を表示
    - Intersection Observerを設定
 
 2. **ホバー時**:
@@ -846,17 +723,17 @@ frontend/src/
    - 読み込み中はスピナーを表示
    - すべて読み込み完了したら「すべてのオークションを表示しました」を表示
 
-### 15.2 ログイン状態による表示切り替え
+### 15.2 表示内容
 
-1. **未ログイン時**:
-   - 入札状況は非表示
-   - 「自分が参加したオークション」フィルタは非表示
-   - ヘッダーに「ログイン」「新規登録」ボタンを表示
-
-2. **ログイン時**:
-   - 各カードに入札状況を表示（「入札済み (3/15商品)」または「未参加」）
-   - 「自分が参加したオークション」フィルタを表示
-   - ヘッダーに「マイページ」「ログアウト」ボタンを表示
+- すべてのユーザーに同じ情報を表示
+- 各カードに表示される情報:
+  - サムネイル画像
+  - タイトル
+  - 説明（2行まで）
+  - 状態バッジ
+  - 商品数
+  - 開始日時
+  - 詳細ボタン
 
 ---
 
@@ -909,28 +786,25 @@ frontend/src/
 ### 18.1 バックエンドテスト
 
 **正常系テスト**:
-- 未ログインでデフォルトパラメータで一覧取得成功
-- ログイン時に入札状況付き一覧取得成功
+- デフォルトパラメータで一覧取得成功
 - フィルタ適用で正しい結果が返却される
 - OFFSET/LIMITが正しく機能する
 - has_moreフラグが正しく計算される
-- ソートが正しく機能する
-- `my_auctions=true`で自分が参加したオークションのみ取得
+- ソートが正しく機能する（started_at降順/昇順、updated_at降順/昇順）
+- サムネイル画像が正しく取得される
 
 **異常系テスト**:
-- `my_auctions=true`だが認証なし（401エラー）
 - 不正なクエリパラメータ（400エラー）
 
 ### 18.2 フロントエンドテスト
 
 **コンポーネントテスト**:
 - BidderAuctionListViewが正しくレンダリングされる
-- 未ログイン時に入札状況が非表示
-- ログイン時に入札状況が表示される
 - フィルタ変更時に正しいAPIリクエストが送信される
 - 検索実行時にURLクエリパラメータが更新される
 - Intersection Observerが正しく動作する
 - スクロール時に追加データが読み込まれる
+- カードに開始日時が正しく表示される
 
 **統合テスト**:
 - 初回一覧取得成功時にデータが表示される
@@ -938,7 +812,6 @@ frontend/src/
 - has_more=falseの場合に読み込み完了メッセージが表示される
 - フィルタが正しく動作する
 - フィルタ変更時にデータがリセットされる
-- 未ログイン時とログイン時で表示が切り替わる
 
 ---
 
@@ -950,17 +823,22 @@ frontend/src/
 
 ## 20. 実装手順
 
-### Phase 1: バックエンドAPI（4-5時間）
+### Phase 1: データベースマイグレーション（0.5時間）
+- [ ] auctionsテーブルにstarted_atカラムを追加するマイグレーションを作成
+- [ ] マイグレーション実行とテスト
+
+### Phase 2: バックエンドAPI（3-4時間）
 - [ ] Domain層にBidderAuctionListRequest、BidderAuctionListResponse、BidderAuctionSummary、Pagination構造体を定義
   - [ ] PaginationにはOffset、Limit、Total、HasMoreフィールドを含める
-- [ ] Repository層に公開オークション一覧取得、入札状況取得メソッドを実装（OFFSET/LIMIT対応）
-- [ ] Service層に一覧取得ロジックを実装（認証状態に応じた分岐）
+  - [ ] BidderAuctionSummaryにStartedAtフィールドを追加
+- [ ] Repository層に公開オークション一覧取得メソッドを実装（OFFSET/LIMIT対応、started_atを含む）
+- [ ] Service層に一覧取得ロジックを実装
   - [ ] HasMore計算ロジックを実装
-- [ ] Handler層に一覧取得エンドポイントを実装（任意認証、page→offsetに変更）
-- [ ] ルーティング設定（認証ミドルウェアを任意に設定）
-- [ ] 手動テスト（curlまたはPostman、未ログインとログイン両方、offset/limitテスト）
+- [ ] Handler層に一覧取得エンドポイントを実装（認証不要）
+- [ ] ルーティング設定（認証ミドルウェアなし）
+- [ ] 手動テスト（curlまたはPostman、offset/limitテスト、started_atソートテスト）
 
-### Phase 2: フロントエンド基盤（3-4時間）
+### Phase 3: フロントエンド基盤（3-4時間）
 - [ ] bidderAuctionApi.tsにgetBidderAuctionListを実装（offset/limit対応）
 - [ ] bidderAuctionStore.tsに状態管理を実装
   - [ ] offset、has_more、loadingの状態管理
@@ -968,11 +846,11 @@ frontend/src/
   - [ ] フィルタ変更時のリセット処理
 - [ ] ルーティング設定（/auctions、認証ガードなし）
 
-### Phase 3: フロントエンドUI（6-7時間）
+### Phase 4: フロントエンドUI（5-6時間）
 - [ ] BidderAuctionListView.vueの実装
   - [ ] Intersection Observerのセットアップ
   - [ ] スクロール検知と追加読み込み
-- [ ] AuctionCard.vueの実装
+- [ ] AuctionCard.vueの実装（開始日時の表示を含む）
 - [ ] AuctionCardGrid.vueの実装
 - [ ] AuctionFilters.vueの実装
 - [ ] AuctionSearchBar.vueの実装
@@ -981,13 +859,14 @@ frontend/src/
 - [ ] loading-spinner.vueの実装
 - [ ] レスポンシブデザインの実装
 
-### Phase 4: テストと検証（3-4時間）
+### Phase 5: テストと検証（2-3時間）
 - [ ] バックエンドユニットテストの作成
 - [ ] フロントエンドコンポーネントテストの作成
-- [ ] 統合テストの実施（未ログインとログイン両方）
+- [ ] 統合テストの実施
 - [ ] レスポンシブデザインの検証
+- [ ] started_atの表示と ソート動作確認
 
-**合計想定時間**: 16-20時間
+**合計想定時間**: 14-18時間
 
 ---
 
@@ -995,21 +874,21 @@ frontend/src/
 
 以下の条件がすべて満たされたら実装完了とします:
 
-- [ ] 未ログインユーザーでもオークション一覧が表示される
-- [ ] ログイン済み入札者には入札状況が表示される
+- [ ] すべてのユーザーがオークション一覧を表示できる
 - [ ] 検索機能が正しく動作する
 - [ ] 状態フィルタが正しく動作する
-- [ ] 自分が参加したオークションフィルタが正しく動作する（ログイン時のみ）
-- [ ] ソート機能が正しく動作する
+- [ ] ソート機能が正しく動作する（開始日時降順/昇順、更新日時降順/昇順）
 - [ ] 無限スクロールが正しく動作する
 - [ ] スクロール時に追加データが自動的に読み込まれる
 - [ ] すべてのデータを読み込んだら読み込み完了メッセージが表示される
 - [ ] フィルタ変更時にデータがリセットされる
 - [ ] 詳細ボタンからオークション詳細画面へ遷移できる
 - [ ] サムネイル画像が正しく表示される
+- [ ] 開始日時が正しく表示される（YYYY/MM/DD HH:MM形式）
 - [ ] レスポンシブデザインが正しく動作する
 - [ ] すべてのテストが通過する
 - [ ] `pending`状態のオークションが表示されない
+- [ ] auctionsテーブルにstarted_atカラムが追加されている
 
 ---
 
