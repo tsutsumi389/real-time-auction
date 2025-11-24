@@ -213,3 +213,62 @@ func (h *AuctionHandler) CreateAuction(c *gin.Context) {
 	// Return successful response with 201 Created
 	c.JSON(http.StatusCreated, response)
 }
+
+// GetBidderAuctionList handles GET /api/auctions (public endpoint, no authentication required)
+func (h *AuctionHandler) GetBidderAuctionList(c *gin.Context) {
+	// Parse query parameters
+	var req domain.BidderAuctionListRequest
+
+	// Parse offset (default: 0)
+	offsetStr := c.DefaultQuery("offset", "0")
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+	req.Offset = offset
+
+	// Parse limit (default: 20, max: 100)
+	limitStr := c.DefaultQuery("limit", "20")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	req.Limit = limit
+
+	// Parse keyword
+	req.Keyword = strings.TrimSpace(c.Query("keyword"))
+
+	// Parse status filter (default: active)
+	statusStr := c.DefaultQuery("status", "active")
+	if statusStr != "" {
+		req.Status = domain.AuctionStatus(statusStr)
+	}
+
+	// Parse sort mode (default: started_at_desc)
+	req.Sort = c.DefaultQuery("sort", "started_at_desc")
+
+	// Call service
+	response, err := h.auctionService.GetBidderAuctionList(&req)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrInvalidSortMode),
+			errors.Is(err, service.ErrInvalidStatus):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: err.Error(),
+			})
+		default:
+			// Log internal errors but don't expose details to client
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusOK, response)
+}

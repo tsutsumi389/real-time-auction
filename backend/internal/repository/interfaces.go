@@ -33,6 +33,8 @@ type AuctionRepositoryInterface interface {
 	FindByID(id string) (*domain.Auction, error)
 	FindAuctionsWithFilters(req *domain.AuctionListRequest) ([]domain.AuctionWithItemCount, error)
 	CountAuctionsWithFilters(req *domain.AuctionListRequest) (int64, error)
+	FindPublicAuctionsWithFilters(req *domain.BidderAuctionListRequest) ([]domain.BidderAuctionSummary, error)
+	CountPublicAuctionsWithFilters(req *domain.BidderAuctionListRequest) (int64, error)
 	UpdateAuctionStatus(id string, status domain.AuctionStatus) error
 	CountItemsByAuctionID(auctionID string) (int64, error)
 	FindItemsByAuctionID(auctionID string) ([]domain.Item, error)

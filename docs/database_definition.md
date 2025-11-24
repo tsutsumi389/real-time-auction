@@ -230,12 +230,14 @@ ALTER TABLE bidder_points ADD CONSTRAINT chk_bidder_points_balance
 | title | VARCHAR(200) | NO | - | オークションタイトル |
 | description | TEXT | YES | NULL | オークション説明 |
 | status | VARCHAR(20) | NO | 'pending' | 状態 (pending/active/ended/cancelled) |
+| started_at | TIMESTAMPTZ | YES | NULL | オークション開始日時（入札者用一覧画面で表示・ソートに使用） |
 | created_at | TIMESTAMPTZ | NO | NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | NO | NOW() | 更新日時 |
 
 **インデックス**
 ```sql
 CREATE INDEX idx_auctions_status ON auctions(status);
+CREATE INDEX idx_auctions_started_at ON auctions(started_at);
 ```
 
 **制約**

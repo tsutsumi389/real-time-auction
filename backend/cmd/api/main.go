@@ -71,6 +71,10 @@ func main() {
 			auth.POST("/admin/login", authHandler.AdminLogin)
 		}
 
+		// 公開エンドポイント（認証不要）
+		// 入札者用オークション一覧取得（すべてのユーザーがアクセス可能）
+		api.GET("/auctions", auctionHandler.GetBidderAuctionList)
+
 		// 保護されたエンドポイント（認証が必要）
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware(jwtService))

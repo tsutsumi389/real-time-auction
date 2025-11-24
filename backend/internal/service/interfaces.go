@@ -34,6 +34,7 @@ type BidderServiceInterface interface {
 // AuctionServiceInterface defines the interface for auction service operations
 type AuctionServiceInterface interface {
 	GetAuctionList(req *domain.AuctionListRequest) (*domain.AuctionListResponse, error)
+	GetBidderAuctionList(req *domain.BidderAuctionListRequest) (*domain.BidderAuctionListResponse, error)
 	StartAuction(id string) (*domain.AuctionWithItemCount, error)
 	EndAuction(id string) (*domain.AuctionWithItemCount, error)
 	CancelAuction(id string) (*domain.AuctionWithItemCount, error)
