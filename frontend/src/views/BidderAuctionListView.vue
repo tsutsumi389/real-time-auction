@@ -1,7 +1,10 @@
 <template>
-  <div class="bidder-auction-list-container min-h-screen bg-gray-50">
+  <div class="bidder-auction-list-container">
+    <!-- ヘッダー -->
+    <BidderHeader />
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <!-- ヘッダー -->
+      <!-- ページタイトル -->
       <div class="mb-6 sm:mb-8">
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
           オークション一覧
@@ -108,6 +111,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useBidderAuctionStore } from '@/stores/bidderAuction'
+import BidderHeader from '@/components/bidder/BidderHeader.vue'
 import AuctionSearchBar from '@/components/bidder/AuctionSearchBar.vue'
 import AuctionFilters from '@/components/bidder/AuctionFilters.vue'
 import AuctionCardGrid from '@/components/bidder/AuctionCardGrid.vue'
@@ -249,6 +253,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.bidder-auction-list-container {
+  min-height: 100vh;
+  background-color: #f9fafb; /* bg-gray-50 */
+}
+
 /* レスポンシブデザイン対応 */
 @media (max-width: 640px) {
   .bidder-auction-list-container {
