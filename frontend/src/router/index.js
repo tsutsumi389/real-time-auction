@@ -64,6 +64,12 @@ const router = createRouter({
       name: 'auction-new',
       component: () => import('../views/admin/AuctionNewView.vue'),
       meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
+    },
+    {
+      path: '/auctions',
+      name: 'bidder-auction-list',
+      component: () => import('../views/BidderAuctionListView.vue'),
+      meta: { requiresAuth: false }
     }
   ]
 })

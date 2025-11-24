@@ -839,12 +839,12 @@ frontend/src/
 - [x] 手動テスト（curlまたはPostman、offset/limitテスト、started_atソートテスト）
 
 ### Phase 3: フロントエンド基盤（3-4時間）
-- [ ] bidderAuctionApi.tsにgetBidderAuctionListを実装（offset/limit対応）
-- [ ] bidderAuctionStore.tsに状態管理を実装
-  - [ ] offset、has_more、loadingの状態管理
-  - [ ] 初回読み込みと追加読み込みのロジック分離
-  - [ ] フィルタ変更時のリセット処理
-- [ ] ルーティング設定（/auctions、認証ガードなし）
+- [x] bidderAuctionApi.tsにgetBidderAuctionListを実装（offset/limit対応）
+- [x] bidderAuctionStore.tsに状態管理を実装
+  - [x] offset、has_more、loadingの状態管理
+  - [x] 初回読み込みと追加読み込みのロジック分離
+  - [x] フィルタ変更時のリセット処理
+- [x] ルーティング設定（/auctions、認証ガードなし）
 
 ### Phase 4: フロントエンドUI（5-6時間）
 - [ ] BidderAuctionListView.vueの実装
