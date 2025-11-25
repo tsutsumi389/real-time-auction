@@ -26,3 +26,47 @@ type Item struct {
 func (Item) TableName() string {
 	return "items"
 }
+
+// StartItemResponse represents the response for starting an item
+type StartItemResponse struct {
+	ItemID       uuid.UUID  `json:"item_id"`
+	AuctionID    uuid.UUID  `json:"auction_id"`
+	CurrentPrice int64      `json:"current_price"`
+	StartedAt    time.Time  `json:"started_at"`
+}
+
+// OpenPriceRequest represents the request to open a new price
+type OpenPriceRequest struct {
+	NewPrice int64 `json:"new_price" binding:"required,min=1"`
+}
+
+// OpenPriceResponse represents the response for opening a new price
+type OpenPriceResponse struct {
+	ItemID        uuid.UUID `json:"item_id"`
+	CurrentPrice  int64     `json:"current_price"`
+	PreviousPrice int64     `json:"previous_price"`
+	DisclosedAt   time.Time `json:"disclosed_at"`
+}
+
+// EndItemResponse represents the response for ending an item
+type EndItemResponse struct {
+	ItemID     uuid.UUID  `json:"item_id"`
+	WinnerID   *uuid.UUID `json:"winner_id"`
+	WinnerName *string    `json:"winner_name"`
+	FinalPrice int64      `json:"final_price"`
+	EndedAt    time.Time  `json:"ended_at"`
+}
+
+// CancelAuctionRequest represents the request to cancel an auction
+type CancelAuctionRequest struct {
+	Reason string `json:"reason" binding:"max=500"`
+}
+
+// CancelAuctionResponse represents the response for cancelling an auction
+type CancelAuctionResponse struct {
+	AuctionID           uuid.UUID `json:"auction_id"`
+	Status              string    `json:"status"`
+	RefundedBidders     int64     `json:"refunded_bidders"`
+	TotalRefundedPoints int64     `json:"total_refunded_points"`
+	CancelledAt         time.Time `json:"cancelled_at"`
+}

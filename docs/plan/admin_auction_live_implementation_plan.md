@@ -1515,23 +1515,23 @@ API_PORT=8080
 
 ### 16.1 フェーズ1: バックエンド基礎（推定: 5日）
 
-- [ ] Domain層: 構造体定義（Auction, Item, Bid, PriceHistory）
-- [ ] Repository層: データベースアクセス実装
-- [ ] Service層: ビジネスロジック実装
-  - [ ] オークション開始ロジック
-  - [ ] 価格開示ロジック
-  - [ ] 商品終了ロジック
-  - [ ] 緊急停止ロジック
-- [ ] Handler層: HTTPエンドポイント実装
-  - [ ] POST /api/auctions/:id/start
-  - [ ] POST /api/items/:id/open-price
-  - [ ] POST /api/items/:id/end
-  - [ ] POST /api/auctions/:id/cancel
-  - [ ] GET /api/auctions/:id
-  - [ ] GET /api/items/:id/bids
-  - [ ] GET /api/auctions/:id/participants
-  - [ ] GET /api/items/:id/price-history
-- [ ] Middleware層: JWT認証、ロールチェック
+- [x] Domain層: 構造体定義（Auction, Item, Bid, PriceHistory）
+- [x] Repository層: データベースアクセス実装
+- [x] Service層: ビジネスロジック実装
+  - [x] オークション開始ロジック
+  - [x] 価格開示ロジック
+  - [x] 商品終了ロジック
+  - [x] 緊急停止ロジック
+- [x] Handler層: HTTPエンドポイント実装
+  - [x] POST /api/auctions/:id/start
+  - [x] POST /api/items/:id/open-price
+  - [x] POST /api/items/:id/end
+  - [x] POST /api/auctions/:id/cancel
+  - [x] GET /api/auctions/:id
+  - [x] GET /api/items/:id/bids
+  - [x] GET /api/auctions/:id/participants
+  - [x] GET /api/items/:id/price-history
+- [x] Middleware層: JWT認証、ロールチェック
 
 ### 16.2 フェーズ2: WebSocket実装（推定: 4日）
 
