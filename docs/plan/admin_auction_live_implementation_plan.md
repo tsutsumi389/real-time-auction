@@ -1535,15 +1535,15 @@ API_PORT=8080
 
 ### 16.2 フェーズ2: WebSocket実装（推定: 4日）
 
-- [ ] WebSocket層: Hub, Client, EventHandler実装
-- [ ] Redis Pub/Sub統合
-- [ ] イベント定義
-  - [ ] auction:started
-  - [ ] auction:price_open
-  - [ ] auction:bid
-  - [ ] auction:ended
-  - [ ] auction:cancelled
-- [ ] 接続管理、自動再接続
+- [x] WebSocket層: Hub, Client, EventHandler実装
+- [x] Redis Pub/Sub統合
+- [x] イベント定義
+  - [x] auction:started
+  - [x] auction:price_open
+  - [x] auction:bid
+  - [x] auction:ended
+  - [x] auction:cancelled
+- [x] 接続管理、自動再接続
 - [ ] レート制限、エラーハンドリング
 
 ### 16.3 フェーズ3: フロントエンド基礎（推定: 6日）
