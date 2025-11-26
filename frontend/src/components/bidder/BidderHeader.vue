@@ -22,7 +22,7 @@
               オークション一覧
             </router-link>
             <router-link
-              v-if="authStore.isAuthenticated"
+              v-if="bidderAuthStore.isAuthenticated"
               to="/my/bids"
               class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
               :class="{ 'text-blue-600': isCurrentRoute('/my/bids') }"
@@ -30,7 +30,7 @@
               入札履歴
             </router-link>
             <router-link
-              v-if="authStore.isAuthenticated"
+              v-if="bidderAuthStore.isAuthenticated"
               to="/my/points"
               class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
               :class="{ 'text-blue-600': isCurrentRoute('/my/points') }"
@@ -40,10 +40,10 @@
           </nav>
 
           <!-- ユーザー情報（ログイン済みの場合） -->
-          <div v-if="authStore.isAuthenticated" class="flex items-center gap-4">
+          <div v-if="bidderAuthStore.isAuthenticated" class="flex items-center gap-4">
             <!-- ユーザー情報 -->
             <div class="hidden sm:block text-right">
-              <p class="text-sm font-medium text-gray-900">{{ authStore.user?.display_name || authStore.user?.email }}</p>
+              <p class="text-sm font-medium text-gray-900">{{ bidderAuthStore.user?.displayName || bidderAuthStore.user?.email }}</p>
               <p class="text-xs text-gray-500">入札者</p>
             </div>
 
@@ -110,7 +110,7 @@
           オークション一覧
         </router-link>
         <router-link
-          v-if="authStore.isAuthenticated"
+          v-if="bidderAuthStore.isAuthenticated"
           to="/my/bids"
           class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
           :class="{ 'text-blue-600 bg-blue-50': isCurrentRoute('/my/bids') }"
@@ -119,7 +119,7 @@
           入札履歴
         </router-link>
         <router-link
-          v-if="authStore.isAuthenticated"
+          v-if="bidderAuthStore.isAuthenticated"
           to="/my/points"
           class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
           :class="{ 'text-blue-600 bg-blue-50': isCurrentRoute('/my/points') }"
@@ -135,11 +135,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useBidderAuthStore } from '@/stores/bidderAuthStore'
 
 const router = useRouter()
 const route = useRoute()
-const authStore = useAuthStore()
+const bidderAuthStore = useBidderAuthStore()
 const loading = ref(false)
 const showMobileNav = ref(false)
 
@@ -150,7 +150,7 @@ const isCurrentRoute = (path) => {
 
 // ユーザーイニシャル（アバター用）
 const userInitial = computed(() => {
-  const displayName = authStore.user?.display_name || authStore.user?.email || ''
+  const displayName = bidderAuthStore.user?.displayName || bidderAuthStore.user?.email || ''
   return displayName.charAt(0).toUpperCase()
 })
 
@@ -158,8 +158,8 @@ const userInitial = computed(() => {
 async function handleLogout() {
   loading.value = true
   try {
-    await authStore.logout()
-    router.push({ name: 'bidder-auction-list' })
+    await bidderAuthStore.logout()
+    router.push({ name: 'bidder-login' })
   } catch (error) {
     console.error('Logout error:', error)
   } finally {
