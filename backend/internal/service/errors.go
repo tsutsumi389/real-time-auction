@@ -21,3 +21,14 @@ var (
 	ErrInvalidSortMode           = errors.New("invalid sort mode")
 	ErrInvalidStatus             = errors.New("invalid status")
 )
+
+// Item service errors
+var (
+	ErrItemNotFound           = errors.New("item not found")
+	ErrItemAlreadyStarted     = errors.New("item already started")
+	ErrItemNotStarted         = errors.New("item not started")
+	ErrItemAlreadyEnded       = errors.New("item already ended")
+	ErrStartingPriceNotSet    = errors.New("starting price not set")
+	ErrPriceTooLow            = errors.New("new price must be higher than current price")
+	ErrNoBidsFound            = errors.New("no bids found for this item")
+)

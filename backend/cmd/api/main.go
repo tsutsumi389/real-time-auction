@@ -74,6 +74,8 @@ func main() {
 		// 公開エンドポイント（認証不要）
 		// 入札者用オークション一覧取得（すべてのユーザーがアクセス可能）
 		api.GET("/auctions", auctionHandler.GetBidderAuctionList)
+		// オークション詳細取得（すべてのユーザーがアクセス可能）
+		api.GET("/auctions/:id", auctionHandler.GetAuctionDetail)
 
 		// 保護されたエンドポイント（認証が必要）
 		protected := api.Group("")
@@ -111,7 +113,7 @@ func main() {
 				systemAdmin.PATCH("/admin/bidders/:id/status", bidderHandler.UpdateBidderStatus)
 
 				// オークション中止（system_adminのみ）
-				systemAdmin.POST("/admin/auctions/:id/cancel", auctionHandler.CancelAuction)
+				systemAdmin.POST("/admin/auctions/:id/cancel", auctionHandler.CancelAuctionWithReason)
 			}
 
 			// システム管理者と主催者がアクセス可能なエンドポイント
@@ -126,6 +128,19 @@ func main() {
 				adminOrAuctioneer.POST("/admin/auctions/:id/start", auctionHandler.StartAuction)
 				// オークション終了
 				adminOrAuctioneer.POST("/admin/auctions/:id/end", auctionHandler.EndAuction)
+				// オークション参加者一覧取得
+				adminOrAuctioneer.GET("/admin/auctions/:id/participants", auctionHandler.GetParticipants)
+
+				// 商品開始
+				adminOrAuctioneer.POST("/admin/items/:id/start", auctionHandler.StartItem)
+				// 価格開示
+				adminOrAuctioneer.POST("/admin/items/:id/open-price", auctionHandler.OpenPrice)
+				// 商品終了
+				adminOrAuctioneer.POST("/admin/items/:id/end", auctionHandler.EndItem)
+				// 入札履歴取得
+				adminOrAuctioneer.GET("/admin/items/:id/bids", auctionHandler.GetBidHistory)
+				// 価格開示履歴取得
+				adminOrAuctioneer.GET("/admin/items/:id/price-history", auctionHandler.GetPriceHistory)
 			}
 		}
 	}

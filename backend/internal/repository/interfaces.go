@@ -1,6 +1,9 @@
 package repository
 
-import "github.com/tsutsumi389/real-time-auction/internal/domain"
+import (
+	"github.com/google/uuid"
+	"github.com/tsutsumi389/real-time-auction/internal/domain"
+)
 
 // AdminRepositoryInterface defines the interface for admin repository operations
 type AdminRepositoryInterface interface {
@@ -31,6 +34,7 @@ type BidderRepositoryInterface interface {
 // AuctionRepositoryInterface defines the interface for auction repository operations
 type AuctionRepositoryInterface interface {
 	FindByID(id string) (*domain.Auction, error)
+	FindAuctionWithItems(id string) (*domain.GetAuctionDetailResponse, error)
 	FindAuctionsWithFilters(req *domain.AuctionListRequest) ([]domain.AuctionWithItemCount, error)
 	CountAuctionsWithFilters(req *domain.AuctionListRequest) (int64, error)
 	FindPublicAuctionsWithFilters(req *domain.BidderAuctionListRequest) ([]domain.BidderAuctionSummary, error)
@@ -41,4 +45,27 @@ type AuctionRepositoryInterface interface {
 	CreateAuction(auction *domain.Auction) error
 	CreateItems(items []domain.Item) error
 	CreateAuctionWithItems(auction *domain.Auction, items []domain.Item) error
+
+	// Item operations
+	FindItemByID(itemID string) (*domain.Item, error)
+	StartItem(itemID string) (*domain.Item, error)
+	UpdateItemCurrentPrice(itemID string, price int64) error
+	EndItem(itemID string, winnerID uuid.UUID, finalPrice int64) (*domain.Item, error)
+
+	// Bid operations
+	FindBidsByItemID(itemID string, limit int, offset int) ([]domain.BidWithBidderInfo, error)
+	CountBidsByItemID(itemID string) (int64, error)
+	FindWinningBidByItemID(itemID string) (*domain.Bid, error)
+	CreateBid(bid *domain.Bid) error
+	UpdateBidWinningStatus(itemID string, winningBidID int64) error
+
+	// Price history operations
+	FindPriceHistoryByItemID(itemID string) ([]domain.PriceHistoryWithAdmin, error)
+	CreatePriceHistory(history *domain.PriceHistory) error
+
+	// Participant operations
+	FindParticipantsByAuctionID(auctionID string) ([]domain.ParticipantInfo, error)
+
+	// Cancel auction operations
+	CancelAuctionWithRefunds(auctionID string, reason string) (*domain.CancelAuctionResponse, error)
 }

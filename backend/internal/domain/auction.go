@@ -124,3 +124,30 @@ type BidderAuctionListResponse struct {
 	Auctions   []BidderAuctionSummary `json:"auctions"`
 	Pagination BidderPagination       `json:"pagination"`
 }
+
+// GetAuctionDetailResponse represents the response for auction detail endpoint
+type GetAuctionDetailResponse struct {
+	ID          uuid.UUID     `json:"id"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Status      AuctionStatus `json:"status"`
+	StartedAt   *time.Time    `json:"started_at"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
+	Items       []Item        `json:"items"`
+}
+
+// ParticipantInfo represents a participant in an auction
+type ParticipantInfo struct {
+	BidderID    uuid.UUID  `json:"bidder_id"`
+	DisplayName string     `json:"display_name"`
+	BidCount    int64      `json:"bid_count"`
+	IsOnline    bool       `json:"is_online"`
+	LastBidAt   *time.Time `json:"last_bid_at"`
+}
+
+// ParticipantsResponse represents the response for participants endpoint
+type ParticipantsResponse struct {
+	Total        int64             `json:"total"`
+	Participants []ParticipantInfo `json:"participants"`
+}
