@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuctionLiveStore } from '@/stores/auctionLive'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
-import AdminLayout from '@/layouts/AdminLayout.vue'
 import ItemInfo from '@/components/auction/ItemInfo.vue'
 import ControlPanel from '@/components/auction/ControlPanel.vue'
 import BidHistory from '@/components/auction/BidHistory.vue'
@@ -149,53 +148,86 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AdminLayout>
-    <div class="space-y-6">
-      <!-- ヘッダー -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold">オークションライブ</h1>
-          <div v-if="auctionLiveStore.auction" class="flex items-center gap-4 mt-2">
-            <div class="text-lg text-gray-600">{{ auctionLiveStore.auction.title }}</div>
-            <div :class="['px-3 py-1 rounded-full text-sm font-medium', auctionStatusClass]">
-              {{ auctionStatusText }}
-            </div>
+  <div class="p-6 space-y-6">
+    <!-- ヘッダー -->
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold">オークションライブ</h1>
+        <div v-if="auctionLiveStore.auction" class="flex items-center gap-4 mt-2">
+          <div class="text-lg text-gray-600">{{ auctionLiveStore.auction.title }}</div>
+          <div :class="['px-3 py-1 rounded-full text-sm font-medium', auctionStatusClass]">
+            {{ auctionStatusText }}
           </div>
         </div>
-        <div class="flex items-center gap-4">
-          <div class="flex items-center gap-2">
-            <div :class="['w-3 h-3 rounded-full', auctionLiveStore.wsConnected ? 'bg-green-500' : 'bg-red-500']"></div>
-            <span :class="['text-sm font-medium', wsStatus.color]">{{ wsStatus.text }}</span>
-          </div>
-          <Button @click="router.push({ name: 'auction-list' })" variant="outline">
-            一覧に戻る
-          </Button>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <div :class="['w-3 h-3 rounded-full', auctionLiveStore.wsConnected ? 'bg-green-500' : 'bg-red-500']"></div>
+          <span :class="['text-sm font-medium', wsStatus.color]">{{ wsStatus.text }}</span>
         </div>
+        <Button @click="router.push({ name: 'auction-list' })" variant="outline">
+          一覧に戻る
+        </Button>
+      </div>
+    </div>
+
+    <!-- エラー表示 -->
+    <Alert v-if="auctionLiveStore.error" variant="destructive">
+      {{ auctionLiveStore.error }}
+    </Alert>
+
+    <!-- 落札者発表モーダル -->
+    <WinnerModal
+      :open="showWinnerModal"
+      :winner="winnerData"
+      :item="winnerData?.item"
+      @close="showWinnerModal = false"
+    />
+
+    <!-- ローディング -->
+    <div v-if="auctionLiveStore.loading" class="flex justify-center py-12">
+      <LoadingSpinner />
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div v-else-if="auctionLiveStore.auction">
+      <!-- モバイル・タブレット: 縦並び -->
+      <div class="lg:hidden space-y-6">
+        <!-- 操作パネル（モバイルでは最上部） -->
+        <ControlPanel
+          :item="auctionLiveStore.currentItem"
+          :auction="auctionLiveStore.auction"
+          :is-system-admin="authStore.isSystemAdmin"
+          :loading="auctionLiveStore.loading"
+          @start-item="handleStartItem"
+          @open-price="handleOpenPrice"
+          @end-item="handleEndItem"
+          @end-auction="handleEndAuction"
+          @cancel-auction="handleCancelAuction"
+        />
+        <ItemInfo :item="auctionLiveStore.currentItem" />
+        <ImageSlider :media="auctionLiveStore.currentItem?.media || []" />
+        <BidHistory :bids="auctionLiveStore.bids" />
+        <PriceHistoryList :price-history="auctionLiveStore.priceHistory" />
+        <ParticipantList :participants="auctionLiveStore.participants" />
       </div>
 
-      <!-- エラー表示 -->
-      <Alert v-if="auctionLiveStore.error" variant="destructive">
-        {{ auctionLiveStore.error }}
-      </Alert>
+      <!-- デスクトップ: 3カラムレイアウト -->
+      <div class="hidden lg:grid grid-cols-12 gap-6">
+        <!-- 左カラム: 商品情報と画像 -->
+        <div class="col-span-4 space-y-6">
+          <ItemInfo :item="auctionLiveStore.currentItem" />
+          <ImageSlider :media="auctionLiveStore.currentItem?.media || []" />
+        </div>
 
-      <!-- 落札者発表モーダル -->
-      <WinnerModal
-        :open="showWinnerModal"
-        :winner="winnerData"
-        :item="winnerData?.item"
-        @close="showWinnerModal = false"
-      />
+        <!-- 中央カラム: 入札履歴と価格履歴 -->
+        <div class="col-span-4 space-y-6">
+          <BidHistory :bids="auctionLiveStore.bids" />
+          <PriceHistoryList :price-history="auctionLiveStore.priceHistory" />
+        </div>
 
-      <!-- ローディング -->
-      <div v-if="auctionLiveStore.loading" class="flex justify-center py-12">
-        <LoadingSpinner />
-      </div>
-
-      <!-- メインコンテンツ -->
-      <div v-else-if="auctionLiveStore.auction">
-        <!-- モバイル・タブレット: 縦並び -->
-        <div class="lg:hidden space-y-6">
-          <!-- 操作パネル（モバイルでは最上部） -->
+        <!-- 右カラム: 操作パネルと参加者一覧 -->
+        <div class="col-span-4 space-y-6">
           <ControlPanel
             :item="auctionLiveStore.currentItem"
             :auction="auctionLiveStore.auction"
@@ -207,80 +239,45 @@ onUnmounted(() => {
             @end-auction="handleEndAuction"
             @cancel-auction="handleCancelAuction"
           />
-          <ItemInfo :item="auctionLiveStore.currentItem" />
-          <ImageSlider :media="auctionLiveStore.currentItem?.media || []" />
-          <BidHistory :bids="auctionLiveStore.bids" />
-          <PriceHistoryList :price-history="auctionLiveStore.priceHistory" />
           <ParticipantList :participants="auctionLiveStore.participants" />
         </div>
-
-        <!-- デスクトップ: 3カラムレイアウト -->
-        <div class="hidden lg:grid grid-cols-12 gap-6">
-          <!-- 左カラム: 商品情報と画像 -->
-          <div class="col-span-4 space-y-6">
-            <ItemInfo :item="auctionLiveStore.currentItem" />
-            <ImageSlider :media="auctionLiveStore.currentItem?.media || []" />
-          </div>
-
-          <!-- 中央カラム: 入札履歴と価格履歴 -->
-          <div class="col-span-4 space-y-6">
-            <BidHistory :bids="auctionLiveStore.bids" />
-            <PriceHistoryList :price-history="auctionLiveStore.priceHistory" />
-          </div>
-
-          <!-- 右カラム: 操作パネルと参加者一覧 -->
-          <div class="col-span-4 space-y-6">
-            <ControlPanel
-              :item="auctionLiveStore.currentItem"
-              :auction="auctionLiveStore.auction"
-              :is-system-admin="authStore.isSystemAdmin"
-              :loading="auctionLiveStore.loading"
-              @start-item="handleStartItem"
-              @open-price="handleOpenPrice"
-              @end-item="handleEndItem"
-              @end-auction="handleEndAuction"
-              @cancel-auction="handleCancelAuction"
-            />
-            <ParticipantList :participants="auctionLiveStore.participants" />
-          </div>
-        </div>
       </div>
-
-      <!-- 商品一覧 (タブ形式) -->
-      <Card v-if="auctionLiveStore.items.length > 0" class="p-6">
-        <h3 class="text-lg font-semibold mb-4">商品一覧</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button
-            v-for="item in auctionLiveStore.items"
-            :key="item.id"
-            @click="handleSelectItem(item.id)"
-            :class="[
-              'p-4 rounded-lg border-2 transition-all text-left',
-              auctionLiveStore.currentItem?.id === item.id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300 bg-white'
-            ]"
-          >
-            <div class="flex justify-between items-start mb-2">
-              <div class="text-sm font-semibold">ロット {{ item.lot_number }}</div>
-              <div
-                :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
-                  item.status === 'active' ? 'bg-green-100 text-green-700' :
-                  item.status === 'ended' ? 'bg-blue-100 text-blue-700' :
-                  'bg-gray-100 text-gray-700'
-                ]"
-              >
-                {{ item.status === 'active' ? '進行中' : item.status === 'ended' ? '終了' : '待機中' }}
-              </div>
-            </div>
-            <div class="text-sm font-medium truncate">{{ item.name }}</div>
-            <div v-if="item.current_price" class="text-xs text-gray-500 mt-1">
-              現在価格: {{ new Intl.NumberFormat('ja-JP').format(item.current_price) }} pt
-            </div>
-          </button>
-        </div>
-      </Card>
     </div>
-  </AdminLayout>
+
+    <!-- 商品一覧 (タブ形式) -->
+    <Card v-if="auctionLiveStore.items.length > 0" class="p-6">
+      <h3 class="text-lg font-semibold mb-4">商品一覧</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button
+          v-for="item in auctionLiveStore.items"
+          :key="item.id"
+          @click="handleSelectItem(item.id)"
+          :class="[
+            'p-4 rounded-lg border-2 transition-all text-left',
+            auctionLiveStore.currentItem?.id === item.id
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 hover:border-gray-300 bg-white'
+          ]"
+        >
+          <div class="flex justify-between items-start mb-2">
+            <div class="text-sm font-semibold">ロット {{ item.lot_number }}</div>
+            <div
+              :class="[
+                'px-2 py-1 rounded-full text-xs font-medium',
+                item.status === 'active' ? 'bg-green-100 text-green-700' :
+                item.status === 'ended' ? 'bg-blue-100 text-blue-700' :
+                'bg-gray-100 text-gray-700'
+              ]"
+            >
+              {{ item.status === 'active' ? '進行中' : item.status === 'ended' ? '終了' : '待機中' }}
+            </div>
+          </div>
+          <div class="text-sm font-medium truncate">{{ item.name }}</div>
+          <div v-if="item.current_price" class="text-xs text-gray-500 mt-1">
+            現在価格: {{ new Intl.NumberFormat('ja-JP').format(item.current_price) }} pt
+          </div>
+        </button>
+      </div>
+    </Card>
+  </div>
 </template>
