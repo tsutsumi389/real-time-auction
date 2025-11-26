@@ -28,14 +28,23 @@ const sortedBids = computed(() => {
     <h3 class="text-lg font-semibold mb-4">入札履歴</h3>
 
     <div v-if="sortedBids.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
-      <div
-        v-for="(bid, index) in sortedBids"
-        :key="bid.id"
-        :class="[
-          'p-3 rounded-md border transition-all',
-          index === 0 ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
-        ]"
+      <TransitionGroup
+        enter-active-class="transition-all duration-500 ease-out"
+        enter-from-class="opacity-0 -translate-y-4 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+        move-class="transition-transform duration-300"
       >
+        <div
+          v-for="(bid, index) in sortedBids"
+          :key="bid.id"
+          :class="[
+            'p-3 rounded-md border transition-all',
+            index === 0 ? 'bg-green-50 border-green-200 animate-pulse-subtle' : 'bg-white border-gray-200'
+          ]"
+        >
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-2">
             <div
@@ -56,7 +65,8 @@ const sortedBids = computed(() => {
             <div v-if="bid.is_winning" class="text-xs text-green-600 font-medium">最高入札</div>
           </div>
         </div>
-      </div>
+        </div>
+      </TransitionGroup>
     </div>
 
     <div v-else class="text-center text-gray-400 py-8">

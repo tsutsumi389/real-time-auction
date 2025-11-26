@@ -75,7 +75,16 @@ const formattedStartingPrice = computed(() => {
         </div>
         <div>
           <div class="text-sm text-gray-500 mb-1">現在価格</div>
-          <div class="text-lg font-semibold text-blue-600">{{ formattedPrice }}</div>
+          <Transition
+            enter-active-class="transition-all duration-500"
+            enter-from-class="scale-125 text-green-500"
+            enter-to-class="scale-100"
+            mode="out-in"
+          >
+            <div :key="formattedPrice" class="text-lg font-semibold text-blue-600">
+              {{ formattedPrice }}
+            </div>
+          </Transition>
         </div>
       </div>
 

@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, onUnmounted, computed } from 'vue'
+import { onMounted, onUnmounted, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuctionLiveStore } from '@/stores/auctionLive'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import ItemInfo from '@/components/auction/ItemInfo.vue'
 import ControlPanel from '@/components/auction/ControlPanel.vue'
@@ -10,6 +11,7 @@ import BidHistory from '@/components/auction/BidHistory.vue'
 import ParticipantList from '@/components/auction/ParticipantList.vue'
 import PriceHistoryList from '@/components/auction/PriceHistoryList.vue'
 import ImageSlider from '@/components/auction/ImageSlider.vue'
+import WinnerModal from '@/components/auction/WinnerModal.vue'
 import Alert from '@/components/ui/Alert.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import Card from '@/components/ui/Card.vue'
@@ -19,8 +21,11 @@ const route = useRoute()
 const router = useRouter()
 const auctionLiveStore = useAuctionLiveStore()
 const authStore = useAuthStore()
+const toast = useToast()
 
 const auctionId = computed(() => route.params.id)
+const showWinnerModal = ref(false)
+const winnerData = ref(null)
 
 const wsStatus = computed(() => {
   if (auctionLiveStore.wsReconnecting) {
@@ -66,46 +71,57 @@ const auctionStatusClass = computed(() => {
 
 async function handleStartItem(itemId) {
   const success = await auctionLiveStore.handleStartItem(itemId)
-  if (!success && auctionLiveStore.error) {
-    console.error('商品開始エラー:', auctionLiveStore.error)
+  if (success) {
+    toast.success('商品を開始しました')
+  } else if (auctionLiveStore.error) {
+    toast.error('商品開始エラー', auctionLiveStore.error)
   }
 }
 
 async function handleOpenPrice(itemId, price) {
   const success = await auctionLiveStore.handleOpenPrice(itemId, price)
-  if (!success && auctionLiveStore.error) {
-    console.error('価格開示エラー:', auctionLiveStore.error)
+  if (success) {
+    toast.success('価格を開示しました', `${new Intl.NumberFormat('ja-JP').format(price)} pt`)
+  } else if (auctionLiveStore.error) {
+    toast.error('価格開示エラー', auctionLiveStore.error)
   }
 }
 
 async function handleEndItem(itemId) {
   const winner = await auctionLiveStore.handleEndItem(itemId)
   if (winner) {
-    console.log('落札者:', winner)
+    winnerData.value = {
+      ...winner,
+      item: auctionLiveStore.currentItem
+    }
+    showWinnerModal.value = true
+    toast.success('商品が終了しました', `落札者: ${winner.display_name}`)
   } else if (auctionLiveStore.error) {
-    console.error('商品終了エラー:', auctionLiveStore.error)
+    toast.error('商品終了エラー', auctionLiveStore.error)
   }
 }
 
 async function handleEndAuction(auctionId) {
   const success = await auctionLiveStore.handleEndAuction(auctionId)
   if (success) {
+    toast.success('オークションを終了しました', 'オークション一覧に戻ります')
     setTimeout(() => {
       router.push({ name: 'auction-list' })
     }, 2000)
   } else if (auctionLiveStore.error) {
-    console.error('オークション終了エラー:', auctionLiveStore.error)
+    toast.error('オークション終了エラー', auctionLiveStore.error)
   }
 }
 
 async function handleCancelAuction(auctionId) {
   const success = await auctionLiveStore.handleCancelAuction(auctionId)
   if (success) {
+    toast.warning('オークションを緊急停止しました', 'すべてのポイントが返金されました')
     setTimeout(() => {
       router.push({ name: 'auction-list' })
     }, 2000)
   } else if (auctionLiveStore.error) {
-    console.error('オークション中止エラー:', auctionLiveStore.error)
+    toast.error('オークション中止エラー', auctionLiveStore.error)
   }
 }
 
@@ -119,9 +135,10 @@ onMounted(async () => {
     const token = authStore.token
     if (token) {
       auctionLiveStore.connectWebSocket(token, auctionId.value)
+      toast.info('オークションに接続しました', 'リアルタイム更新が有効です')
     }
   } else {
-    console.error('オークション初期化エラー:', auctionLiveStore.error)
+    toast.error('オークション初期化エラー', auctionLiveStore.error)
   }
 })
 
@@ -161,27 +178,24 @@ onUnmounted(() => {
         {{ auctionLiveStore.error }}
       </Alert>
 
+      <!-- 落札者発表モーダル -->
+      <WinnerModal
+        :open="showWinnerModal"
+        :winner="winnerData"
+        :item="winnerData?.item"
+        @close="showWinnerModal = false"
+      />
+
       <!-- ローディング -->
       <div v-if="auctionLiveStore.loading" class="flex justify-center py-12">
         <LoadingSpinner />
       </div>
 
       <!-- メインコンテンツ -->
-      <div v-else-if="auctionLiveStore.auction" class="grid grid-cols-12 gap-6">
-        <!-- 左カラム: 商品情報と画像 -->
-        <div class="col-span-12 lg:col-span-4 space-y-6">
-          <ItemInfo :item="auctionLiveStore.currentItem" />
-          <ImageSlider :media="auctionLiveStore.currentItem?.media || []" />
-        </div>
-
-        <!-- 中央カラム: 入札履歴と価格履歴 -->
-        <div class="col-span-12 lg:col-span-4 space-y-6">
-          <BidHistory :bids="auctionLiveStore.bids" />
-          <PriceHistoryList :price-history="auctionLiveStore.priceHistory" />
-        </div>
-
-        <!-- 右カラム: 操作パネルと参加者一覧 -->
-        <div class="col-span-12 lg:col-span-4 space-y-6">
+      <div v-else-if="auctionLiveStore.auction">
+        <!-- モバイル・タブレット: 縦並び -->
+        <div class="lg:hidden space-y-6">
+          <!-- 操作パネル（モバイルでは最上部） -->
           <ControlPanel
             :item="auctionLiveStore.currentItem"
             :auction="auctionLiveStore.auction"
@@ -193,7 +207,42 @@ onUnmounted(() => {
             @end-auction="handleEndAuction"
             @cancel-auction="handleCancelAuction"
           />
+          <ItemInfo :item="auctionLiveStore.currentItem" />
+          <ImageSlider :media="auctionLiveStore.currentItem?.media || []" />
+          <BidHistory :bids="auctionLiveStore.bids" />
+          <PriceHistoryList :price-history="auctionLiveStore.priceHistory" />
           <ParticipantList :participants="auctionLiveStore.participants" />
+        </div>
+
+        <!-- デスクトップ: 3カラムレイアウト -->
+        <div class="hidden lg:grid grid-cols-12 gap-6">
+          <!-- 左カラム: 商品情報と画像 -->
+          <div class="col-span-4 space-y-6">
+            <ItemInfo :item="auctionLiveStore.currentItem" />
+            <ImageSlider :media="auctionLiveStore.currentItem?.media || []" />
+          </div>
+
+          <!-- 中央カラム: 入札履歴と価格履歴 -->
+          <div class="col-span-4 space-y-6">
+            <BidHistory :bids="auctionLiveStore.bids" />
+            <PriceHistoryList :price-history="auctionLiveStore.priceHistory" />
+          </div>
+
+          <!-- 右カラム: 操作パネルと参加者一覧 -->
+          <div class="col-span-4 space-y-6">
+            <ControlPanel
+              :item="auctionLiveStore.currentItem"
+              :auction="auctionLiveStore.auction"
+              :is-system-admin="authStore.isSystemAdmin"
+              :loading="auctionLiveStore.loading"
+              @start-item="handleStartItem"
+              @open-price="handleOpenPrice"
+              @end-item="handleEndItem"
+              @end-auction="handleEndAuction"
+              @cancel-auction="handleCancelAuction"
+            />
+            <ParticipantList :participants="auctionLiveStore.participants" />
+          </div>
         </div>
       </div>
 

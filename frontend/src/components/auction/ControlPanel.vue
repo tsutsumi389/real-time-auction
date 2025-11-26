@@ -4,6 +4,7 @@ import Card from '@/components/ui/Card.vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
+import Dialog from '@/components/ui/Dialog.vue'
 
 const props = defineProps({
   item: {
@@ -110,6 +111,23 @@ function cancelAction() {
   showConfirm.value = null
 }
 
+const confirmTitle = computed(() => {
+  switch (showConfirm.value) {
+    case 'start-item':
+      return '商品開始の確認'
+    case 'open-price':
+      return '価格開示の確認'
+    case 'end-item':
+      return '商品終了の確認'
+    case 'end-auction':
+      return 'オークション終了の確認'
+    case 'cancel-auction':
+      return '緊急停止の確認'
+    default:
+      return '確認'
+  }
+})
+
 const confirmMessage = computed(() => {
   switch (showConfirm.value) {
     case 'start-item':
@@ -132,18 +150,18 @@ const confirmMessage = computed(() => {
   <Card class="p-6">
     <h3 class="text-lg font-semibold mb-4">操作パネル</h3>
 
-    <!-- 確認ダイアログ -->
-    <div v-if="showConfirm" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-      <p class="text-sm text-yellow-800 mb-3">{{ confirmMessage }}</p>
-      <div class="flex gap-2">
+    <!-- 確認ダイアログ（モーダル） -->
+    <Dialog :open="showConfirm !== null" @update:open="val => !val && cancelAction()" :title="confirmTitle">
+      <p class="text-sm text-gray-600">{{ confirmMessage }}</p>
+      <template #footer="{ close }">
         <Button @click="confirmAction" variant="default" size="sm" :disabled="loading">
           確認
         </Button>
-        <Button @click="cancelAction" variant="outline" size="sm" :disabled="loading">
+        <Button @click="close" variant="outline" size="sm" :disabled="loading">
           キャンセル
         </Button>
-      </div>
-    </div>
+      </template>
+    </Dialog>
 
     <!-- 商品操作 -->
     <div class="space-y-4">

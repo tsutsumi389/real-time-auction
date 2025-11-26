@@ -4,6 +4,8 @@
     <component :is="layout">
       <router-view />
     </component>
+    <!-- トースト通知コンテナ -->
+    <ToastContainer />
   </div>
 </template>
 
@@ -12,6 +14,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import ToastContainer from '@/components/ui/ToastContainer.vue'
 
 const route = useRoute()
 
