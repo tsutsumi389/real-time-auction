@@ -3,9 +3,13 @@ package ws
 import (
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/tsutsumi389/real-time-auction/internal/domain"
+	"github.com/tsutsumi389/real-time-auction/internal/service"
 )
 
 var upgrader = websocket.Upgrader{
@@ -19,17 +23,48 @@ var upgrader = websocket.Upgrader{
 
 // ServeWs はWebSocket接続をアップグレードし、クライアントを登録する
 func ServeWs(hub *Hub, c *gin.Context) {
-	// TODO: JWTトークンからユーザー情報を取得
-	// 現在は仮の実装
-	userID := c.Query("user_id")
-	userRole := c.Query("role")
+	// JWTトークンをクエリパラメータから取得
+	tokenString := c.Query("token")
+	if tokenString == "" {
+		// Authorization ヘッダーからも確認
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenString = parts[1]
+			}
+		}
+	}
 
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing user_id"})
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing authentication token"})
 		return
 	}
 
-	if userRole == "" {
+	// JWTトークンを検証
+	jwtService := service.NewJWTService("")
+	claims, err := jwtService.ValidateToken(tokenString)
+	if err != nil {
+		log.Printf("Failed to validate token: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		return
+	}
+
+	// ユーザー情報を取得
+	userID := strconv.FormatInt(claims.UserID, 10)
+	var userRole string
+
+	if claims.UserType == domain.UserTypeAdmin {
+		// 管理者の場合、ロールを文字列に変換
+		switch claims.Role {
+		case domain.RoleSystemAdmin:
+			userRole = "system_admin"
+		case domain.RoleAuctioneer:
+			userRole = "auctioneer"
+		default:
+			userRole = "admin"
+		}
+	} else {
 		userRole = "bidder"
 	}
 
