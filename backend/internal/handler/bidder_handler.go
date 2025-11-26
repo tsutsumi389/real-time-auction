@@ -51,8 +51,17 @@ func (h *BidderHandler) RegisterBidder(c *gin.Context) {
 		return
 	}
 
+	// Get admin ID from claims
+	adminID, ok := jwtClaims.GetUserIDAsInt64()
+	if !ok {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: "Invalid admin ID in token",
+		})
+		return
+	}
+
 	// Call service
-	response, err := h.bidderService.RegisterBidder(&req, jwtClaims.UserID)
+	response, err := h.bidderService.RegisterBidder(&req, adminID)
 	if err != nil {
 		// Handle different error types
 		switch {
@@ -172,8 +181,17 @@ func (h *BidderHandler) GrantPoints(c *gin.Context) {
 		return
 	}
 
+	// Get admin ID from claims
+	adminID, ok := jwtClaims.GetUserIDAsInt64()
+	if !ok {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: "Invalid admin ID in token",
+		})
+		return
+	}
+
 	// Call service
-	response, err := h.bidderService.GrantPoints(bidderID, req.Points, jwtClaims.UserID)
+	response, err := h.bidderService.GrantPoints(bidderID, req.Points, adminID)
 	if err != nil {
 		// Handle different error types
 		switch {

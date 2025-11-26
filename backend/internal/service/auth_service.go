@@ -17,15 +17,17 @@ var (
 
 // AuthService handles authentication logic
 type AuthService struct {
-	adminRepo  repository.AdminRepositoryInterface
-	jwtService JWTServiceInterface
+	adminRepo   repository.AdminRepositoryInterface
+	bidderRepo  repository.BidderRepositoryInterface
+	jwtService  JWTServiceInterface
 }
 
 // NewAuthService creates a new AuthService instance
-func NewAuthService(adminRepo repository.AdminRepositoryInterface, jwtService JWTServiceInterface) *AuthService {
+func NewAuthService(adminRepo repository.AdminRepositoryInterface, bidderRepo repository.BidderRepositoryInterface, jwtService JWTServiceInterface) *AuthService {
 	return &AuthService{
-		adminRepo:  adminRepo,
-		jwtService: jwtService,
+		adminRepo:   adminRepo,
+		bidderRepo:  bidderRepo,
+		jwtService:  jwtService,
 	}
 }
 
@@ -71,6 +73,83 @@ func (s *AuthService) LoginAdmin(email, password string) (*domain.LoginResponse,
 			DisplayName: admin.DisplayName,
 			Role:        admin.Role,
 			UserType:    domain.UserTypeAdmin,
+		},
+	}
+
+	return response, nil
+}
+
+// LoginBidder authenticates a bidder user and returns a JWT token
+func (s *AuthService) LoginBidder(email, password string) (*domain.LoginResponse, error) {
+	// Find bidder by email
+	bidder, err := s.bidderRepo.FindByEmail(email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find bidder: %w", err)
+	}
+
+	// Check if bidder exists
+	if bidder == nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	// Check account status
+	if bidder.IsDeleted() {
+		return nil, ErrAccountDeleted
+	}
+
+	if bidder.IsSuspended() {
+		return nil, ErrAccountSuspended
+	}
+
+	// Verify password
+	if err := bcrypt.CompareHashAndPassword([]byte(bidder.PasswordHash), []byte(password)); err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	// Get bidder points
+	points, err := s.bidderRepo.GetBidderPoints(bidder.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bidder points: %w", err)
+	}
+
+	// Generate JWT token
+	token, err := s.jwtService.GenerateTokenForBidder(bidder)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	// Get display name (use empty string if nil)
+	displayName := ""
+	if bidder.DisplayName != nil {
+		displayName = *bidder.DisplayName
+	}
+
+	// Build points info
+	var pointsInfo *domain.PointsInfo
+	if points != nil {
+		pointsInfo = &domain.PointsInfo{
+			TotalPoints:     points.TotalPoints,
+			AvailablePoints: points.AvailablePoints,
+			ReservedPoints:  points.ReservedPoints,
+		}
+	} else {
+		// If no points record exists, return zero points
+		pointsInfo = &domain.PointsInfo{
+			TotalPoints:     0,
+			AvailablePoints: 0,
+			ReservedPoints:  0,
+		}
+	}
+
+	// Build response
+	response := &domain.LoginResponse{
+		Token: token,
+		User: &domain.UserInfo{
+			ID:          bidder.ID, // UUID string
+			Email:       bidder.Email,
+			DisplayName: displayName,
+			UserType:    domain.UserTypeBidder,
+			Points:      pointsInfo,
 		},
 	}
 

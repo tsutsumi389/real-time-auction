@@ -703,17 +703,17 @@ frontend/src/
 
 ## 16. 実装手順
 
-### Phase 1: バックエンド基盤（2-3時間）
-- [ ] データモデルの定義（Bidder, JWTClaims with user_type）
-- [ ] Repository層の実装（入札者データベースアクセス）
-- [ ] Service層の実装（入札者認証ロジック、JWT生成）
-- [ ] ミドルウェアの実装（入札者専用認証）
+### Phase 1: バックエンド基盤（2-3時間）✅
+- [x] データモデルの定義（Bidder, JWTClaims with user_type）
+- [x] Repository層の実装（入札者データベースアクセス）
+- [x] Service層の実装（入札者認証ロジック、JWT生成）
+- [x] ミドルウェアの実装（入札者専用認証）
 
-### Phase 2: バックエンドAPI（1-2時間）
-- [ ] Handler層の実装（入札者ログインエンドポイント）
-- [ ] ルーティング設定（POST /api/auth/bidder/login）
-- [ ] Seed dataの作成（テスト入札者アカウント）
-- [ ] 手動テスト（curlまたはPostman）
+### Phase 2: バックエンドAPI（1-2時間）✅
+- [x] Handler層の実装（入札者ログインエンドポイント）
+- [x] ルーティング設定（POST /api/auth/bidder/login）
+- [x] Seed dataの作成（テスト入札者アカウント）
+- [x] 手動テスト（curlまたはPostman）
 
 ### Phase 3: フロントエンド基盤（2-3時間）
 - [ ] 入札者専用API Clientの実装（bidderApi.ts）
