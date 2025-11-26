@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuctionLiveStore } from '@/stores/auctionLive'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { getToken } from '@/services/token'
 import ItemInfo from '@/components/auction/ItemInfo.vue'
 import ControlPanel from '@/components/auction/ControlPanel.vue'
 import BidHistory from '@/components/auction/BidHistory.vue'
@@ -131,10 +132,12 @@ function handleSelectItem(itemId) {
 onMounted(async () => {
   const success = await auctionLiveStore.initialize(auctionId.value)
   if (success) {
-    const token = authStore.token
+    const token = getToken()
     if (token) {
       auctionLiveStore.connectWebSocket(token, auctionId.value)
       toast.info('オークションに接続しました', 'リアルタイム更新が有効です')
+    } else {
+      toast.error('認証トークンがありません', 'ログインし直してください')
     }
   } else {
     toast.error('オークション初期化エラー', auctionLiveStore.error)
