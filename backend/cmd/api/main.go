@@ -36,7 +36,7 @@ func main() {
 
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
-	authService := service.NewAuthService(adminRepo, jwtService)
+	authService := service.NewAuthService(adminRepo, bidderRepo, jwtService)
 	adminService := service.NewAdminService(adminRepo)
 	bidderService := service.NewBidderService(bidderRepo)
 	auctionService := service.NewAuctionService(auctionRepo)
@@ -69,6 +69,7 @@ func main() {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/admin/login", authHandler.AdminLogin)
+			auth.POST("/bidder/login", authHandler.BidderLogin)
 		}
 
 		// 公開エンドポイント（認証不要）

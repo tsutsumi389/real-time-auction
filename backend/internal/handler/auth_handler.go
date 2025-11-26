@@ -77,3 +77,49 @@ func (h *AuthHandler) AdminLogin(c *gin.Context) {
 	// Return successful response
 	c.JSON(http.StatusOK, response)
 }
+
+// BidderLogin handles bidder login requests
+// POST /api/auth/bidder/login
+func (h *AuthHandler) BidderLogin(c *gin.Context) {
+	var req LoginRequest
+
+	// Bind and validate request body
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body",
+		})
+		return
+	}
+
+	// Trim whitespace from email
+	req.Email = strings.TrimSpace(req.Email)
+
+	// Call auth service
+	response, err := h.authService.LoginBidder(req.Email, req.Password)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrInvalidCredentials):
+			c.JSON(http.StatusUnauthorized, ErrorResponse{
+				Error: "Invalid email or password",
+			})
+		case errors.Is(err, service.ErrAccountSuspended):
+			c.JSON(http.StatusForbidden, ErrorResponse{
+				Error: "Account is suspended",
+			})
+		case errors.Is(err, service.ErrAccountDeleted):
+			c.JSON(http.StatusForbidden, ErrorResponse{
+				Error: "Account is deleted",
+			})
+		default:
+			// Log internal errors but don't expose details to client
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusOK, response)
+}

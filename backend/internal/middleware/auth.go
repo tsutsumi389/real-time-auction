@@ -143,6 +143,30 @@ func RequireAdminOrAuctioneer() gin.HandlerFunc {
 	}
 }
 
+// RequireBidder middleware ensures the user is a bidder
+func RequireBidder() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userType, exists := c.Get("user_type")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Authentication required",
+			})
+			c.Abort()
+			return
+		}
+
+		if userType != domain.UserTypeBidder {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Bidder access required",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // GetClaims retrieves JWT claims from the context
 func GetClaims(c *gin.Context) (*domain.JWTClaims, bool) {
 	claims, exists := c.Get("claims")
@@ -163,4 +187,19 @@ func GetUserID(c *gin.Context) (int64, bool) {
 
 	id, ok := userID.(int64)
 	return id, ok
+}
+
+// GetBidderID retrieves bidder ID (UUID string) from the context
+func GetBidderID(c *gin.Context) (string, bool) {
+	claims, ok := GetClaims(c)
+	if !ok {
+		return "", false
+	}
+
+	if claims.UserType != domain.UserTypeBidder {
+		return "", false
+	}
+
+	bidderID, ok := claims.GetUserIDAsString()
+	return bidderID, ok
 }

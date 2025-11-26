@@ -59,6 +59,41 @@ func (s *JWTService) GenerateTokenForAdmin(admin *domain.Admin) (string, error) 
 	return tokenString, nil
 }
 
+// GenerateTokenForBidder generates a JWT token for a bidder user
+func (s *JWTService) GenerateTokenForBidder(bidder *domain.Bidder) (string, error) {
+	// Token expires in 24 hours
+	expirationTime := time.Now().Add(24 * time.Hour)
+
+	// Get display name (use empty string if nil)
+	displayName := ""
+	if bidder.DisplayName != nil {
+		displayName = *bidder.DisplayName
+	}
+
+	// Create claims
+	claims := &domain.JWTClaims{
+		UserID:      bidder.ID, // UUID string
+		Email:       bidder.Email,
+		DisplayName: displayName,
+		UserType:    domain.UserTypeBidder,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	// Create token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Sign token with secret key
+	tokenString, err := token.SignedString(s.secretKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return tokenString, nil
+}
+
 // ValidateToken validates a JWT token and returns the claims
 func (s *JWTService) ValidateToken(tokenString string) (*domain.JWTClaims, error) {
 	// Parse token
