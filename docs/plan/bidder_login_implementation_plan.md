@@ -716,10 +716,10 @@ frontend/src/
 - [x] 手動テスト（curlまたはPostman）
 
 ### Phase 3: フロントエンド基盤（2-3時間）
-- [ ] 入札者専用API Clientの実装（bidderApi.ts）
-- [ ] トークン管理機能の実装（bidderAuth.ts）
-- [ ] Pinia Storeの実装（bidderAuthStore.ts）
-- [ ] ルーティング設定と入札者認証ガード
+- [x] 入札者専用API Clientの実装（bidderApi.ts）
+- [x] トークン管理機能の実装（bidderAuth.ts）
+- [x] Pinia Storeの実装（bidderAuthStore.ts）
+- [x] ルーティング設定と入札者認証ガード
 
 ### Phase 4: フロントエンドUI（3-4時間）
 - [ ] Shadcn UIコンポーネントのセットアップ（既存のものを活用）
