@@ -125,8 +125,8 @@ async function handleCancelAuction(auctionId) {
   }
 }
 
-function handleSelectItem(itemId) {
-  auctionLiveStore.selectItem(itemId)
+async function handleSelectItem(itemId) {
+  await auctionLiveStore.selectItem(itemId)
 }
 
 onMounted(async () => {
@@ -254,9 +254,10 @@ onUnmounted(() => {
         <button
           v-for="item in auctionLiveStore.items"
           :key="item.id"
-          @click="handleSelectItem(item.id)"
+          type="button"
+          @click.stop="handleSelectItem(item.id)"
           :class="[
-            'p-4 rounded-lg border-2 transition-all text-left',
+            'p-4 rounded-lg border-2 transition-all text-left cursor-pointer',
             auctionLiveStore.currentItem?.id === item.id
               ? 'border-blue-500 bg-blue-50'
               : 'border-gray-200 hover:border-gray-300 bg-white'

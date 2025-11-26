@@ -72,8 +72,12 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
     try {
       const response = await getAuctionDetail(auctionId)
-      auction.value = response.auction
-      items.value = response.items || []
+
+      // APIレスポンスは { id, title, ..., items: [] } の構造
+      // itemsを取り出して、残りをauctionとして設定
+      const { items: responseItems, ...auctionData } = response
+      auction.value = auctionData
+      items.value = responseItems || []
 
       // 最初のアクティブまたはペンディングアイテムを選択
       const active = items.value.find(item => item.status === 'active')
