@@ -1548,18 +1548,18 @@ API_PORT=8080
 
 ### 16.3 フェーズ3: フロントエンド基礎（推定: 6日）
 
-- [ ] ページコンポーネント: AuctionLive.vue
-- [ ] 子コンポーネント実装
-  - [ ] ItemInfo.vue
-  - [ ] ControlPanel.vue
-  - [ ] BidHistory.vue
-  - [ ] ParticipantList.vue
-  - [ ] PriceHistoryList.vue
-  - [ ] ImageSlider.vue
-- [ ] Pinia Store: auctionStore.js
-- [ ] API Service: auctionApi.js
-- [ ] WebSocket Service: websocketService.js
-- [ ] ルーティング設定（Vue Router）
+- [x] ページコンポーネント: AuctionLive.vue
+- [x] 子コンポーネント実装
+  - [x] ItemInfo.vue
+  - [x] ControlPanel.vue
+  - [x] BidHistory.vue
+  - [x] ParticipantList.vue
+  - [x] PriceHistoryList.vue
+  - [x] ImageSlider.vue
+- [x] Pinia Store: auctionStore.js
+- [x] API Service: auctionApi.js
+- [x] WebSocket Service: websocketService.js
+- [x] ルーティング設定（Vue Router）
 
 ### 16.4 フェーズ4: UI/UX実装（推定: 5日）
 
