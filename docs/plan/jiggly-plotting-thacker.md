@@ -1319,10 +1319,10 @@ VITE_WS_URL=ws://localhost/ws
 
 ### フェーズ3: フロントエンド基盤（推定: 3時間）
 
-- [ ] API Service: bidderBidApi.jsの作成（getPoints, placeBid, getBidHistory）
-- [ ] Pinia Store: bidderAuctionLive.jsの作成（state, computed, actions）
-- [ ] ルート定義: /bidder/auctions/:id/liveの追加
-- [ ] 動作確認: ルートにアクセスしてコンソールエラーなし
+- [x] API Service: bidderBidApi.jsの作成（getPoints, placeBid, getBidHistory, getAuctionDetail）
+- [x] Pinia Store: bidderAuctionLive.jsの作成（state, computed, actions）
+- [x] ルート定義: /bidder/auctions/:id/liveの追加
+- [x] 動作確認: 基本的なビューコンポーネント作成完了
 
 ### フェーズ4: フロントエンドUI（推定: 8時間）
 
