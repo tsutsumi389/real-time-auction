@@ -21,6 +21,7 @@
             >
               オークション一覧
             </router-link>
+            <!-- TODO: 入札履歴ページ実装後に有効化
             <router-link
               v-if="bidderAuthStore.isAuthenticated"
               to="/my/bids"
@@ -29,6 +30,8 @@
             >
               入札履歴
             </router-link>
+            -->
+            <!-- TODO: ポイントページ実装後に有効化
             <router-link
               v-if="bidderAuthStore.isAuthenticated"
               to="/my/points"
@@ -37,6 +40,7 @@
             >
               ポイント
             </router-link>
+            -->
           </nav>
 
           <!-- ユーザー情報（ログイン済みの場合） -->
@@ -109,6 +113,7 @@
         >
           オークション一覧
         </router-link>
+        <!-- TODO: 入札履歴ページ実装後に有効化
         <router-link
           v-if="bidderAuthStore.isAuthenticated"
           to="/my/bids"
@@ -118,6 +123,8 @@
         >
           入札履歴
         </router-link>
+        -->
+        <!-- TODO: ポイントページ実装後に有効化
         <router-link
           v-if="bidderAuthStore.isAuthenticated"
           to="/my/points"
@@ -127,6 +134,7 @@
         >
           ポイント
         </router-link>
+        -->
       </div>
     </nav>
   </header>

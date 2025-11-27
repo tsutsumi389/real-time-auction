@@ -110,12 +110,15 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useBidderAuctionStore } from '@/stores/bidderAuction'
 import BidderHeader from '@/components/bidder/BidderHeader.vue'
 import AuctionSearchBar from '@/components/bidder/AuctionSearchBar.vue'
 import AuctionFilters from '@/components/bidder/AuctionFilters.vue'
 import AuctionCardGrid from '@/components/bidder/AuctionCardGrid.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+
+const router = useRouter()
 
 const auctionStore = useBidderAuctionStore()
 
@@ -191,8 +194,11 @@ const handleViewDetails = (auction) => {
 }
 
 const handleJoinAuction = (auction) => {
-  console.log('Join auction:', auction)
-  // TODO: オークション参加処理を実装
+  // オークション開催中の画面へ遷移
+  router.push({
+    name: 'bidder-auction-live',
+    params: { id: auction.id }
+  })
 }
 
 // Intersection Observerのセットアップ（無限スクロール）

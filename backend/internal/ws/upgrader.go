@@ -51,11 +51,19 @@ func ServeWs(hub *Hub, c *gin.Context) {
 	}
 
 	// ユーザー情報を取得
-	userID := strconv.FormatInt(claims.UserID, 10)
+	var userID string
 	var userRole string
 
 	if claims.UserType == domain.UserTypeAdmin {
-		// 管理者の場合、ロールを文字列に変換
+		// 管理者の場合、int64のIDを文字列に変換
+		if id, ok := claims.GetUserIDAsInt64(); ok {
+			userID = strconv.FormatInt(id, 10)
+		} else {
+			log.Printf("Failed to get admin user ID")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID"})
+			return
+		}
+		// ロールを文字列に変換
 		switch claims.Role {
 		case domain.RoleSystemAdmin:
 			userRole = "system_admin"
@@ -65,6 +73,14 @@ func ServeWs(hub *Hub, c *gin.Context) {
 			userRole = "admin"
 		}
 	} else {
+		// 入札者の場合、文字列のUUIDをそのまま使用
+		if id, ok := claims.GetUserIDAsString(); ok {
+			userID = id
+		} else {
+			log.Printf("Failed to get bidder user ID")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID"})
+			return
+		}
 		userRole = "bidder"
 	}
 

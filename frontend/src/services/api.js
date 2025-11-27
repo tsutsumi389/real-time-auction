@@ -1,6 +1,7 @@
 /**
- * API Client
- * Axiosインスタンスの設定とインターセプターの実装
+ * Admin API Client
+ * 管理者専用のAxiosインスタンス
+ * 管理者トークンを使用
  */
 import axios from 'axios'
 import { getToken, removeToken } from './token'
@@ -8,7 +9,7 @@ import { getToken, removeToken } from './token'
 // 環境変数からAPIベースURLを取得
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/api'
 
-// Axiosインスタンスの作成
+// 管理者専用Axiosインスタンスの作成
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -20,8 +21,8 @@ const apiClient = axios.create({
 // リクエストインターセプター
 apiClient.interceptors.request.use(
   (config) => {
-    // トークンが存在する場合、Authorizationヘッダーに追加
-    const token = getToken()
+    // 管理者用トークンが存在する場合、Authorizationヘッダーに追加
+    const token = getToken('admin')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -46,8 +47,8 @@ apiClient.interceptors.response.use(
 
       switch (status) {
         case 401:
-          // 認証エラー: トークンを削除してログイン画面へ
-          removeToken()
+          // 認証エラー: 管理者トークンを削除してログイン画面へ
+          removeToken('admin')
           // ログイン画面へのリダイレクトはルーターで処理
           break
         case 403:

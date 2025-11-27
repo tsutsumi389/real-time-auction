@@ -168,3 +168,12 @@ type PointsInfo struct {
 	AvailablePoints int64 `json:"available_points"`
 	ReservedPoints  int64 `json:"reserved_points"`
 }
+
+// GetPointsResponse represents the response for bidder points endpoint
+type GetPointsResponse struct {
+	BidderID        string    `json:"bidder_id"`
+	TotalPoints     int64     `json:"total_points"`
+	AvailablePoints int64     `json:"available_points"`
+	ReservedPoints  int64     `json:"reserved_points"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}

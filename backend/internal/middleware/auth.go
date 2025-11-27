@@ -46,13 +46,21 @@ func AuthMiddleware(jwtService *service.JWTService) gin.HandlerFunc {
 
 		// Store claims in context for use in handlers
 		c.Set("claims", claims)
-		c.Set("user_id", claims.UserID)
 		c.Set("user_type", claims.UserType)
 		c.Set("email", claims.Email)
 
-		// For admin users, also store role
+		// Store user_id with appropriate type based on user type
 		if claims.UserType == domain.UserTypeAdmin {
+			// For admin users, convert to int64
+			if adminID, ok := claims.GetUserIDAsInt64(); ok {
+				c.Set("user_id", adminID)
+			}
 			c.Set("role", claims.Role)
+		} else if claims.UserType == domain.UserTypeBidder {
+			// For bidder users, convert to string
+			if bidderID, ok := claims.GetUserIDAsString(); ok {
+				c.Set("user_id", bidderID)
+			}
 		}
 
 		c.Next()

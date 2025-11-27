@@ -1,23 +1,32 @@
 /**
  * Token Management
- * JWTトークンのlocalStorage操作を管理
+ * JWTトークンのlocalStorage操作を管理（役割別に分離）
  */
 
-const TOKEN_KEY = 'auth_token'
-const TOKEN_EXPIRY_KEY = 'auth_token_expiry'
+// 管理者用のトークンキー
+const ADMIN_TOKEN_KEY = 'admin_auth_token'
+const ADMIN_TOKEN_EXPIRY_KEY = 'admin_auth_token_expiry'
+
+// 入札者用のトークンキー
+const BIDDER_TOKEN_KEY = 'bidder_auth_token'
+const BIDDER_TOKEN_EXPIRY_KEY = 'bidder_auth_token_expiry'
 
 /**
  * トークンをlocalStorageに保存
  * @param {string} token - JWTトークン
+ * @param {string} role - ユーザーの役割（'admin' または 'bidder'）
  * @param {number} expiresIn - トークンの有効期限（秒）
  */
-export function saveToken(token, expiresIn = 86400) {
+export function saveToken(token, role = 'admin', expiresIn = 86400) {
   try {
-    localStorage.setItem(TOKEN_KEY, token)
+    const tokenKey = role === 'bidder' ? BIDDER_TOKEN_KEY : ADMIN_TOKEN_KEY
+    const expiryKey = role === 'bidder' ? BIDDER_TOKEN_EXPIRY_KEY : ADMIN_TOKEN_EXPIRY_KEY
+
+    localStorage.setItem(tokenKey, token)
 
     // 有効期限を計算してタイムスタンプで保存
     const expiryTime = Date.now() + expiresIn * 1000
-    localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
+    localStorage.setItem(expiryKey, expiryTime.toString())
   } catch (error) {
     console.error('Failed to save token:', error)
   }
@@ -25,12 +34,16 @@ export function saveToken(token, expiresIn = 86400) {
 
 /**
  * localStorageからトークンを取得
+ * @param {string} role - ユーザーの役割（'admin' または 'bidder'）
  * @returns {string|null} トークン（有効期限切れの場合はnull）
  */
-export function getToken() {
+export function getToken(role = 'admin') {
   try {
-    const token = localStorage.getItem(TOKEN_KEY)
-    const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY)
+    const tokenKey = role === 'bidder' ? BIDDER_TOKEN_KEY : ADMIN_TOKEN_KEY
+    const expiryKey = role === 'bidder' ? BIDDER_TOKEN_EXPIRY_KEY : ADMIN_TOKEN_EXPIRY_KEY
+
+    const token = localStorage.getItem(tokenKey)
+    const expiry = localStorage.getItem(expiryKey)
 
     if (!token || !expiry) {
       return null
@@ -42,7 +55,7 @@ export function getToken() {
 
     if (now >= expiryTime) {
       // 有効期限切れの場合はトークンを削除
-      removeToken()
+      removeToken(role)
       return null
     }
 
@@ -55,11 +68,15 @@ export function getToken() {
 
 /**
  * localStorageからトークンを削除
+ * @param {string} role - ユーザーの役割（'admin' または 'bidder'）
  */
-export function removeToken() {
+export function removeToken(role = 'admin') {
   try {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(TOKEN_EXPIRY_KEY)
+    const tokenKey = role === 'bidder' ? BIDDER_TOKEN_KEY : ADMIN_TOKEN_KEY
+    const expiryKey = role === 'bidder' ? BIDDER_TOKEN_EXPIRY_KEY : ADMIN_TOKEN_EXPIRY_KEY
+
+    localStorage.removeItem(tokenKey)
+    localStorage.removeItem(expiryKey)
   } catch (error) {
     console.error('Failed to remove token:', error)
   }
@@ -67,18 +84,20 @@ export function removeToken() {
 
 /**
  * トークンの有効性をチェック
+ * @param {string} role - ユーザーの役割（'admin' または 'bidder'）
  * @returns {boolean} トークンが有効な場合true
  */
-export function isTokenValid() {
-  return getToken() !== null
+export function isTokenValid(role = 'admin') {
+  return getToken(role) !== null
 }
 
 /**
  * トークンのペイロードをデコード（Base64）
+ * @param {string} role - ユーザーの役割（'admin' または 'bidder'）
  * @returns {object|null} デコードされたペイロード
  */
-export function decodeToken() {
-  const token = getToken()
+export function decodeToken(role = 'admin') {
+  const token = getToken(role)
   if (!token) {
     return null
   }
@@ -102,12 +121,22 @@ export function decodeToken() {
 
 /**
  * トークンからユーザー情報を取得
+ * @param {string} role - ユーザーの役割（'admin' または 'bidder'）
  * @returns {object|null} ユーザー情報（user_id, email, role）
  */
-export function getUserFromToken() {
-  const payload = decodeToken()
+export function getUserFromToken(role = 'admin') {
+  const payload = decodeToken(role)
   if (!payload) {
     return null
+  }
+
+  if (role === 'bidder') {
+    return {
+      bidderId: payload.user_id,
+      email: payload.email,
+      displayName: payload.display_name,
+      userType: payload.user_type,
+    }
   }
 
   return {

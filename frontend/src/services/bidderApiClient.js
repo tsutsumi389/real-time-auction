@@ -4,7 +4,7 @@
  * 管理者APIとは完全に分離し、bidder_tokenを使用
  */
 import axios from 'axios'
-import { getBidderToken, removeBidderToken } from '@/utils/bidderToken'
+import { getToken, removeToken } from './token'
 
 // 環境変数からAPIベースURLを取得
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/api'
@@ -22,7 +22,7 @@ const bidderApiClient = axios.create({
 bidderApiClient.interceptors.request.use(
   (config) => {
     // 入札者用トークンが存在する場合、Authorizationヘッダーに追加
-    const token = getBidderToken()
+    const token = getToken('bidder')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -48,7 +48,7 @@ bidderApiClient.interceptors.response.use(
       switch (status) {
         case 401:
           // 認証エラー: 入札者トークンを削除してログイン画面へ
-          removeBidderToken()
+          removeToken('bidder')
           // ログイン画面へのリダイレクトはルーターで処理
           break
         case 403:
