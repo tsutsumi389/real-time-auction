@@ -127,9 +127,18 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
         getPoints(),
       ])
 
-      auction.value = auctionData.auction
-      items.value = auctionData.items || []
-      points.value = pointsData.points || { total: 0, available: 0, reserved: 0 }
+      // APIレスポンスはフラット構造（{ id, title, ..., items }）で返される
+      // items を抽出してから auction に設定
+      const { items: auctionItems, ...auctionInfo } = auctionData
+      auction.value = auctionInfo
+      items.value = auctionItems || []
+
+      // ポイントAPIもフラット構造（{ total_points, available_points, reserved_points }）
+      points.value = {
+        total: pointsData.total_points || 0,
+        available: pointsData.available_points || 0,
+        reserved: pointsData.reserved_points || 0,
+      }
 
       // 最初の商品を選択（status=startedの商品があればそれを、なければ最初の商品）
       const startedItem = items.value.find((item) => item.status === 'started')
