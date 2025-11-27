@@ -11,7 +11,7 @@ import {
   getBidHistory as apiGetBidHistory,
 } from '@/services/bidderBidApi'
 import websocketService from '@/services/websocketService'
-import { getBidderToken } from '@/utils/bidderToken'
+import { getToken } from '@/services/token'
 import { useToast } from '@/composables/useToast'
 
 export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => {
@@ -227,7 +227,7 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
    * @param {string} auctionId - オークションID
    */
   function connectWebSocket(auctionId) {
-    const token = getBidderToken()
+    const token = getToken('bidder')
     if (!token) {
       console.error('[bidderAuctionLive] Cannot connect WebSocket: No token')
       error.value = '認証トークンがありません'
