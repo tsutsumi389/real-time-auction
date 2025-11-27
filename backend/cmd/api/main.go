@@ -33,6 +33,7 @@ func main() {
 	adminRepo := repository.NewAdminRepository(db)
 	bidderRepo := repository.NewBidderRepository(db)
 	auctionRepo := repository.NewAuctionRepository(db)
+	pointRepo := repository.NewPointRepository(db)
 
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
@@ -40,12 +41,14 @@ func main() {
 	adminService := service.NewAdminService(adminRepo)
 	bidderService := service.NewBidderService(bidderRepo)
 	auctionService := service.NewAuctionService(auctionRepo)
+	pointService := service.NewPointService(pointRepo)
 
 	// ハンドラ初期化
 	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)
 	bidderHandler := handler.NewBidderHandler(bidderService)
 	auctionHandler := handler.NewAuctionHandler(auctionService)
+	bidHandler := handler.NewBidHandler(pointService)
 
 	// Ginルーター初期化
 	router := gin.Default()
@@ -90,6 +93,13 @@ func main() {
 
 			// 現在のユーザー情報取得
 			protected.GET("/admin/me", adminHandler.GetCurrentAdmin)
+
+			// 入札者専用エンドポイント
+			bidder := protected.Group("/bidder")
+			bidder.Use(middleware.RequireBidder())
+			{
+				bidder.GET("/points", bidHandler.GetPoints)
+			}
 
 			// システム管理者専用エンドポイント
 			systemAdmin := protected.Group("")

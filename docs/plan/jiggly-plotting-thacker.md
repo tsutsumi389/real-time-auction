@@ -1295,12 +1295,12 @@ VITE_WS_URL=ws://localhost/ws
 
 ### フェーズ1: バックエンド基盤（推定: 4時間）
 
-- [ ] Domain層: bidder_points.goの作成（構造体定義）
-- [ ] Repository層: bid_repository.goの作成（CRUD操作）
-- [ ] Repository層: point_repository.goの作成（ポイント更新、履歴作成）
-- [ ] Service層: point_service.goの作成（ポイント取得、キャッシュ）
-- [ ] Handler層: bid_handler.goの作成（GetPoints実装）
-- [ ] ルート定義: GET /api/bidder/pointsの追加
+- [x] Domain層: bidder_points.goの作成（構造体定義）
+- [x] Repository層: bid_repository.goの作成（CRUD操作）
+- [x] Repository層: point_repository.goの作成（ポイント更新、履歴作成）
+- [x] Service層: point_service.goの作成（ポイント取得、キャッシュ）
+- [x] Handler層: bid_handler.goの作成（GetPoints実装）
+- [x] ルート定義: GET /api/bidder/pointsの追加
 - [ ] 動作確認: curlでポイント取得APIをテスト
 
 ### フェーズ2: バックエンド入札機能（推定: 6時間）
