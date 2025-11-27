@@ -1305,15 +1305,15 @@ VITE_WS_URL=ws://localhost/ws
 
 ### フェーズ2: バックエンド入札機能（推定: 6時間）
 
-- [ ] Service層: bid_service.goの作成（PlaceBid実装）
-  - [ ] バリデーション
-  - [ ] Redis分散ロック
-  - [ ] トランザクション処理
-  - [ ] ポイント更新
-  - [ ] 入札レコード作成
-  - [ ] Redis Pub/Sub発行
-- [ ] Handler層: PlaceBid、GetBidHistoryの実装
-- [ ] ルート定義: POST /api/bidder/items/:id/bid、GET /api/bidder/items/:id/bidsの追加
+- [x] Service層: bid_service.goの作成（PlaceBid実装）
+  - [x] バリデーション
+  - [x] Redis分散ロック
+  - [x] トランザクション処理
+  - [x] ポイント更新
+  - [x] 入札レコード作成
+  - [x] Redis Pub/Sub発行
+- [x] Handler層: PlaceBid、GetBidHistoryの実装
+- [x] ルート定義: POST /api/bidder/items/:id/bid、GET /api/bidder/items/:id/bidsの追加
 - [ ] 動作確認: curlで入札APIをテスト
 - [ ] エラーハンドリングの確認（ポイント不足、価格変更、同時入札）
 

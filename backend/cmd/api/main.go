@@ -29,11 +29,18 @@ func main() {
 		log.Fatal("Failed to initialize database:", err)
 	}
 
+	// Redis接続
+	redisClient, err := repository.NewRedisClient()
+	if err != nil {
+		log.Fatal("Failed to initialize Redis:", err)
+	}
+
 	// リポジトリ初期化
 	adminRepo := repository.NewAdminRepository(db)
 	bidderRepo := repository.NewBidderRepository(db)
 	auctionRepo := repository.NewAuctionRepository(db)
 	pointRepo := repository.NewPointRepository(db)
+	bidRepo := repository.NewBidRepository(db)
 
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
@@ -42,13 +49,14 @@ func main() {
 	bidderService := service.NewBidderService(bidderRepo)
 	auctionService := service.NewAuctionService(auctionRepo)
 	pointService := service.NewPointService(pointRepo)
+	bidService := service.NewBidService(db, redisClient, bidRepo, pointRepo, auctionRepo)
 
 	// ハンドラ初期化
 	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)
 	bidderHandler := handler.NewBidderHandler(bidderService)
 	auctionHandler := handler.NewAuctionHandler(auctionService)
-	bidHandler := handler.NewBidHandler(pointService)
+	bidHandler := handler.NewBidHandler(pointService, bidService)
 
 	// Ginルーター初期化
 	router := gin.Default()
@@ -99,6 +107,8 @@ func main() {
 			bidder.Use(middleware.RequireBidder())
 			{
 				bidder.GET("/points", bidHandler.GetPoints)
+				bidder.POST("/items/:id/bid", bidHandler.PlaceBid)
+				bidder.GET("/items/:id/bids", bidHandler.GetBidHistory)
 			}
 
 			// システム管理者専用エンドポイント
