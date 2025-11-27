@@ -6,14 +6,57 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { bidderLogin as apiBidderLogin, bidderLogout as apiBidderLogout } from '@/services/bidderAuth'
-import {
-  saveBidderToken,
-  saveBidderUser,
-  getBidderUser,
-  clearBidderAuth,
-  isBidderTokenValid,
-  getBidderFromToken,
-} from '@/utils/bidderToken'
+import { saveToken, removeToken, isTokenValid, getUserFromToken } from '@/services/token'
+
+// 入札者用の役割識別子
+const ROLE = 'bidder'
+
+// ユーザー情報のlocalStorageキー
+const USER_KEY = 'bidder_user'
+
+/**
+ * ユーザー情報をlocalStorageに保存
+ */
+function saveBidderUser(user) {
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user))
+  } catch (error) {
+    console.error('Failed to save bidder user:', error)
+  }
+}
+
+/**
+ * ユーザー情報をlocalStorageから取得
+ */
+function getBidderUser() {
+  try {
+    const userJson = localStorage.getItem(USER_KEY)
+    if (!userJson) return null
+    return JSON.parse(userJson)
+  } catch (error) {
+    console.error('Failed to get bidder user:', error)
+    return null
+  }
+}
+
+/**
+ * ユーザー情報をlocalStorageから削除
+ */
+function removeBidderUser() {
+  try {
+    localStorage.removeItem(USER_KEY)
+  } catch (error) {
+    console.error('Failed to remove bidder user:', error)
+  }
+}
+
+/**
+ * トークンとユーザー情報をすべて削除
+ */
+function clearBidderAuth() {
+  removeToken(ROLE)
+  removeBidderUser()
+}
 
 export const useBidderAuthStore = defineStore('bidderAuth', () => {
   // State
@@ -23,7 +66,7 @@ export const useBidderAuthStore = defineStore('bidderAuth', () => {
 
   // Getters
   const isAuthenticated = computed(() => {
-    return user.value !== null && isBidderTokenValid()
+    return user.value !== null && isTokenValid(ROLE)
   })
 
   const hasPoints = computed(() => {
@@ -46,8 +89,8 @@ export const useBidderAuthStore = defineStore('bidderAuth', () => {
       // ログインAPI呼び出し
       const response = await apiBidderLogin(email, password)
 
-      // トークンを保存
-      saveBidderToken(response.token)
+      // トークンを保存（入札者用）
+      saveToken(response.token, ROLE)
 
       // ユーザー情報を設定
       const userData = {
@@ -119,8 +162,8 @@ export const useBidderAuthStore = defineStore('bidderAuth', () => {
    * @returns {Promise<boolean>} 成功した場合true
    */
   async function restoreUser() {
-    // トークンの有効性チェック
-    if (!isBidderTokenValid()) {
+    // トークンの有効性チェック（入札者用）
+    if (!isTokenValid(ROLE)) {
       user.value = null
       return false
     }
@@ -133,7 +176,7 @@ export const useBidderAuthStore = defineStore('bidderAuth', () => {
 
       // localStorageにユーザー情報がない場合はトークンから復元
       if (!storedUser) {
-        const tokenUser = getBidderFromToken()
+        const tokenUser = getUserFromToken(ROLE)
         if (tokenUser) {
           storedUser = {
             bidderId: tokenUser.bidderId,

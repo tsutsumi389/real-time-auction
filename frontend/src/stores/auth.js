@@ -1,11 +1,14 @@
 /**
- * Authentication Store
- * 認証状態の管理とアクション
+ * Admin Authentication Store
+ * 管理者認証状態の管理とアクション
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login as apiLogin, logout as apiLogout, getCurrentUser } from '@/services/auth'
 import { saveToken, removeToken, isTokenValid, getUserFromToken } from '@/services/token'
+
+// 管理者用の役割識別子
+const ROLE = 'admin'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -15,7 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Getters
   const isAuthenticated = computed(() => {
-    return user.value !== null && isTokenValid()
+    return user.value !== null && isTokenValid(ROLE)
   })
 
   const isSystemAdmin = computed(() => {
@@ -42,8 +45,8 @@ export const useAuthStore = defineStore('auth', () => {
       // ログインAPI呼び出し
       const response = await apiLogin(email, password)
 
-      // トークンを保存
-      saveToken(response.token)
+      // トークンを保存（管理者用）
+      saveToken(response.token, ROLE)
 
       // ユーザー情報を設定
       user.value = {
@@ -72,8 +75,8 @@ export const useAuthStore = defineStore('auth', () => {
       // エラーが発生してもローカルの状態はクリアする
       console.error('Logout API error:', err)
     } finally {
-      // トークンとユーザー情報を削除
-      removeToken()
+      // トークンとユーザー情報を削除（管理者用）
+      removeToken(ROLE)
       user.value = null
       error.value = null
     }
@@ -85,8 +88,8 @@ export const useAuthStore = defineStore('auth', () => {
    * @returns {Promise<boolean>} 成功した場合true
    */
   async function restoreUser() {
-    // トークンの有効性チェック
-    if (!isTokenValid()) {
+    // トークンの有効性チェック（管理者用）
+    if (!isTokenValid(ROLE)) {
       user.value = null
       return false
     }
@@ -95,13 +98,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       // まずトークンからユーザー情報を取得して即座に設定
-      const tokenUser = getUserFromToken()
+      const tokenUser = getUserFromToken(ROLE)
 
       if (tokenUser) {
         user.value = tokenUser
       } else {
         // トークンが不正な場合はクリア
-        removeToken()
+        removeToken(ROLE)
         user.value = null
         loading.value = false
         return false
@@ -121,7 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
       } catch (apiError) {
         // APIエラー（401/403）の場合のみトークンを削除
         if (apiError.response && (apiError.response.status === 401 || apiError.response.status === 403)) {
-          removeToken()
+          removeToken(ROLE)
           user.value = null
           loading.value = false
           return false
@@ -135,7 +138,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       // トークンデコードエラーなど予期しないエラー
       console.error('Unexpected error during restore:', err)
-      removeToken()
+      removeToken(ROLE)
       user.value = null
       loading.value = false
       return false
