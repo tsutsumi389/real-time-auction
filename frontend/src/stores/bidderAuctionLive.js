@@ -12,8 +12,12 @@ import {
 } from '@/services/bidderBidApi'
 import websocketService from '@/services/websocketService'
 import { getBidderToken } from '@/utils/bidderToken'
+import { useToast } from '@/composables/useToast'
 
 export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => {
+  // Toast composable
+  const toast = useToast()
+
   // State
   const auction = ref(null)
   const items = ref([])
@@ -304,10 +308,17 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       item.updated_at = payload.opened_at
     }
 
-    // 現在の商品なら更新
+    // 現在の商品なら更新し、通知表示
     if (currentItem.value?.id === payload.item_id) {
       currentItem.value.current_price = payload.price
       currentItem.value.updated_at = payload.opened_at
+
+      // トースト通知
+      toast.info(
+        '価格が開示されました',
+        `新しい価格: ${new Intl.NumberFormat('ja-JP').format(payload.price)}ポイント`,
+        3000
+      )
     }
   }
 
@@ -328,6 +339,15 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       const existingBid = bids.value.find((b) => b.id === payload.bid.id)
       if (!existingBid) {
         bids.value.unshift(payload.bid)
+
+        // 他者の入札通知（自分の入札はhandlePlaceBidで通知済み）
+        if (!payload.points && payload.bid.bidder_display_name) {
+          toast.warning(
+            '他の入札者が入札しました',
+            `${payload.bid.bidder_display_name}さんが ${new Intl.NumberFormat('ja-JP').format(payload.bid.price)}ポイントで入札`,
+            3000
+          )
+        }
       }
     }
   }
@@ -343,6 +363,13 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     if (item) {
       item.status = payload.status
       item.started_at = payload.started_at
+
+      // 通知
+      toast.info(
+        '商品が開始されました',
+        `${item.name}の入札が開始されました`,
+        3000
+      )
     }
 
     if (currentItem.value?.id === payload.item_id) {
@@ -371,9 +398,27 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       currentItem.value.ended_at = payload.ended_at
     }
 
-    // 落札/非落札によるポイント更新
+    // 落札/非落札によるポイント更新と通知
     if (payload.points) {
+      const oldPoints = points.value
       points.value = payload.points
+
+      // ポイントが消費された場合（落札）
+      if (payload.points.reserved < oldPoints.reserved) {
+        const item = items.value.find((i) => i.id === payload.item_id)
+        toast.success(
+          '落札しました！',
+          `${item?.name || '商品'}を落札しました`,
+          5000
+        )
+      } else if (payload.points.available > oldPoints.available) {
+        // ポイントが戻った場合（非落札）
+        toast.info(
+          '商品が終了しました',
+          '予約ポイントが返却されました',
+          3000
+        )
+      }
     }
   }
 
@@ -387,6 +432,13 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     if (auction.value && auction.value.id === payload.auction_id) {
       auction.value.status = payload.status
       auction.value.ended_at = payload.ended_at
+
+      // 通知
+      toast.info(
+        'オークションが終了しました',
+        `${auction.value.title}が終了しました。ご参加ありがとうございました。`,
+        5000
+      )
     }
   }
 

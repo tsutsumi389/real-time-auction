@@ -1,5 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50 p-4">
+    <!-- Toast Container -->
+    <ToastContainer />
+
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
@@ -92,13 +95,16 @@ import { onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBidderAuctionLiveStore } from '@/stores/bidderAuctionLive'
+import { useToast } from '@/composables/useToast'
 import PointsDisplay from '@/components/bidder/PointsDisplay.vue'
 import ItemTabs from '@/components/bidder/ItemTabs.vue'
 import BidPanel from '@/components/bidder/BidPanel.vue'
 import BidderBidHistory from '@/components/bidder/BidderBidHistory.vue'
+import ToastContainer from '@/components/ui/ToastContainer.vue'
 
 const route = useRoute()
 const store = useBidderAuctionLiveStore()
+const toast = useToast()
 
 // State from store
 const {
@@ -158,10 +164,20 @@ async function handlePlaceBid() {
   const result = await store.placeBid(currentItem.value.id, currentPrice.value)
 
   if (result.success) {
-    console.log('入札成功')
+    toast.success(
+      '入札成功',
+      `${formatNumber(currentPrice.value)}ポイントで入札しました`
+    )
   } else {
-    console.error('入札失敗:', result.error)
+    toast.error(
+      '入札失敗',
+      result.error || '入札処理中にエラーが発生しました'
+    )
   }
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat('ja-JP').format(value)
 }
 
 function handleRetry() {
