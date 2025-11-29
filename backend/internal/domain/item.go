@@ -27,6 +27,40 @@ func (Item) TableName() string {
 	return "items"
 }
 
+// ItemStatus represents the status of an auction item
+type ItemStatus string
+
+const (
+	ItemStatusPending ItemStatus = "pending" // Not started yet
+	ItemStatusActive  ItemStatus = "active"  // Currently active (started but not ended)
+	ItemStatusEnded   ItemStatus = "ended"   // Ended
+)
+
+// ItemWithStatus represents an item with computed status field
+type ItemWithStatus struct {
+	Item
+	Status ItemStatus `json:"status"`
+}
+
+// GetStatus computes the status of an item based on timestamps
+func (i *Item) GetStatus() ItemStatus {
+	if i.EndedAt != nil {
+		return ItemStatusEnded
+	}
+	if i.StartedAt != nil {
+		return ItemStatusActive
+	}
+	return ItemStatusPending
+}
+
+// ToItemWithStatus converts an Item to ItemWithStatus
+func (i *Item) ToItemWithStatus() ItemWithStatus {
+	return ItemWithStatus{
+		Item:   *i,
+		Status: i.GetStatus(),
+	}
+}
+
 // StartItemResponse represents the response for starting an item
 type StartItemResponse struct {
 	ItemID       uuid.UUID  `json:"item_id"`

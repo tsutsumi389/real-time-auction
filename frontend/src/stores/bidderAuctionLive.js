@@ -71,7 +71,7 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     if (!currentItem.value) {
       return false
     }
-    const isStarted = currentItem.value.status === 'started'
+    const isStarted = currentItem.value.status === 'active'
     const hasPrice = currentPrice.value > 0
     return (
       isStarted &&
@@ -140,10 +140,10 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
         reserved: pointsData.reserved_points || 0,
       }
 
-      // 最初の商品を選択（status=startedの商品があればそれを、なければ最初の商品）
-      const startedItem = items.value.find((item) => item.status === 'started')
-      if (startedItem) {
-        await selectItem(startedItem.id)
+      // 最初の商品を選択（status=activeの商品があればそれを、なければ最初の商品）
+      const activeItem = items.value.find((item) => item.status === 'active')
+      if (activeItem) {
+        await selectItem(activeItem.id)
       } else if (items.value.length > 0) {
         currentItem.value = items.value[0]
       }

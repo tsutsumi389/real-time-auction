@@ -63,6 +63,12 @@ func (r *AuctionRepository) FindAuctionWithItems(id string) (*domain.GetAuctionD
 		return nil, err
 	}
 
+	// Convert items to ItemWithStatus
+	itemsWithStatus := make([]domain.ItemWithStatus, len(items))
+	for i, item := range items {
+		itemsWithStatus[i] = item.ToItemWithStatus()
+	}
+
 	return &domain.GetAuctionDetailResponse{
 		ID:          auction.ID,
 		Title:       auction.Title,
@@ -71,7 +77,7 @@ func (r *AuctionRepository) FindAuctionWithItems(id string) (*domain.GetAuctionD
 		StartedAt:   auction.StartedAt,
 		CreatedAt:   auction.CreatedAt,
 		UpdatedAt:   auction.UpdatedAt,
-		Items:       items,
+		Items:       itemsWithStatus,
 	}, nil
 }
 

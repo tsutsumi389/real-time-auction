@@ -79,7 +79,7 @@
 
       <!-- Insufficient Points Warning -->
       <div
-        v-if="!hasEnoughPoints && item.status === 'started' && currentPrice > 0"
+        v-if="!hasEnoughPoints && item.status === 'active' && currentPrice > 0"
         class="p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-start"
       >
         <svg class="w-5 h-5 text-orange-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -113,7 +113,7 @@
 
       <!-- No Price Opened Yet -->
       <div
-        v-if="item.status === 'started' && currentPrice === 0"
+        v-if="item.status === 'active' && currentPrice === 0"
         class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
       >
         <p class="text-sm text-yellow-800">価格がまだ開示されていません。主催者が価格を開示するまでお待ちください。</p>
@@ -192,7 +192,7 @@ function formatNumber(value) {
 function getStatusLabel(status) {
   const labels = {
     pending: '待機中',
-    started: '開始',
+    active: '開始',
     ended: '終了',
   }
   return labels[status] || status
@@ -201,7 +201,7 @@ function getStatusLabel(status) {
 function getStatusClass(status) {
   const classes = {
     pending: 'bg-yellow-100 text-yellow-800',
-    started: 'bg-green-100 text-green-800',
+    active: 'bg-green-100 text-green-800',
     ended: 'bg-gray-100 text-gray-800',
   }
   return classes[status] || 'bg-gray-100 text-gray-800'
