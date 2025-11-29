@@ -91,7 +91,7 @@ const props = defineProps({
     default: () => [],
   },
   selectedItemId: {
-    type: Number,
+    type: [Number, String], // Support both Number and String (UUID)
     default: null,
   },
 })
