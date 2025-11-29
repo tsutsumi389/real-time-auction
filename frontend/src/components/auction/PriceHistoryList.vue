@@ -19,7 +19,7 @@ function formatTime(timestamp) {
 }
 
 const sortedHistory = computed(() => {
-  return [...props.priceHistory].sort((a, b) => new Date(b.opened_at) - new Date(a.opened_at))
+  return [...props.priceHistory].sort((a, b) => new Date(b.disclosed_at) - new Date(a.disclosed_at))
 })
 </script>
 
@@ -47,7 +47,7 @@ const sortedHistory = computed(() => {
               {{ sortedHistory.length - index }}
             </div>
             <div>
-              <div class="font-medium">{{ formatTime(history.opened_at) }}</div>
+              <div class="font-medium">{{ formatTime(history.disclosed_at) }}</div>
               <div class="text-xs text-gray-500">
                 {{ history.had_bid ? '入札あり' : '入札なし' }}
               </div>

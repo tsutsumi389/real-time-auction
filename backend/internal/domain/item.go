@@ -76,10 +76,11 @@ type OpenPriceRequest struct {
 
 // OpenPriceResponse represents the response for opening a new price
 type OpenPriceResponse struct {
-	ItemID        uuid.UUID `json:"item_id"`
-	CurrentPrice  int64     `json:"current_price"`
-	PreviousPrice int64     `json:"previous_price"`
-	DisclosedAt   time.Time `json:"disclosed_at"`
+	ItemID        uuid.UUID     `json:"item_id"`
+	CurrentPrice  int64         `json:"current_price"`
+	PreviousPrice int64         `json:"previous_price"`
+	DisclosedAt   time.Time     `json:"disclosed_at"`
+	PriceHistory  *PriceHistory `json:"price_history"`
 }
 
 // EndItemResponse represents the response for ending an item

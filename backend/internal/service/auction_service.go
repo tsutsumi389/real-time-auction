@@ -451,6 +451,7 @@ func (s *AuctionService) OpenPrice(itemID string, newPrice int64, adminID int64)
 		CurrentPrice:  newPrice,
 		PreviousPrice: previousPrice,
 		DisclosedAt:   now,
+		PriceHistory:  priceHistory,
 	}, nil
 }
 
