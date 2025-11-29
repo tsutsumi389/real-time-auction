@@ -298,7 +298,14 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onBidPlaced(payload) {
-    const { bid, item_id } = payload
+    // payloadから必要なデータを取得
+    const bid = payload.bid
+    const item_id = payload.item_id
+
+    if (!bid || !item_id) {
+      console.error('Invalid bid:placed payload:', payload)
+      return
+    }
 
     // 入札履歴に追加（先頭に挿入）
     bids.value.unshift(bid)
@@ -318,10 +325,12 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onPriceOpened(payload) {
-    // payloadから必要なデータを取得
-    const item_id = payload.item_id || payload.payload?.item_id
-    const price = payload.price || payload.payload?.price
-    const price_history = payload.price_history || payload.payload?.price_history
+    // payloadから必要なデータを取得（二重ネストに対応）
+    // Backend hub wraps: { item_id, payload: { item_id, price, price_history } }
+    const actualPayload = payload.payload || payload
+    const item_id = actualPayload.item_id || payload.item_id
+    const price = actualPayload.price
+    const price_history = actualPayload.price_history
 
     if (!price_history || !item_id) {
       console.error('Invalid price:opened payload:', payload)
@@ -346,8 +355,9 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onItemStarted(payload) {
-    // payloadから必要なデータを取得（ネストされた構造に対応）
-    const item = payload.item || payload
+    // payloadから必要なデータを取得（二重ネストに対応）
+    // Backend hub wraps: { item_id, payload: { item: {...} } }
+    const item = payload.payload?.item || payload.item || payload
 
     if (!item || !item.id) {
       console.error('Invalid item:started payload:', payload)
@@ -366,8 +376,9 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onItemEnded(payload) {
-    // payloadから必要なデータを取得（ネストされた構造に対応）
-    const item = payload.item || payload
+    // payloadから必要なデータを取得（二重ネストに対応）
+    // Backend hub wraps: { item_id, payload: { item: {...} } }
+    const item = payload.payload?.item || payload.item || payload
 
     if (!item || !item.id) {
       console.error('Invalid item:ended payload:', payload)
@@ -386,7 +397,13 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onParticipantJoined(payload) {
-    const { participant } = payload
+    // payloadから必要なデータを取得（二重ネストに対応）
+    const participant = payload.payload?.participant || payload.participant
+
+    if (!participant || !participant.id) {
+      console.error('Invalid participant:joined payload:', payload)
+      return
+    }
 
     // 既に存在しない場合のみ追加
     const exists = participants.value.some(p => p.id === participant.id)
@@ -400,7 +417,14 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onParticipantLeft(payload) {
-    const { bidder_id } = payload
+    // payloadから必要なデータを取得（二重ネストに対応）
+    const actualPayload = payload.payload || payload
+    const bidder_id = actualPayload.bidder_id
+
+    if (!bidder_id) {
+      console.error('Invalid participant:left payload:', payload)
+      return
+    }
 
     // 参加者のステータスを更新または削除
     const index = participants.value.findIndex(p => p.id === bidder_id)
@@ -414,8 +438,8 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onAuctionEnded(payload) {
-    // payloadから必要なデータを取得（ネストされた構造に対応）
-    const updatedAuction = payload.auction || payload
+    // payloadから必要なデータを取得（二重ネストに対応）
+    const updatedAuction = payload.payload?.auction || payload.auction || payload
 
     if (!updatedAuction) {
       console.error('Invalid auction:ended payload:', payload)
@@ -430,8 +454,8 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onAuctionCancelled(payload) {
-    // payloadから必要なデータを取得（ネストされた構造に対応）
-    const updatedAuction = payload.auction || payload
+    // payloadから必要なデータを取得（二重ネストに対応）
+    const updatedAuction = payload.payload?.auction || payload.auction || payload
 
     if (!updatedAuction) {
       console.error('Invalid auction:cancelled payload:', payload)
