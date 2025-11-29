@@ -235,20 +235,43 @@ func (h *Hub) listenRedis() {
 	log.Println("Redis Pub/Sub listener started")
 
 	for msg := range ch {
-		var event Event
-		if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+		// Redisからのメッセージを汎用的なマップとして解析
+		var rawEvent map[string]interface{}
+		if err := json.Unmarshal([]byte(msg.Payload), &rawEvent); err != nil {
 			log.Printf("Failed to unmarshal Redis message: %v", err)
 			continue
 		}
 
-		// イベントをブロードキャスト
-		if event.AuctionID > 0 {
-			h.BroadcastToAuction(event.AuctionID, &event)
-		} else {
-			h.BroadcastToAll(&event)
+		// typeフィールドを取得
+		eventType, _ := rawEvent["type"].(string)
+
+		// WebSocketクライアントが期待する形式に変換: { type, payload }
+		// payloadにはtype以外の全フィールドを含める
+		delete(rawEvent, "type")
+
+		wsMessage := map[string]interface{}{
+			"type":    eventType,
+			"payload": rawEvent,
 		}
 
-		log.Printf("Broadcasted event from Redis: type=%s, auctionID=%d", event.Type, event.AuctionID)
+		// メッセージをJSONに変換
+		messageBytes, err := json.Marshal(wsMessage)
+		if err != nil {
+			log.Printf("Failed to marshal WebSocket message: %v", err)
+			continue
+		}
+
+		// 全クライアントにブロードキャスト
+		for client := range h.clients {
+			select {
+			case client.send <- messageBytes:
+			default:
+				close(client.send)
+				delete(h.clients, client)
+			}
+		}
+
+		log.Printf("Broadcasted event from Redis: type=%s, channel=%s", eventType, msg.Channel)
 	}
 }
 
