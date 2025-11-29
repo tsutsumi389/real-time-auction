@@ -594,13 +594,10 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 		return nil, ErrItemAlreadyEnded
 	}
 
-	// Find the winning bid
+	// Find the winning bid (may be nil if no bids)
 	winningBid, err := s.auctionRepo.FindWinningBidByItemID(itemID)
 	if err != nil {
 		return nil, err
-	}
-	if winningBid == nil {
-		return nil, ErrNoBidsFound
 	}
 
 	// Get all bids for this item to process point transactions
@@ -625,7 +622,10 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 
 	// Variables to store results
 	var endedItem *domain.Item
-	finalPrice := winningBid.Price
+	var finalPrice int64
+	if winningBid != nil {
+		finalPrice = winningBid.Price
+	}
 
 	// Execute everything in a single transaction
 	err = s.db.Transaction(func(tx *gorm.DB) error {
@@ -641,8 +641,12 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 		}
 
 		now := time.Now()
-		itemToEnd.WinnerID = &winningBid.BidderID
-		itemToEnd.CurrentPrice = &finalPrice
+		if winningBid != nil {
+			itemToEnd.WinnerID = &winningBid.BidderID
+		}
+		if finalPrice > 0 {
+			itemToEnd.CurrentPrice = &finalPrice
+		}
 		itemToEnd.EndedAt = &now
 
 		if err := tx.Save(&itemToEnd).Error; err != nil {
