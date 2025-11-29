@@ -420,26 +420,25 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
 
   /**
    * 商品開始イベント
-   * @param {object} payload - { item_id, status, started_at } or { payload: { item } }
+   * @param {object} payload - { item: { id, auction_id, name, current_price, started_at, status } }
    */
   function onItemStarted(payload) {
     console.log('[bidderAuctionLive] Item started:', payload)
 
-    // payloadから必要なデータを取得（ネストされた構造にも対応）
-    const item_id = payload.item_id || payload.payload?.item?.id
-    const status = payload.status || payload.payload?.item?.status || 'active'
-    const started_at = payload.started_at || payload.payload?.item?.started_at
-
-    if (!item_id) {
+    // payloadから商品情報を取得
+    const itemData = payload.item
+    if (!itemData || !itemData.id) {
       console.error('[bidderAuctionLive] Invalid item:started payload:', payload)
       return
     }
 
-    const item = items.value.find((i) => i.id === item_id)
+    // 商品リストを更新
+    const item = items.value.find((i) => i.id === itemData.id)
     if (item) {
-      item.status = status
-      if (started_at) {
-        item.started_at = started_at
+      item.status = itemData.status || 'active'
+      item.current_price = itemData.current_price
+      if (itemData.started_at) {
+        item.started_at = itemData.started_at
       }
 
       // 通知
@@ -450,10 +449,12 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       )
     }
 
-    if (currentItem.value?.id === item_id) {
-      currentItem.value.status = status
-      if (started_at) {
-        currentItem.value.started_at = started_at
+    // 現在の商品を更新
+    if (currentItem.value?.id === itemData.id) {
+      currentItem.value.status = itemData.status || 'active'
+      currentItem.value.current_price = itemData.current_price
+      if (itemData.started_at) {
+        currentItem.value.started_at = itemData.started_at
       }
     }
   }
