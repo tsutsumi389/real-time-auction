@@ -1,8 +1,5 @@
 <template>
   <div class="bidder-auction-list-container">
-    <!-- ヘッダー -->
-    <BidderHeader />
-
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <!-- ページタイトル -->
       <div class="mb-6 sm:mb-8">
@@ -112,7 +109,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBidderAuctionStore } from '@/stores/bidderAuction'
-import BidderHeader from '@/components/bidder/BidderHeader.vue'
 import AuctionSearchBar from '@/components/bidder/AuctionSearchBar.vue'
 import AuctionFilters from '@/components/bidder/AuctionFilters.vue'
 import AuctionCardGrid from '@/components/bidder/AuctionCardGrid.vue'
