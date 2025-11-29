@@ -35,20 +35,28 @@ func (r *PointRepository) FindPointsByBidderID(bidderID string) (*domain.BidderP
 // UpdatePoints updates the available and reserved points for a bidder
 // availableDelta: change in available_points (can be negative)
 // reservedDelta: change in reserved_points (can be negative)
+// totalDelta: change in total_points (can be negative, typically for consume operations)
 func (r *PointRepository) UpdatePoints(bidderID string, availableDelta, reservedDelta int64, tx *gorm.DB) error {
 	db := r.db
 	if tx != nil {
 		db = tx
 	}
 
+	// Calculate total delta
+	// When consuming: available stays same (0), reserved decreases (negative), total should decrease
+	// When releasing: available increases (positive), reserved decreases (negative), total stays same
+	// When reserving: available decreases (negative), reserved increases (positive), total stays same
+	totalDelta := availableDelta + reservedDelta
+
 	// Use raw SQL to update with incremental changes
 	result := db.Exec(`
 		UPDATE bidder_points
 		SET available_points = available_points + ?,
 		    reserved_points = reserved_points + ?,
+		    total_points = total_points + ?,
 		    updated_at = NOW()
 		WHERE bidder_id = ?
-	`, availableDelta, reservedDelta, bidderID)
+	`, availableDelta, reservedDelta, totalDelta, bidderID)
 
 	if result.Error != nil {
 		return result.Error
