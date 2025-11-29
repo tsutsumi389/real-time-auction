@@ -11,7 +11,7 @@ import {
   getBidHistory as apiGetBidHistory,
 } from '@/services/bidderBidApi'
 import websocketService from '@/services/websocketService'
-import { getToken } from '@/services/token'
+import { getToken, getUserFromToken } from '@/services/token'
 import { useToast } from '@/composables/useToast'
 
 export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => {
@@ -59,9 +59,21 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     if (!currentItem.value || !bids.value.length) {
       return false
     }
-    // 最新の入札が自分のものか確認
-    const latestBid = bids.value[0]
-    return latestBid?.is_winning === true
+
+    // 現在のユーザーIDを取得
+    const user = getUserFromToken('bidder')
+    if (!user || !user.bidderId) {
+      return false
+    }
+
+    // is_winningがtrueの入札を探し、それが自分の入札かを確認
+    const winningBid = bids.value.find((bid) => bid.is_winning === true)
+    if (!winningBid) {
+      return false
+    }
+
+    // bidder_idを比較（UUIDの文字列比較）
+    return winningBid.bidder_id === user.bidderId
   })
 
   /**
