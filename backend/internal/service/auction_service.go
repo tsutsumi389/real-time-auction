@@ -3,25 +3,39 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/tsutsumi389/real-time-auction/internal/domain"
 	"github.com/tsutsumi389/real-time-auction/internal/repository"
+	"gorm.io/gorm"
 )
 
 // AuctionService handles business logic for auction operations
 type AuctionService struct {
+	db          *gorm.DB
 	auctionRepo repository.AuctionRepositoryInterface
+	bidRepo     *repository.BidRepository
+	pointRepo   *repository.PointRepository
 	redisClient *redis.Client
 	ctx         context.Context
 }
 
 // NewAuctionService creates a new AuctionService instance
-func NewAuctionService(auctionRepo repository.AuctionRepositoryInterface, redisClient *redis.Client) *AuctionService {
+func NewAuctionService(
+	db *gorm.DB,
+	auctionRepo repository.AuctionRepositoryInterface,
+	bidRepo *repository.BidRepository,
+	pointRepo *repository.PointRepository,
+	redisClient *redis.Client,
+) *AuctionService {
 	return &AuctionService{
+		db:          db,
 		auctionRepo: auctionRepo,
+		bidRepo:     bidRepo,
+		pointRepo:   pointRepo,
 		redisClient: redisClient,
 		ctx:         context.Background(),
 	}
@@ -445,33 +459,84 @@ func (s *AuctionService) OpenPrice(itemID string, newPrice int64, adminID int64)
 		previousPrice = *item.CurrentPrice
 	}
 
-	// Check if there was a bid at the previous price
-	// (In real implementation, this would check Redis for has_bid flag)
-	// For now, we'll check if there are any bids at the current price
-	hadBid := false
-	if previousPrice > 0 {
-		winningBid, err := s.auctionRepo.FindWinningBidByItemID(itemID)
-		if err != nil {
-			return nil, err
+	// Execute transaction to update price and release reserved points
+	var priceHistory *domain.PriceHistory
+	var hadBid bool
+
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		// Check if there was a bid at the previous price
+		var winningBid *domain.Bid
+		if previousPrice > 0 {
+			winningBid, err = s.bidRepo.FindWinningBidByItemID(item.ID)
+			if err != nil {
+				return fmt.Errorf("failed to find winning bid: %w", err)
+			}
+			hadBid = winningBid != nil && winningBid.Price == previousPrice
 		}
-		hadBid = winningBid != nil && winningBid.Price == previousPrice
-	}
 
-	// Update item current price
-	if err := s.auctionRepo.UpdateItemCurrentPrice(itemID, newPrice); err != nil {
-		return nil, err
-	}
+		// If there is a winning bid, release the reserved points (price has changed, old bid is invalid)
+		if winningBid != nil {
+			bidderIDStr := winningBid.BidderID.String()
 
-	// Create price history record
-	now := time.Now()
-	priceHistory := &domain.PriceHistory{
-		ItemID:      item.ID,
-		Price:       newPrice,
-		DisclosedBy: adminID,
-		HadBid:      hadBid,
-		DisclosedAt: now,
-	}
-	if err := s.auctionRepo.CreatePriceHistory(priceHistory); err != nil {
+			// Get bidder's current points
+			currentPoints, err := s.pointRepo.GetCurrentPoints(bidderIDStr, tx)
+			if err != nil {
+				return fmt.Errorf("failed to get current points: %w", err)
+			}
+			if currentPoints == nil {
+				return ErrPointsNotFound
+			}
+
+			// Release reserved points
+			if err := s.pointRepo.UpdatePoints(bidderIDStr, winningBid.Price, -winningBid.Price, tx); err != nil {
+				return fmt.Errorf("failed to release points: %w", err)
+			}
+
+			// Create point history for release
+			releaseHistory := &domain.PointHistory{
+				BidderID:       bidderIDStr,
+				Amount:         winningBid.Price,
+				Type:           domain.PointHistoryTypeRelease,
+				RelatedBidID:   &winningBid.ID,
+				BalanceBefore:  currentPoints.AvailablePoints,
+				BalanceAfter:   currentPoints.AvailablePoints + winningBid.Price,
+				ReservedBefore: currentPoints.ReservedPoints,
+				ReservedAfter:  currentPoints.ReservedPoints - winningBid.Price,
+				TotalBefore:    currentPoints.TotalPoints,
+				TotalAfter:     currentPoints.TotalPoints,
+			}
+			if err := s.pointRepo.CreatePointHistory(releaseHistory, tx); err != nil {
+				return fmt.Errorf("failed to create release history: %w", err)
+			}
+
+			// Mark all bids as not winning
+			if err := s.bidRepo.UpdateBidWinningStatus(item.ID, 0, tx); err != nil {
+				return fmt.Errorf("failed to update winning status: %w", err)
+			}
+		}
+
+		// Update item current price (using tx for transaction consistency)
+		if err := tx.Model(&domain.Item{}).Where("id = ?", itemID).Update("current_price", newPrice).Error; err != nil {
+			return fmt.Errorf("failed to update item price: %w", err)
+		}
+
+		// Create price history record
+		now := time.Now()
+		priceHistory = &domain.PriceHistory{
+			ItemID:      item.ID,
+			Price:       newPrice,
+			DisclosedBy: adminID,
+			HadBid:      hadBid,
+			DisclosedAt: now,
+		}
+		if err := tx.Create(priceHistory).Error; err != nil {
+			return fmt.Errorf("failed to create price history: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
 
