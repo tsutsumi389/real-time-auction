@@ -103,7 +103,7 @@ const itemStats = computed(() => {
   return {
     total: props.items.length,
     pending: props.items.filter((item) => item.status === 'pending').length,
-    started: props.items.filter((item) => item.status === 'started').length,
+    started: props.items.filter((item) => item.status === 'active').length,
     ended: props.items.filter((item) => item.status === 'ended').length,
   }
 })
@@ -126,7 +126,7 @@ function formatNumber(value) {
 function getStatusLabel(status) {
   const labels = {
     pending: '待機中',
-    started: '開始',
+    active: '開始',
     ended: '終了',
   }
   return labels[status] || status
@@ -137,7 +137,7 @@ function getStatusClass(status, isSelected) {
     // Selected tab: lighter colors for contrast with blue background
     const classes = {
       pending: 'bg-yellow-200 text-yellow-900',
-      started: 'bg-green-200 text-green-900',
+      active: 'bg-green-200 text-green-900',
       ended: 'bg-gray-200 text-gray-900',
     }
     return classes[status] || 'bg-gray-200 text-gray-900'
@@ -145,7 +145,7 @@ function getStatusClass(status, isSelected) {
     // Unselected tab: normal colors
     const classes = {
       pending: 'bg-yellow-100 text-yellow-800',
-      started: 'bg-green-100 text-green-800',
+      active: 'bg-green-100 text-green-800',
       ended: 'bg-gray-100 text-gray-800',
     }
     return classes[status] || 'bg-gray-100 text-gray-800'
