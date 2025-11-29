@@ -337,22 +337,36 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
 
   /**
    * 価格開示イベント
-   * @param {object} payload - { item_id, price, opened_at }
+   * @param {object} payload - { item_id, price, opened_at } or { payload: { item_id, price } }
    */
   function onPriceOpened(payload) {
     console.log('[bidderAuctionLive] Price opened:', payload)
 
+    // payloadから必要なデータを取得（ネストされた構造にも対応）
+    const item_id = payload.item_id || payload.payload?.item_id
+    const price = payload.price || payload.payload?.price
+    const opened_at = payload.opened_at || payload.payload?.price_history?.disclosed_at
+
+    if (!item_id || !price) {
+      console.error('[bidderAuctionLive] Invalid price:opened payload:', payload)
+      return
+    }
+
     // 商品の価格を更新
-    const item = items.value.find((i) => i.id === payload.item_id)
+    const item = items.value.find((i) => i.id === item_id)
     if (item) {
-      item.current_price = payload.price
-      item.updated_at = payload.opened_at
+      item.current_price = price
+      if (opened_at) {
+        item.updated_at = opened_at
+      }
     }
 
     // 現在の商品なら更新し、通知表示
-    if (currentItem.value?.id === payload.item_id) {
-      currentItem.value.current_price = payload.price
-      currentItem.value.updated_at = payload.opened_at
+    if (currentItem.value?.id === item_id) {
+      currentItem.value.current_price = price
+      if (opened_at) {
+        currentItem.value.updated_at = opened_at
+      }
 
       // 新しい価格が開示されたので、入札可能状態にリセット
       hasBidAtCurrentPrice.value = false
@@ -360,7 +374,7 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       // トースト通知
       toast.info(
         '価格が開示されました',
-        `新しい価格: ${new Intl.NumberFormat('ja-JP').format(payload.price)}ポイント`,
+        `新しい価格: ${new Intl.NumberFormat('ja-JP').format(price)}ポイント`,
         3000
       )
     }
@@ -406,15 +420,27 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
 
   /**
    * 商品開始イベント
-   * @param {object} payload - { item_id, status, started_at }
+   * @param {object} payload - { item_id, status, started_at } or { payload: { item } }
    */
   function onItemStarted(payload) {
     console.log('[bidderAuctionLive] Item started:', payload)
 
-    const item = items.value.find((i) => i.id === payload.item_id)
+    // payloadから必要なデータを取得（ネストされた構造にも対応）
+    const item_id = payload.item_id || payload.payload?.item?.id
+    const status = payload.status || payload.payload?.item?.status || 'active'
+    const started_at = payload.started_at || payload.payload?.item?.started_at
+
+    if (!item_id) {
+      console.error('[bidderAuctionLive] Invalid item:started payload:', payload)
+      return
+    }
+
+    const item = items.value.find((i) => i.id === item_id)
     if (item) {
-      item.status = payload.status
-      item.started_at = payload.started_at
+      item.status = status
+      if (started_at) {
+        item.started_at = started_at
+      }
 
       // 通知
       toast.info(
@@ -424,30 +450,51 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       )
     }
 
-    if (currentItem.value?.id === payload.item_id) {
-      currentItem.value.status = payload.status
-      currentItem.value.started_at = payload.started_at
+    if (currentItem.value?.id === item_id) {
+      currentItem.value.status = status
+      if (started_at) {
+        currentItem.value.started_at = started_at
+      }
     }
   }
 
   /**
    * 商品終了イベント
-   * @param {object} payload - { item_id, status, winner_id, ended_at, points }
+   * @param {object} payload - { item_id, status, winner_id, ended_at, points } or { payload: { item } }
    */
   function onItemEnded(payload) {
     console.log('[bidderAuctionLive] Item ended:', payload)
 
-    const item = items.value.find((i) => i.id === payload.item_id)
-    if (item) {
-      item.status = payload.status
-      item.winner_id = payload.winner_id
-      item.ended_at = payload.ended_at
+    // payloadから必要なデータを取得（ネストされた構造にも対応）
+    const item_id = payload.item_id || payload.payload?.item?.id
+    const status = payload.status || payload.payload?.item?.status || 'ended'
+    const winner_id = payload.winner_id || payload.payload?.item?.winner_id
+    const ended_at = payload.ended_at || payload.payload?.item?.ended_at
+
+    if (!item_id) {
+      console.error('[bidderAuctionLive] Invalid item:ended payload:', payload)
+      return
     }
 
-    if (currentItem.value?.id === payload.item_id) {
-      currentItem.value.status = payload.status
-      currentItem.value.winner_id = payload.winner_id
-      currentItem.value.ended_at = payload.ended_at
+    const item = items.value.find((i) => i.id === item_id)
+    if (item) {
+      item.status = status
+      if (winner_id !== undefined) {
+        item.winner_id = winner_id
+      }
+      if (ended_at) {
+        item.ended_at = ended_at
+      }
+    }
+
+    if (currentItem.value?.id === item_id) {
+      currentItem.value.status = status
+      if (winner_id !== undefined) {
+        currentItem.value.winner_id = winner_id
+      }
+      if (ended_at) {
+        currentItem.value.ended_at = ended_at
+      }
     }
 
     // 落札/非落札によるポイント更新と通知
@@ -463,10 +510,10 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
 
       // ポイントが消費された場合（落札）
       if (normalizedPoints.reserved < oldPoints.reserved) {
-        const item = items.value.find((i) => i.id === payload.item_id)
+        const targetItem = items.value.find((i) => i.id === item_id)
         toast.success(
           '落札しました！',
-          `${item?.name || '商品'}を落札しました`,
+          `${targetItem?.name || '商品'}を落札しました`,
           5000
         )
       } else if (normalizedPoints.available > oldPoints.available) {
