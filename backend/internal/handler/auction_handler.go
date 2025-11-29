@@ -336,7 +336,7 @@ func (h *AuctionHandler) OpenPrice(c *gin.Context) {
 	itemID := c.Param("id")
 
 	// Get admin ID from context (set by auth middleware)
-	adminIDInterface, exists := c.Get("admin_id")
+	adminIDInterface, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, ErrorResponse{
 			Error: "Unauthorized",
