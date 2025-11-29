@@ -399,17 +399,14 @@ func (s *AuctionService) StartItem(itemID string) (*domain.StartItemResponse, er
 	// Publish WebSocket event to Redis Pub/Sub
 	if s.redisClient != nil {
 		event := map[string]interface{}{
-			"type":    "item:started",
-			"item_id": item.ID.String(),
-			"payload": map[string]interface{}{
-				"item": map[string]interface{}{
-					"id":            item.ID.String(),
-					"auction_id":    item.AuctionID.String(),
-					"name":          item.Name,
-					"current_price": item.CurrentPrice,
-					"started_at":    item.StartedAt,
-					"status":        "active",
-				},
+			"type": "item:started",
+			"item": map[string]interface{}{
+				"id":            item.ID.String(),
+				"auction_id":    item.AuctionID.String(),
+				"name":          item.Name,
+				"current_price": item.CurrentPrice,
+				"started_at":    item.StartedAt,
+				"status":        "active",
 			},
 		}
 		eventJSON, err := json.Marshal(event)

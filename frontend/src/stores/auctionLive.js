@@ -352,12 +352,11 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: 商品が開始された
-   * @param {object} payload - イベントペイロード
+   * @param {object} payload - { item: { id, auction_id, name, current_price, started_at, status } }
    */
   function onItemStarted(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    // Backend hub wraps: { item_id, payload: { item: {...} } }
-    const item = payload.payload?.item || payload.item || payload
+    // payloadから商品情報を取得
+    const item = payload.item
 
     if (!item || !item.id) {
       console.error('Invalid item:started payload:', payload)
@@ -373,12 +372,11 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: 商品が終了された
-   * @param {object} payload - イベントペイロード
+   * @param {object} payload - { item: { id, auction_id, status, winner_id, ended_at } }
    */
   function onItemEnded(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    // Backend hub wraps: { item_id, payload: { item: {...} } }
-    const item = payload.payload?.item || payload.item || payload
+    // payloadから商品情報を取得
+    const item = payload.item
 
     if (!item || !item.id) {
       console.error('Invalid item:ended payload:', payload)
