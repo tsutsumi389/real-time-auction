@@ -165,33 +165,40 @@ func (s *BidService) PlaceBid(req *PlaceBidRequest) (*PlaceBidResponse, error) {
 			return ErrInsufficientPoints
 		}
 
-		// If bidder had a previous bid on this item, release those reserved points first
-		if winningBid != nil && winningBid.BidderID == bidderID {
-			// Release previous reserved points
-			if err := s.pointRepo.UpdatePoints(req.BidderID, winningBid.Price, -winningBid.Price, tx); err != nil {
+		// If there is a previous winning bid, release those reserved points
+		// (Note: We already checked that the bidder is not the current winning bidder in Step 3)
+		if winningBid != nil {
+			// Get the previous bidder's points
+			previousBidderIDStr := winningBid.BidderID.String()
+			previousPoints, err := s.pointRepo.GetCurrentPoints(previousBidderIDStr, tx)
+			if err != nil {
+				return fmt.Errorf("failed to get previous bidder points: %w", err)
+			}
+			if previousPoints == nil {
+				return ErrPointsNotFound
+			}
+
+			// Release previous bidder's reserved points
+			if err := s.pointRepo.UpdatePoints(previousBidderIDStr, winningBid.Price, -winningBid.Price, tx); err != nil {
 				return fmt.Errorf("failed to release previous points: %w", err)
 			}
 
 			// Create point history for release
 			releaseHistory := &domain.PointHistory{
-				BidderID:       req.BidderID,
+				BidderID:       previousBidderIDStr,
 				Amount:         winningBid.Price,
 				Type:           domain.PointHistoryTypeRelease,
 				RelatedBidID:   &winningBid.ID,
-				BalanceBefore:  currentPoints.AvailablePoints,
-				BalanceAfter:   currentPoints.AvailablePoints + winningBid.Price,
-				ReservedBefore: currentPoints.ReservedPoints,
-				ReservedAfter:  currentPoints.ReservedPoints - winningBid.Price,
-				TotalBefore:    currentPoints.TotalPoints,
-				TotalAfter:     currentPoints.TotalPoints,
+				BalanceBefore:  previousPoints.AvailablePoints,
+				BalanceAfter:   previousPoints.AvailablePoints + winningBid.Price,
+				ReservedBefore: previousPoints.ReservedPoints,
+				ReservedAfter:  previousPoints.ReservedPoints - winningBid.Price,
+				TotalBefore:    previousPoints.TotalPoints,
+				TotalAfter:     previousPoints.TotalPoints,
 			}
 			if err := s.pointRepo.CreatePointHistory(releaseHistory, tx); err != nil {
 				return fmt.Errorf("failed to create release history: %w", err)
 			}
-
-			// Update current points for next calculation
-			currentPoints.AvailablePoints += winningBid.Price
-			currentPoints.ReservedPoints -= winningBid.Price
 		}
 
 		// Create bid record
