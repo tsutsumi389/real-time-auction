@@ -91,7 +91,7 @@ export async function startItem(itemId) {
  * 価格を開示
  * @param {string} itemId - 商品ID
  * @param {object} data - 価格開示データ
- * @param {number} data.price - 開示する価格
+ * @param {number} data.new_price - 開示する価格
  * @returns {Promise<object>} レスポンス（price_history情報）
  */
 export async function openPrice(itemId, data) {

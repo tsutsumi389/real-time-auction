@@ -183,7 +183,7 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
     error.value = null
 
     try {
-      const response = await openPrice(itemId, { price })
+      const response = await openPrice(itemId, { new_price: price })
 
       // 価格履歴に追加
       priceHistory.value.unshift(response.price_history)
