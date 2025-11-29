@@ -227,14 +227,21 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     try {
       const response = await apiPlaceBid(itemId, price)
 
-      // ポイントを更新
+      // ポイントを更新（APIレスポンス構造を正規化）
       if (response.points) {
-        points.value = response.points
+        points.value = {
+          total: response.points.total_points ?? response.points.total ?? 0,
+          available: response.points.available_points ?? response.points.available ?? 0,
+          reserved: response.points.reserved_points ?? response.points.reserved ?? 0,
+        }
       }
 
-      // 楽観的UI更新: 入札を履歴の先頭に追加
+      // 楽観的UI更新: 入札を履歴の先頭に追加（WebSocketイベントで重複追加されないよう、IDをチェック）
       if (response.bid) {
-        bids.value.unshift(response.bid)
+        const existingBid = bids.value.find((b) => b.id === response.bid.id)
+        if (!existingBid) {
+          bids.value.unshift(response.bid)
+        }
       }
 
       loadingBid.value = false
@@ -368,7 +375,12 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
 
     // 自分の入札の場合はポイントを更新
     if (payload.points) {
-      points.value = payload.points
+      // APIレスポンス構造を正規化（total_points -> total など）
+      points.value = {
+        total: payload.points.total_points ?? payload.points.total ?? 0,
+        available: payload.points.available_points ?? payload.points.available ?? 0,
+        reserved: payload.points.reserved_points ?? payload.points.reserved ?? 0,
+      }
     }
 
     // 入札履歴に追加（重複チェック）
@@ -441,17 +453,23 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     // 落札/非落札によるポイント更新と通知
     if (payload.points) {
       const oldPoints = points.value
-      points.value = payload.points
+      // APIレスポンス構造を正規化
+      const normalizedPoints = {
+        total: payload.points.total_points ?? payload.points.total ?? 0,
+        available: payload.points.available_points ?? payload.points.available ?? 0,
+        reserved: payload.points.reserved_points ?? payload.points.reserved ?? 0,
+      }
+      points.value = normalizedPoints
 
       // ポイントが消費された場合（落札）
-      if (payload.points.reserved < oldPoints.reserved) {
+      if (normalizedPoints.reserved < oldPoints.reserved) {
         const item = items.value.find((i) => i.id === payload.item_id)
         toast.success(
           '落札しました！',
           `${item?.name || '商品'}を落札しました`,
           5000
         )
-      } else if (payload.points.available > oldPoints.available) {
+      } else if (normalizedPoints.available > oldPoints.available) {
         // ポイントが戻った場合（非落札）
         toast.info(
           '商品が終了しました',
