@@ -626,15 +626,12 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 		}
 	}
 
-	fmt.Printf("[EndItem] Processing %d unique bidders for item %s\n", len(bidderMap), itemID)
-
 	// Variables to store results
 	var endedItem *domain.Item
 	finalPrice := winningBid.Price
 
 	// Execute everything in a single transaction
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		fmt.Printf("[EndItem] Transaction started for item %s\n", itemID)
 		// End the item (update status, set winner, end time)
 		id, err := uuid.Parse(itemID)
 		if err != nil {
@@ -657,11 +654,8 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 
 		endedItem = &itemToEnd
 
-		fmt.Printf("[EndItem] Item ended, processing %d bidders\n", len(bidderMap))
-
 		// Process each bidder's points
 		for bidderIDStr, bid := range bidderMap {
-			fmt.Printf("[EndItem] Processing bidder %s, is_winning=%v, price=%d\n", bidderIDStr, bid.IsWinning, bid.Price)
 			// Get current points
 			currentPoints, err := s.pointRepo.GetCurrentPoints(bidderIDStr, tx)
 			if err != nil {
