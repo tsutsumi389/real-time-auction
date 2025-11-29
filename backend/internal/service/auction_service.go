@@ -1,9 +1,12 @@
 package service
 
 import (
+	"context"
+	"encoding/json"
 	"math"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/tsutsumi389/real-time-auction/internal/domain"
 	"github.com/tsutsumi389/real-time-auction/internal/repository"
 )
@@ -11,12 +14,16 @@ import (
 // AuctionService handles business logic for auction operations
 type AuctionService struct {
 	auctionRepo repository.AuctionRepositoryInterface
+	redisClient *redis.Client
+	ctx         context.Context
 }
 
 // NewAuctionService creates a new AuctionService instance
-func NewAuctionService(auctionRepo repository.AuctionRepositoryInterface) *AuctionService {
+func NewAuctionService(auctionRepo repository.AuctionRepositoryInterface, redisClient *redis.Client) *AuctionService {
 	return &AuctionService{
 		auctionRepo: auctionRepo,
+		redisClient: redisClient,
+		ctx:         context.Background(),
 	}
 }
 
@@ -374,6 +381,29 @@ func (s *AuctionService) StartItem(itemID string) (*domain.StartItemResponse, er
 		return nil, ErrItemNotFound
 	}
 
+	// Publish WebSocket event to Redis Pub/Sub
+	if s.redisClient != nil {
+		event := map[string]interface{}{
+			"type":    "item:started",
+			"item_id": item.ID.String(),
+			"payload": map[string]interface{}{
+				"item": map[string]interface{}{
+					"id":            item.ID.String(),
+					"auction_id":    item.AuctionID.String(),
+					"name":          item.Name,
+					"current_price": item.CurrentPrice,
+					"started_at":    item.StartedAt,
+					"status":        "active",
+				},
+			},
+		}
+		eventJSON, err := json.Marshal(event)
+		if err == nil {
+			channel := "auction:item_started"
+			_ = s.redisClient.Publish(s.ctx, channel, eventJSON).Err()
+		}
+	}
+
 	// Build response
 	return &domain.StartItemResponse{
 		ItemID:       item.ID,
@@ -445,6 +475,31 @@ func (s *AuctionService) OpenPrice(itemID string, newPrice int64, adminID int64)
 		return nil, err
 	}
 
+	// Publish WebSocket event to Redis Pub/Sub
+	if s.redisClient != nil {
+		event := map[string]interface{}{
+			"type":    "price:opened",
+			"item_id": item.ID.String(),
+			"payload": map[string]interface{}{
+				"item_id": item.ID.String(),
+				"price":   newPrice,
+				"price_history": map[string]interface{}{
+					"id":           priceHistory.ID,
+					"item_id":      priceHistory.ItemID.String(),
+					"price":        priceHistory.Price,
+					"disclosed_by": priceHistory.DisclosedBy,
+					"had_bid":      priceHistory.HadBid,
+					"disclosed_at": priceHistory.DisclosedAt,
+				},
+			},
+		}
+		eventJSON, err := json.Marshal(event)
+		if err == nil {
+			channel := "auction:price_open"
+			_ = s.redisClient.Publish(s.ctx, channel, eventJSON).Err()
+		}
+	}
+
 	// Build response
 	return &domain.OpenPriceResponse{
 		ItemID:        item.ID,
@@ -501,6 +556,30 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 
 	// TODO: Handle point consumption and release for winners and non-winners
 	// This will be implemented when we add point transaction logic
+
+	// Publish WebSocket event to Redis Pub/Sub
+	if s.redisClient != nil {
+		event := map[string]interface{}{
+			"type":    "item:ended",
+			"item_id": endedItem.ID.String(),
+			"payload": map[string]interface{}{
+				"item": map[string]interface{}{
+					"id":          endedItem.ID.String(),
+					"auction_id":  endedItem.AuctionID.String(),
+					"name":        endedItem.Name,
+					"final_price": finalPrice,
+					"winner_id":   endedItem.WinnerID,
+					"ended_at":    endedItem.EndedAt,
+					"status":      "ended",
+				},
+			},
+		}
+		eventJSON, err := json.Marshal(event)
+		if err == nil {
+			channel := "auction:item_ended"
+			_ = s.redisClient.Publish(s.ctx, channel, eventJSON).Err()
+		}
+	}
 
 	// Build response
 	return &domain.EndItemResponse{
