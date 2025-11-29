@@ -318,7 +318,15 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onPriceOpened(payload) {
-    const { price_history, item_id, price } = payload
+    // payloadから必要なデータを取得
+    const item_id = payload.item_id || payload.payload?.item_id
+    const price = payload.price || payload.payload?.price
+    const price_history = payload.price_history || payload.payload?.price_history
+
+    if (!price_history || !item_id) {
+      console.error('Invalid price:opened payload:', payload)
+      return
+    }
 
     // 価格履歴に追加
     priceHistory.value.unshift(price_history)

@@ -47,7 +47,7 @@ func main() {
 	authService := service.NewAuthService(adminRepo, bidderRepo, jwtService)
 	adminService := service.NewAdminService(adminRepo)
 	bidderService := service.NewBidderService(bidderRepo)
-	auctionService := service.NewAuctionService(auctionRepo)
+	auctionService := service.NewAuctionService(auctionRepo, redisClient)
 	pointService := service.NewPointService(pointRepo)
 	bidService := service.NewBidService(db, redisClient, bidRepo, pointRepo, auctionRepo)
 

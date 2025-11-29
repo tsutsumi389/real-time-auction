@@ -227,6 +227,8 @@ func (h *Hub) listenRedis() {
 		"auction:bid",
 		"auction:ended",
 		"auction:cancelled",
+		"auction:item_started",
+		"auction:item_ended",
 	)
 	defer pubsub.Close()
 
