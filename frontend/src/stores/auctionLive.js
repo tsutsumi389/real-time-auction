@@ -375,8 +375,8 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - { item: { id, auction_id, status, winner_id, ended_at } }
    */
   function onItemEnded(payload) {
-    // payloadから商品情報を取得
-    const item = payload.item
+    // payloadから商品情報を取得（二重ネストに対応）
+    const item = payload.payload?.item || payload.item
 
     if (!item || !item.id) {
       console.error('Invalid item:ended payload:', payload)
