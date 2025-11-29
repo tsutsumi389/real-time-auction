@@ -346,7 +346,13 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onItemStarted(payload) {
-    const { item } = payload
+    // payloadから必要なデータを取得（ネストされた構造に対応）
+    const item = payload.item || payload
+
+    if (!item || !item.id) {
+      console.error('Invalid item:started payload:', payload)
+      return
+    }
 
     // アイテムのステータスを更新
     const index = items.value.findIndex(i => i.id === item.id)
@@ -360,7 +366,13 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onItemEnded(payload) {
-    const { item } = payload
+    // payloadから必要なデータを取得（ネストされた構造に対応）
+    const item = payload.item || payload
+
+    if (!item || !item.id) {
+      console.error('Invalid item:ended payload:', payload)
+      return
+    }
 
     // アイテムのステータスを更新
     const index = items.value.findIndex(i => i.id === item.id)
@@ -402,7 +414,14 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onAuctionEnded(payload) {
-    const { auction: updatedAuction } = payload
+    // payloadから必要なデータを取得（ネストされた構造に対応）
+    const updatedAuction = payload.auction || payload
+
+    if (!updatedAuction) {
+      console.error('Invalid auction:ended payload:', payload)
+      return
+    }
+
     auction.value = { ...auction.value, ...updatedAuction }
   }
 
@@ -411,7 +430,14 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
    * @param {object} payload - イベントペイロード
    */
   function onAuctionCancelled(payload) {
-    const { auction: updatedAuction } = payload
+    // payloadから必要なデータを取得（ネストされた構造に対応）
+    const updatedAuction = payload.auction || payload
+
+    if (!updatedAuction) {
+      console.error('Invalid auction:cancelled payload:', payload)
+      return
+    }
+
     auction.value = { ...auction.value, ...updatedAuction }
   }
 
