@@ -11,7 +11,7 @@ import {
   getBidHistory as apiGetBidHistory,
 } from '@/services/bidderBidApi'
 import websocketService from '@/services/websocketService'
-import { getToken } from '@/services/token'
+import { getToken, getUserFromToken } from '@/services/token'
 import { useToast } from '@/composables/useToast'
 
 export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => {
@@ -35,6 +35,7 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
   const wsReconnecting = ref(false)
   const reconnectAttempt = ref(0)
   const maxReconnectAttempts = ref(5)
+  const hasBidAtCurrentPrice = ref(false) // 現在価格で既に入札があるか
 
   // Computed
 
@@ -59,13 +60,25 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     if (!currentItem.value || !bids.value.length) {
       return false
     }
-    // 最新の入札が自分のものか確認
-    const latestBid = bids.value[0]
-    return latestBid?.is_winning === true
+
+    // 現在のユーザーIDを取得
+    const user = getUserFromToken('bidder')
+    if (!user || !user.bidderId) {
+      return false
+    }
+
+    // is_winningがtrueの入札を探し、それが自分の入札かを確認
+    const winningBid = bids.value.find((bid) => bid.is_winning === true)
+    if (!winningBid) {
+      return false
+    }
+
+    // bidder_idを比較（UUIDの文字列比較）
+    return winningBid.bidder_id === user.bidderId
   })
 
   /**
-   * 入札可能か（条件: 商品が開始済み、終了していない、ポイント十分、すでに勝者でない）
+   * 入札可能か（条件: 商品が開始済み、終了していない、ポイント十分、すでに勝者でない、現在価格で入札がない）
    */
   const canBid = computed(() => {
     if (!currentItem.value) {
@@ -78,6 +91,7 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       hasPrice &&
       hasEnoughPoints.value &&
       !isOwnBidWinning.value &&
+      !hasBidAtCurrentPrice.value &&
       !loadingBid.value
     )
   })
@@ -100,6 +114,9 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     }
     if (isOwnBidWinning.value) {
       return '現在あなたが最高入札者です'
+    }
+    if (hasBidAtCurrentPrice.value) {
+      return '現在の価格で既に入札があります。次の価格開示をお待ちください'
     }
     if (!hasEnoughPoints.value) {
       return 'ポイントが不足しています'
@@ -171,6 +188,7 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
 
     currentItem.value = item
     bids.value = []
+    hasBidAtCurrentPrice.value = false // 商品切り替え時にリセット
 
     // 入札履歴を取得
     await fetchBidHistory(itemId)
@@ -184,6 +202,13 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     try {
       const response = await apiGetBidHistory(itemId, { limit: 50, offset: 0 })
       bids.value = response.bids || []
+
+      // 現在価格で既に入札があるかチェック
+      if (currentItem.value && currentItem.value.current_price) {
+        const currentPrice = currentItem.value.current_price
+        const hasBidAtPrice = bids.value.some((bid) => bid.price === currentPrice)
+        hasBidAtCurrentPrice.value = hasBidAtPrice
+      }
     } catch (err) {
       console.error('[bidderAuctionLive] Fetch bid history error:', err)
       // エラーは表示せず、履歴が空になるだけ
@@ -322,6 +347,9 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       currentItem.value.current_price = payload.price
       currentItem.value.updated_at = payload.opened_at
 
+      // 新しい価格が開示されたので、入札可能状態にリセット
+      hasBidAtCurrentPrice.value = false
+
       // トースト通知
       toast.info(
         '価格が開示されました',
@@ -348,6 +376,9 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       const existingBid = bids.value.find((b) => b.id === payload.bid.id)
       if (!existingBid) {
         bids.value.unshift(payload.bid)
+
+        // 現在価格で入札があったことを記録
+        hasBidAtCurrentPrice.value = true
 
         // 他者の入札通知（自分の入札はhandlePlaceBidで通知済み）
         if (!payload.points && payload.bid.bidder_display_name) {
@@ -474,6 +505,7 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     wsReconnecting.value = false
     reconnectAttempt.value = 0
     maxReconnectAttempts.value = 5
+    hasBidAtCurrentPrice.value = false
   }
 
   return {
