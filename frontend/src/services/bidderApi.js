@@ -34,6 +34,30 @@ export async function getBidderList(params = {}) {
 }
 
 /**
+ * 入札者詳細を取得
+ * @param {string} bidderId - 入札者ID（UUID）
+ * @returns {Promise<object>} レスポンス（id, email, display_name, status, points, created_at, updated_at）
+ */
+export async function getBidderById(bidderId) {
+  const response = await apiClient.get(`/admin/bidders/${bidderId}`)
+  return response.data
+}
+
+/**
+ * 入札者を更新
+ * @param {string} bidderId - 入札者ID（UUID）
+ * @param {object} data - 更新データ
+ * @param {string} data.email - メールアドレス
+ * @param {string} data.display_name - 表示名（任意）
+ * @param {string} data.password - パスワード（任意、8文字以上、空文字の場合は変更なし）
+ * @returns {Promise<object>} レスポンス（id, email, display_name, status, points, created_at, updated_at）
+ */
+export async function updateBidder(bidderId, data) {
+  const response = await apiClient.put(`/admin/bidders/${bidderId}`, data)
+  return response.data
+}
+
+/**
  * ポイントを付与
  * @param {string} bidderId - 入札者ID（UUID）
  * @param {number} points - 付与するポイント数（1〜1,000,000）

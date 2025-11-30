@@ -28,10 +28,12 @@ type AdminServiceInterface interface {
 type BidderServiceInterface interface {
 	RegisterBidder(req *domain.BidderCreateRequest, adminID int64) (*domain.BidderResponse, error)
 	GetBidderByID(id string) (*domain.Bidder, error)
+	GetBidderDetail(id string) (*domain.BidderDetailResponse, error)
 	GetBidderList(req *domain.BidderListRequest) (*domain.BidderListResponse, error)
 	GrantPoints(bidderID string, points int64, adminID int64) (*domain.GrantPointsResponse, error)
 	GetPointHistory(bidderID string, page int, limit int) (*domain.PointHistoryListResponse, error)
 	UpdateBidderStatus(id string, status domain.BidderStatus) (*domain.Bidder, error)
+	UpdateBidder(id string, req *domain.BidderUpdateRequest) (*domain.BidderDetailResponse, error)
 }
 
 // AuctionServiceInterface defines the interface for auction service operations

@@ -303,3 +303,70 @@ func (h *BidderHandler) UpdateBidderStatus(c *gin.Context) {
 	// Return successful response
 	c.JSON(http.StatusOK, updatedBidder)
 }
+
+// GetBidderByID handles GET /api/admin/bidders/:id
+func (h *BidderHandler) GetBidderByID(c *gin.Context) {
+	// Get bidder ID from URL parameter
+	bidderID := c.Param("id")
+
+	// Call service
+	response, err := h.bidderService.GetBidderDetail(bidderID)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrBidderNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Bidder not found",
+			})
+		default:
+			// Log internal errors but don't expose details to client
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusOK, response)
+}
+
+// UpdateBidder handles PUT /api/admin/bidders/:id
+func (h *BidderHandler) UpdateBidder(c *gin.Context) {
+	// Get bidder ID from URL parameter
+	bidderID := c.Param("id")
+
+	// Parse request body
+	var req domain.BidderUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body",
+		})
+		return
+	}
+
+	// Call service
+	response, err := h.bidderService.UpdateBidder(bidderID, &req)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrBidderNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Bidder not found",
+			})
+		case errors.Is(err, service.ErrEmailAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Error: "Email already exists",
+			})
+		default:
+			// Log internal errors but don't expose details to client
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusOK, response)
+}

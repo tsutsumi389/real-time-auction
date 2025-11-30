@@ -175,3 +175,89 @@ export function validateBidderRegistrationForm(formData) {
 export function hasErrors(errors) {
   return Object.keys(errors).length > 0
 }
+
+/**
+ * オプショナルパスワードのバリデーション（編集画面用）
+ * @param {string} password - パスワード（空欄OK）
+ * @returns {string|null} エラーメッセージ（エラーがない場合はnull）
+ */
+export function validateOptionalPassword(password) {
+  // 空欄はOK（パスワード変更しない場合）
+  if (!password || password.trim() === '') {
+    return null
+  }
+
+  // 最小文字数チェック
+  if (password.length < 8) {
+    return 'パスワードは8文字以上で入力してください'
+  }
+
+  return null
+}
+
+/**
+ * オプショナルパスワード確認のバリデーション（編集画面用）
+ * @param {string} password - パスワード
+ * @param {string} confirmPassword - 確認用パスワード
+ * @returns {string|null} エラーメッセージ（エラーがない場合はnull）
+ */
+export function validateOptionalConfirmPassword(password, confirmPassword) {
+  // パスワードが空欄の場合は確認も不要
+  if (!password || password.trim() === '') {
+    return null
+  }
+
+  // 確認用パスワードの空欄チェック
+  if (!confirmPassword || confirmPassword.trim() === '') {
+    return '確認用パスワードを入力してください'
+  }
+
+  // パスワードとの一致チェック
+  if (password !== confirmPassword) {
+    return 'パスワードが一致しません'
+  }
+
+  return null
+}
+
+/**
+ * 入札者編集フォーム全体のバリデーション
+ * @param {object} formData - フォームデータ
+ * @param {string} formData.email - メールアドレス
+ * @param {string} formData.display_name - 表示名（任意）
+ * @param {string} formData.password - パスワード（任意）
+ * @param {string} formData.confirmPassword - 確認用パスワード（任意）
+ * @returns {object} エラーオブジェクト（エラーがない場合は空オブジェクト）
+ */
+export function validateBidderEditForm(formData) {
+  const errors = {}
+
+  // メールアドレス
+  const emailError = validateEmail(formData.email)
+  if (emailError) {
+    errors.email = emailError
+  }
+
+  // 表示名
+  const displayNameError = validateDisplayName(formData.display_name)
+  if (displayNameError) {
+    errors.display_name = displayNameError
+  }
+
+  // パスワード（オプショナル）
+  const passwordError = validateOptionalPassword(formData.password)
+  if (passwordError) {
+    errors.password = passwordError
+  }
+
+  // パスワード確認（オプショナル）
+  const confirmPasswordError = validateOptionalConfirmPassword(
+    formData.password,
+    formData.confirmPassword
+  )
+  if (confirmPasswordError) {
+    errors.confirmPassword = confirmPasswordError
+  }
+
+  return errors
+}

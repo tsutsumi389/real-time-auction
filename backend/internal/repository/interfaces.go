@@ -23,6 +23,7 @@ type AdminRepositoryInterface interface {
 type BidderRepositoryInterface interface {
 	FindByID(id string) (*domain.Bidder, error)
 	FindByEmail(email string) (*domain.Bidder, error)
+	FindByIDWithPoints(id string) (*domain.BidderDetailResponse, error)
 	FindBiddersWithFilters(req *domain.BidderListRequest) ([]domain.BidderWithPoints, error)
 	CountBiddersWithFilters(req *domain.BidderListRequest) (int64, error)
 	GetBidderPoints(bidderID string) (*domain.BidderPoints, error)
@@ -31,6 +32,7 @@ type BidderRepositoryInterface interface {
 	CountPointHistory(bidderID string) (int64, error)
 	UpdateBidderStatus(id string, status domain.BidderStatus) error
 	CreateBidderWithPoints(bidder *domain.Bidder, initialPoints int64, adminID int64) (*domain.BidderResponse, error)
+	UpdateBidder(id string, req *domain.BidderUpdateRequest, passwordHash *string) error
 }
 
 // AuctionRepositoryInterface defines the interface for auction repository operations

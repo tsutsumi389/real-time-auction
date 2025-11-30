@@ -177,3 +177,21 @@ type GetPointsResponse struct {
 	ReservedPoints  int64     `json:"reserved_points"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
+
+// BidderUpdateRequest represents the request body for updating a bidder
+type BidderUpdateRequest struct {
+	Email       string  `json:"email" binding:"required,email"`
+	DisplayName *string `json:"display_name"`
+	Password    *string `json:"password" binding:"omitempty,min=8"`
+}
+
+// BidderDetailResponse represents the response for bidder detail endpoint (includes points info)
+type BidderDetailResponse struct {
+	ID          string       `json:"id"`
+	Email       string       `json:"email"`
+	DisplayName *string      `json:"display_name"`
+	Status      BidderStatus `json:"status"`
+	Points      PointsInfo   `json:"points"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+}
