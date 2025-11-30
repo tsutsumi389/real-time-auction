@@ -68,6 +68,22 @@ func (m *MockBidderService) RegisterBidder(req *domain.BidderCreateRequest, admi
 	return args.Get(0).(*domain.BidderResponse), args.Error(1)
 }
 
+func (m *MockBidderService) GetBidderDetail(id string) (*domain.BidderDetailResponse, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.BidderDetailResponse), args.Error(1)
+}
+
+func (m *MockBidderService) UpdateBidder(id string, req *domain.BidderUpdateRequest) (*domain.BidderDetailResponse, error) {
+	args := m.Called(id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.BidderDetailResponse), args.Error(1)
+}
+
 func TestBidderHandler_GetBidderList(t *testing.T) {
 	t.Run("Success - Default parameters", func(t *testing.T) {
 		mockBidderService := new(MockBidderService)

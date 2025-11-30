@@ -323,3 +323,55 @@ func (r *BidderRepository) CreateBidderWithPoints(bidder *domain.Bidder, initial
 
 	return response, nil
 }
+
+// FindByIDWithPoints finds a bidder by ID with points information
+func (r *BidderRepository) FindByIDWithPoints(id string) (*domain.BidderDetailResponse, error) {
+	var bidder domain.Bidder
+	result := r.db.Where("id = ?", id).First(&bidder)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+
+	// Get bidder points
+	var points domain.BidderPoints
+	pointsResult := r.db.Where("bidder_id = ?", id).First(&points)
+	if pointsResult.Error != nil && !errors.Is(pointsResult.Error, gorm.ErrRecordNotFound) {
+		return nil, pointsResult.Error
+	}
+
+	response := &domain.BidderDetailResponse{
+		ID:          bidder.ID,
+		Email:       bidder.Email,
+		DisplayName: bidder.DisplayName,
+		Status:      bidder.Status,
+		Points: domain.PointsInfo{
+			TotalPoints:     points.TotalPoints,
+			AvailablePoints: points.AvailablePoints,
+			ReservedPoints:  points.ReservedPoints,
+		},
+		CreatedAt: bidder.CreatedAt,
+		UpdatedAt: bidder.UpdatedAt,
+	}
+
+	return response, nil
+}
+
+// UpdateBidder updates bidder information
+func (r *BidderRepository) UpdateBidder(id string, req *domain.BidderUpdateRequest, passwordHash *string) error {
+	updates := map[string]interface{}{
+		"email":        req.Email,
+		"display_name": req.DisplayName,
+	}
+
+	if passwordHash != nil {
+		updates["password_hash"] = *passwordHash
+	}
+
+	return r.db.Model(&domain.Bidder{}).
+		Where("id = ?", id).
+		Updates(updates).Error
+}

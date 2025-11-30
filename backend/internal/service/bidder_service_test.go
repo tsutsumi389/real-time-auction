@@ -85,6 +85,19 @@ func (m *MockBidderRepository) CreateBidderWithPoints(bidder *domain.Bidder, ini
 	return args.Get(0).(*domain.BidderResponse), args.Error(1)
 }
 
+func (m *MockBidderRepository) FindByIDWithPoints(id string) (*domain.BidderDetailResponse, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.BidderDetailResponse), args.Error(1)
+}
+
+func (m *MockBidderRepository) UpdateBidder(id string, req *domain.BidderUpdateRequest, passwordHash *string) error {
+	args := m.Called(id, req, passwordHash)
+	return args.Error(0)
+}
+
 func TestBidderService_GetBidderByID(t *testing.T) {
 	t.Run("Success - Bidder found", func(t *testing.T) {
 		mockBidderRepo := new(MockBidderRepository)

@@ -126,6 +126,10 @@ func main() {
 				systemAdmin.POST("/admin/bidders", bidderHandler.RegisterBidder)
 				// 入札者一覧取得
 				systemAdmin.GET("/admin/bidders", bidderHandler.GetBidderList)
+				// 入札者詳細取得
+				systemAdmin.GET("/admin/bidders/:id", bidderHandler.GetBidderByID)
+				// 入札者更新
+				systemAdmin.PUT("/admin/bidders/:id", bidderHandler.UpdateBidder)
 				// 入札者へのポイント付与
 				systemAdmin.POST("/admin/bidders/:id/points", bidderHandler.GrantPoints)
 				// 入札者のポイント履歴取得

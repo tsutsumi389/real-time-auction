@@ -307,3 +307,70 @@ func isValidBidderSortMode(sort string) bool {
 
 	return false
 }
+
+// GetBidderDetail retrieves a bidder with points information
+func (s *BidderService) GetBidderDetail(id string) (*domain.BidderDetailResponse, error) {
+	bidder, err := s.bidderRepo.FindByIDWithPoints(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find bidder: %w", err)
+	}
+
+	if bidder == nil {
+		return nil, ErrBidderNotFound
+	}
+
+	return bidder, nil
+}
+
+// UpdateBidder updates bidder information
+func (s *BidderService) UpdateBidder(id string, req *domain.BidderUpdateRequest) (*domain.BidderDetailResponse, error) {
+	// Check if bidder exists
+	bidder, err := s.bidderRepo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find bidder: %w", err)
+	}
+
+	if bidder == nil {
+		return nil, ErrBidderNotFound
+	}
+
+	// Check if bidder is deleted
+	if bidder.IsDeleted() {
+		return nil, errors.New("cannot update deleted bidder")
+	}
+
+	// Check email uniqueness if email is changed
+	if req.Email != bidder.Email {
+		existingBidder, err := s.bidderRepo.FindByEmail(req.Email)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check email: %w", err)
+		}
+		if existingBidder != nil {
+			return nil, ErrEmailAlreadyExists
+		}
+	}
+
+	// Hash password if provided
+	var passwordHash *string
+	if req.Password != nil && *req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, fmt.Errorf("failed to hash password: %w", err)
+		}
+		hash := string(hashedPassword)
+		passwordHash = &hash
+	}
+
+	// Update bidder
+	if err := s.bidderRepo.UpdateBidder(id, req, passwordHash); err != nil {
+		return nil, fmt.Errorf("failed to update bidder: %w", err)
+	}
+
+	// Fetch updated bidder with points
+	updatedBidder, err := s.bidderRepo.FindByIDWithPoints(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated bidder: %w", err)
+	}
+
+	return updatedBidder, nil
+}
