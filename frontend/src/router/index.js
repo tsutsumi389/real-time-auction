@@ -85,6 +85,30 @@ const router = createRouter({
       meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
     },
     {
+      path: '/admin/items',
+      name: 'item-list',
+      component: () => import('../views/admin/ItemListView.vue'),
+      meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
+    },
+    {
+      path: '/admin/items/new',
+      name: 'item-new',
+      component: () => import('../views/admin/ItemNewView.vue'),
+      meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
+    },
+    {
+      path: '/admin/items/:id/edit',
+      name: 'item-edit',
+      component: () => import('../views/admin/ItemEditView.vue'),
+      meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
+    },
+    {
+      path: '/admin/auctions/:id/items',
+      name: 'auction-items-assign',
+      component: () => import('../views/admin/AuctionItemsAssignView.vue'),
+      meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
+    },
+    {
       path: '/login',
       name: 'bidder-login',
       component: () => import('../views/bidder/BidderLoginView.vue'),

@@ -272,7 +272,7 @@ func (r *AuctionRepository) CreateAuctionWithItems(auction *domain.Auction, item
 		if len(items) > 0 {
 			// Set auction_id for all items
 			for i := range items {
-				items[i].AuctionID = auction.ID
+				items[i].AuctionID = &auction.ID
 			}
 			if err := tx.Create(&items).Error; err != nil {
 				return err
@@ -1027,7 +1027,7 @@ func (r *AuctionRepository) AddItem(auctionID string, req *domain.AddItemRequest
 
 		// Create new item
 		item = domain.Item{
-			AuctionID:     id,
+			AuctionID:     &id,
 			Name:          req.Name,
 			Description:   req.Description,
 			LotNumber:     maxLotNumber + 1,

@@ -121,7 +121,6 @@
                 />
               </svg>
               商品一覧
-              <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">未実装</span>
             </router-link>
           </div>
 

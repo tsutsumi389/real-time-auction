@@ -41,6 +41,7 @@ func main() {
 	auctionRepo := repository.NewAuctionRepository(db)
 	pointRepo := repository.NewPointRepository(db)
 	bidRepo := repository.NewBidRepository(db)
+	itemRepo := repository.NewItemRepository(db)
 
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
@@ -50,6 +51,7 @@ func main() {
 	auctionService := service.NewAuctionService(db, auctionRepo, bidRepo, pointRepo, redisClient)
 	pointService := service.NewPointService(pointRepo)
 	bidService := service.NewBidService(db, redisClient, bidRepo, pointRepo, auctionRepo)
+	itemService := service.NewItemService(itemRepo)
 
 	// ハンドラ初期化
 	authHandler := handler.NewAuthHandler(authService)
@@ -57,6 +59,7 @@ func main() {
 	bidderHandler := handler.NewBidderHandler(bidderService)
 	auctionHandler := handler.NewAuctionHandler(auctionService)
 	bidHandler := handler.NewBidHandler(pointService, bidService)
+	itemHandler := handler.NewItemHandler(itemService)
 
 	// Ginルーター初期化
 	router := gin.Default()
@@ -164,14 +167,26 @@ func main() {
 				// オークション参加者一覧取得
 				adminOrAuctioneer.GET("/admin/auctions/:id/participants", auctionHandler.GetParticipants)
 
+				// オークション商品紐づけ
+				adminOrAuctioneer.POST("/admin/auctions/:id/items/assign", itemHandler.AssignItems)
+				// オークション商品解除
+				adminOrAuctioneer.DELETE("/admin/auctions/:id/items/:itemId/unassign", itemHandler.UnassignItem)
+
 				// 商品追加
 				adminOrAuctioneer.POST("/admin/auctions/:id/items", auctionHandler.AddItem)
 				// 商品更新
-				adminOrAuctioneer.PUT("/admin/auctions/:id/items/:item_id", auctionHandler.UpdateItem)
+				adminOrAuctioneer.PUT("/admin/auctions/:id/items/:itemId", auctionHandler.UpdateItem)
 				// 商品削除
-				adminOrAuctioneer.DELETE("/admin/auctions/:id/items/:item_id", auctionHandler.DeleteItem)
+				adminOrAuctioneer.DELETE("/admin/auctions/:id/items/:itemId", auctionHandler.DeleteItem)
 				// 商品順序変更
 				adminOrAuctioneer.PUT("/admin/auctions/:id/items/reorder", auctionHandler.ReorderItems)
+
+				// 商品管理API（オークションから独立）
+				adminOrAuctioneer.GET("/admin/items", itemHandler.GetItemList)
+				adminOrAuctioneer.POST("/admin/items", itemHandler.CreateItem)
+				adminOrAuctioneer.GET("/admin/items/:id", itemHandler.GetItemDetail)
+				adminOrAuctioneer.PUT("/admin/items/:id", itemHandler.UpdateItem)
+				adminOrAuctioneer.DELETE("/admin/items/:id", itemHandler.DeleteItem)
 
 				// 商品開始
 				adminOrAuctioneer.POST("/admin/items/:id/start", auctionHandler.StartItem)
