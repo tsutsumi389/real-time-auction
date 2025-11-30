@@ -38,7 +38,16 @@
             <p v-if="auction.description" class="mt-2 text-gray-600">{{ auction.description }}</p>
           </div>
           <!-- WebSocket Status -->
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
+            <!-- Participant Count -->
+            <div class="flex items-center gap-1.5 text-sm text-gray-600">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+              </svg>
+              <span>{{ participantCount }}人参加中</span>
+            </div>
+            <!-- Connection Status -->
+            <div class="flex items-center gap-2">
             <div
               :class="[
                 'w-3 h-3 rounded-full',
@@ -51,6 +60,7 @@
             <span v-if="wsReconnecting" class="text-sm text-gray-500">
               ({{ reconnectAttempt }}/{{ maxReconnectAttempts }})
             </span>
+            </div>
           </div>
         </div>
       </div>
@@ -111,6 +121,34 @@
         </button>
       </div>
     </div>
+
+    <!-- WebSocket Disconnected Overlay -->
+    <div 
+      v-if="!wsConnected && !wsReconnecting && auction" 
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+    >
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+        <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
+          <svg class="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">接続が切断されました</h3>
+        <p class="text-gray-600 mb-6">
+          リアルタイム更新が停止しています。<br />
+          入札を続けるには再接続してください。
+        </p>
+        <button
+          @click="handleReconnect"
+          class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-3 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          再接続する
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -149,6 +187,7 @@ const {
   canBid,
   cannotBidReason,
   isOwnBidWinning,
+  participantCount,
 } = storeToRefs(store)
 
 // Local state for winning modal
@@ -229,9 +268,19 @@ async function handlePlaceBid() {
     return
   }
 
+  // Initialize audio on first user interaction
+  if (store.audioNotification && !store.audioNotification.isEnabled) {
+    store.audioNotification.initAudio()
+  }
+
   const result = await store.placeBid(currentItem.value.id, currentPrice.value)
 
   if (result.success) {
+    // Play success sound
+    if (store.audioNotification) {
+      store.audioNotification.playBidSuccessSound()
+    }
+
     toast.success(
       '入札成功',
       `${formatNumber(currentPrice.value)}ポイントで入札しました`
@@ -242,6 +291,11 @@ async function handlePlaceBid() {
       result.error || '入札処理中にエラーが発生しました'
     )
   }
+}
+
+function handleReconnect() {
+  const auctionId = route.params.id
+  store.connectWebSocket(auctionId)
 }
 
 function formatNumber(value) {

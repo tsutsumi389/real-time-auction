@@ -13,13 +13,18 @@ import {
 import websocketService from '@/services/websocketService'
 import { getToken, getUserFromToken } from '@/services/token'
 import { useToast } from '@/composables/useToast'
+import { useAudioNotification } from '@/composables/useAudioNotification'
 
 export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => {
   // Toast composable
   const toast = useToast()
 
+  // Audio notification composable
+  const audioNotification = useAudioNotification()
+
   // State
   const auction = ref(null)
+  const participantCount = ref(0)
   const items = ref([])
   const currentItem = ref(null)
   const bids = ref([])
@@ -285,6 +290,9 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     websocketService.on('item:started', onItemStarted)
     websocketService.on('item:ended', onItemEnded)
     websocketService.on('auction:ended', onAuctionEnded)
+    websocketService.on('participants:list', onParticipantsList)
+    websocketService.on('participant:joined', onParticipantJoined)
+    websocketService.on('participant:left', onParticipantLeft)
 
     // 接続
     websocketService.connect(token, auctionId)
@@ -304,6 +312,12 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     websocketService.off('item:started', onItemStarted)
     websocketService.off('item:ended', onItemEnded)
     websocketService.off('auction:ended', onAuctionEnded)
+    websocketService.off('participants:list', onParticipantsList)
+    websocketService.off('participant:joined', onParticipantJoined)
+    websocketService.off('participant:left', onParticipantLeft)
+
+    // Audio cleanup
+    audioNotification.cleanup()
 
     // 切断
     websocketService.disconnect()
@@ -326,6 +340,41 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
         }
       })
       console.log('[bidderAuctionLive] Sent subscribe event for auction:', auction.value.id)
+    }
+  }
+
+  /**
+   * 参加者リスト受信イベント
+   * @param {object} payload - { participants: [{ id, display_name }], count }
+   */
+  function onParticipantsList(payload) {
+    console.log('[bidderAuctionLive] Participants list:', payload)
+    participantCount.value = payload.count || payload.participants?.length || 0
+  }
+
+  /**
+   * 参加者参加イベント
+   * @param {object} payload - { participant: { id, display_name }, count }
+   */
+  function onParticipantJoined(payload) {
+    console.log('[bidderAuctionLive] Participant joined:', payload)
+    if (payload.count !== undefined) {
+      participantCount.value = payload.count
+    } else {
+      participantCount.value++
+    }
+  }
+
+  /**
+   * 参加者退出イベント
+   * @param {object} payload - { participant_id, count }
+   */
+  function onParticipantLeft(payload) {
+    console.log('[bidderAuctionLive] Participant left:', payload)
+    if (payload.count !== undefined) {
+      participantCount.value = payload.count
+    } else {
+      participantCount.value = Math.max(0, participantCount.value - 1)
     }
   }
 
@@ -382,6 +431,9 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
       // 新しい価格が開示されたので、入札可能状態にリセット
       hasBidAtCurrentPrice.value = false
 
+      // 音声通知
+      audioNotification.playPriceOpenedSound()
+
       // トースト通知
       toast.info(
         '価格が開示されました',
@@ -419,6 +471,9 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
 
         // 他者の入札通知（自分の入札はhandlePlaceBidで通知済み）
         if (!payload.points && payload.bid.bidder_display_name) {
+          // 音声通知
+          audioNotification.playOtherBidSound()
+
           toast.warning(
             '他の入札者が入札しました',
             `${payload.bid.bidder_display_name}さんが ${new Intl.NumberFormat('ja-JP').format(payload.bid.price)}ポイントで入札`,
@@ -583,6 +638,8 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     reconnectAttempt.value = 0
     maxReconnectAttempts.value = 5
     hasBidAtCurrentPrice.value = false
+    participantCount.value = 0
+    audioNotification.cleanup()
   }
 
   return {
@@ -599,12 +656,15 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     wsReconnecting,
     reconnectAttempt,
     maxReconnectAttempts,
+    participantCount,
     // Computed
     currentPrice,
     hasEnoughPoints,
     isOwnBidWinning,
     canBid,
     cannotBidReason,
+    // Audio
+    audioNotification,
     // Actions
     initialize,
     selectItem,
