@@ -88,6 +88,7 @@
               @start="$emit('start', $event)"
               @end="$emit('end', $event)"
               @cancel="$emit('cancel', $event)"
+              @edit="$emit('edit', $event)"
             />
           </tbody>
         </table>
@@ -127,5 +128,5 @@ defineProps({
   },
 })
 
-defineEmits(['sort', 'view-details', 'view-live', 'start', 'end', 'cancel'])
+defineEmits(['sort', 'view-details', 'view-live', 'start', 'end', 'cancel', 'edit'])
 </script>

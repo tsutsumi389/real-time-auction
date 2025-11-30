@@ -151,3 +151,23 @@ type ParticipantsResponse struct {
 	Total        int64             `json:"total"`
 	Participants []ParticipantInfo `json:"participants"`
 }
+
+// UpdateAuctionRequest represents the request to update an auction
+type UpdateAuctionRequest struct {
+	Title       *string `json:"title" binding:"omitempty,max=200"`
+	Description *string `json:"description"`
+}
+
+// AuctionEditResponse represents the response for auction edit endpoint
+type AuctionEditResponse struct {
+	ID            uuid.UUID      `json:"id"`
+	Title         string         `json:"title"`
+	Description   string         `json:"description"`
+	Status        AuctionStatus  `json:"status"`
+	StartedAt     *time.Time     `json:"started_at"`
+	CanEdit       bool           `json:"can_edit"`
+	CanEditReason *string        `json:"can_edit_reason"`
+	Items         []ItemEditInfo `json:"items"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+}

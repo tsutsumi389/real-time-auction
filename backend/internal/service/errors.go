@@ -20,6 +20,7 @@ var (
 	ErrInvalidLimit              = errors.New("invalid limit")
 	ErrInvalidSortMode           = errors.New("invalid sort mode")
 	ErrInvalidStatus             = errors.New("invalid status")
+	ErrAuctionNotEditable        = errors.New("auction cannot be edited")
 )
 
 // Item service errors
@@ -31,4 +32,8 @@ var (
 	ErrStartingPriceNotSet    = errors.New("starting price not set")
 	ErrPriceTooLow            = errors.New("new price must be higher than current price")
 	ErrNoBidsFound            = errors.New("no bids found for this item")
+	ErrItemNotEditable        = errors.New("item cannot be edited")
+	ErrItemNotDeletable       = errors.New("item cannot be deleted")
+	ErrItemHasBids            = errors.New("item has bids and cannot be deleted")
+	ErrInvalidItemIDs         = errors.New("invalid item IDs")
 )

@@ -847,6 +847,134 @@ func (s *AuctionService) CancelAuctionWithReason(auctionID string, reason string
 	return response, nil
 }
 
+// GetAuctionForEdit retrieves an auction with items and edit permissions
+func (s *AuctionService) GetAuctionForEdit(id string) (*domain.AuctionEditResponse, error) {
+	return s.auctionRepo.GetAuctionForEdit(id)
+}
+
+// UpdateAuction updates an auction's title and/or description
+func (s *AuctionService) UpdateAuction(id string, req *domain.UpdateAuctionRequest) (*domain.Auction, error) {
+	// Find auction
+	auction, err := s.auctionRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if auction == nil {
+		return nil, ErrAuctionNotFound
+	}
+
+	// Check if auction can be edited (only pending auctions)
+	if auction.Status != domain.AuctionStatusPending {
+		return nil, ErrAuctionNotEditable
+	}
+
+	// Update auction
+	return s.auctionRepo.UpdateAuction(id, req)
+}
+
+// UpdateItem updates an item's name and/or description
+func (s *AuctionService) UpdateItem(itemID string, req *domain.UpdateItemRequest) (*domain.Item, error) {
+	// Find item
+	item, err := s.auctionRepo.FindItemByID(itemID)
+	if err != nil {
+		return nil, err
+	}
+	if item == nil {
+		return nil, ErrItemNotFound
+	}
+
+	// Check if item can be edited (not started yet)
+	if item.StartedAt != nil {
+		return nil, ErrItemNotEditable
+	}
+
+	// Update item
+	return s.auctionRepo.UpdateItem(itemID, req)
+}
+
+// DeleteItem deletes an item
+func (s *AuctionService) DeleteItem(itemID string) error {
+	// Find item
+	item, err := s.auctionRepo.FindItemByID(itemID)
+	if err != nil {
+		return err
+	}
+	if item == nil {
+		return ErrItemNotFound
+	}
+
+	// Check if item can be deleted (not started yet)
+	if item.StartedAt != nil {
+		return ErrItemNotDeletable
+	}
+
+	// Check if item has bids
+	bidCount, err := s.auctionRepo.CountBidsByItemID(itemID)
+	if err != nil {
+		return err
+	}
+	if bidCount > 0 {
+		return ErrItemHasBids
+	}
+
+	// Find the auction to check status
+	auction, err := s.auctionRepo.FindByID(item.AuctionID.String())
+	if err != nil {
+		return err
+	}
+	if auction == nil {
+		return ErrAuctionNotFound
+	}
+
+	// Only allow deletion for pending auctions
+	if auction.Status != domain.AuctionStatusPending {
+		return ErrAuctionNotEditable
+	}
+
+	// Delete item
+	return s.auctionRepo.DeleteItem(itemID)
+}
+
+// AddItem adds a new item to an auction
+func (s *AuctionService) AddItem(auctionID string, req *domain.AddItemRequest) (*domain.Item, error) {
+	// Find auction
+	auction, err := s.auctionRepo.FindByID(auctionID)
+	if err != nil {
+		return nil, err
+	}
+	if auction == nil {
+		return nil, ErrAuctionNotFound
+	}
+
+	// Check if auction can be edited (only pending auctions)
+	if auction.Status != domain.AuctionStatusPending {
+		return nil, ErrAuctionNotEditable
+	}
+
+	// Add item
+	return s.auctionRepo.AddItem(auctionID, req)
+}
+
+// ReorderItems reorders items in an auction
+func (s *AuctionService) ReorderItems(auctionID string, req *domain.ReorderItemsRequest) error {
+	// Find auction
+	auction, err := s.auctionRepo.FindByID(auctionID)
+	if err != nil {
+		return err
+	}
+	if auction == nil {
+		return ErrAuctionNotFound
+	}
+
+	// Check if auction can be edited (only pending auctions)
+	if auction.Status != domain.AuctionStatusPending {
+		return ErrAuctionNotEditable
+	}
+
+	// Reorder items
+	return s.auctionRepo.ReorderItems(auctionID, req.ItemIDs)
+}
+
 // stringPtr is a helper function to create a string pointer
 func stringPtr(s string) *string {
 	return &s

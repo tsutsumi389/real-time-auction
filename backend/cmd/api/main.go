@@ -145,12 +145,25 @@ func main() {
 				adminOrAuctioneer.GET("/admin/auctions", auctionHandler.GetAuctionList)
 				// オークション作成
 				adminOrAuctioneer.POST("/admin/auctions", auctionHandler.CreateAuction)
+				// オークション詳細取得（編集用）
+				adminOrAuctioneer.GET("/admin/auctions/:id", auctionHandler.GetAuctionForEdit)
+				// オークション更新
+				adminOrAuctioneer.PUT("/admin/auctions/:id", auctionHandler.UpdateAuction)
 				// オークション開始
 				adminOrAuctioneer.POST("/admin/auctions/:id/start", auctionHandler.StartAuction)
 				// オークション終了
 				adminOrAuctioneer.POST("/admin/auctions/:id/end", auctionHandler.EndAuction)
 				// オークション参加者一覧取得
 				adminOrAuctioneer.GET("/admin/auctions/:id/participants", auctionHandler.GetParticipants)
+
+				// 商品追加
+				adminOrAuctioneer.POST("/admin/auctions/:id/items", auctionHandler.AddItem)
+				// 商品更新
+				adminOrAuctioneer.PUT("/admin/auctions/:id/items/:item_id", auctionHandler.UpdateItem)
+				// 商品削除
+				adminOrAuctioneer.DELETE("/admin/auctions/:id/items/:item_id", auctionHandler.DeleteItem)
+				// 商品順序変更
+				adminOrAuctioneer.PUT("/admin/auctions/:id/items/reorder", auctionHandler.ReorderItems)
 
 				// 商品開始
 				adminOrAuctioneer.POST("/admin/items/:id/start", auctionHandler.StartItem)

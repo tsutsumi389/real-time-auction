@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -781,4 +782,404 @@ func (r *AuctionRepository) CancelAuctionWithRefunds(auctionID string, reason st
 	}
 
 	return &response, nil
+}
+
+// UpdateAuction updates an auction's title and/or description
+func (r *AuctionRepository) UpdateAuction(id string, req *domain.UpdateAuctionRequest) (*domain.Auction, error) {
+	auctionID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var auction domain.Auction
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		// Find the auction
+		if err := tx.First(&auction, "id = ?", auctionID).Error; err != nil {
+			return err
+		}
+
+		// Build updates map
+		updates := make(map[string]interface{})
+		if req.Title != nil {
+			updates["title"] = *req.Title
+		}
+		if req.Description != nil {
+			updates["description"] = *req.Description
+		}
+
+		if len(updates) > 0 {
+			if err := tx.Model(&auction).Updates(updates).Error; err != nil {
+				return err
+			}
+		}
+
+		// Reload auction to get updated values
+		if err := tx.First(&auction, "id = ?", auctionID).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &auction, nil
+}
+
+// GetAuctionForEdit retrieves an auction with items and edit permissions
+func (r *AuctionRepository) GetAuctionForEdit(id string) (*domain.AuctionEditResponse, error) {
+	auctionID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var auction domain.Auction
+	if err := r.db.First(&auction, "id = ?", auctionID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	// Find items with bid counts
+	var items []domain.Item
+	if err := r.db.Where("auction_id = ?", auctionID).
+		Order("lot_number ASC").
+		Find(&items).Error; err != nil {
+		return nil, err
+	}
+
+	// Get bid counts for each item
+	type bidCountResult struct {
+		ItemID   uuid.UUID `gorm:"column:item_id"`
+		BidCount int64     `gorm:"column:bid_count"`
+	}
+	var bidCounts []bidCountResult
+	if err := r.db.Table("bids").
+		Select("item_id, COUNT(*) as bid_count").
+		Where("item_id IN ?", func() []uuid.UUID {
+			ids := make([]uuid.UUID, len(items))
+			for i, item := range items {
+				ids[i] = item.ID
+			}
+			return ids
+		}()).
+		Group("item_id").
+		Scan(&bidCounts).Error; err != nil {
+		return nil, err
+	}
+
+	// Create bid count map
+	bidCountMap := make(map[uuid.UUID]int64)
+	for _, bc := range bidCounts {
+		bidCountMap[bc.ItemID] = bc.BidCount
+	}
+
+	// Build items with edit info
+	itemsWithEdit := make([]domain.ItemEditInfo, len(items))
+	for i, item := range items {
+		bidCount := bidCountMap[item.ID]
+		// Item can be edited if it hasn't started yet
+		canEdit := item.StartedAt == nil
+		// Item can be deleted if it hasn't started and has no bids
+		canDelete := item.StartedAt == nil && bidCount == 0
+
+		itemsWithEdit[i] = domain.ItemEditInfo{
+			ID:            item.ID,
+			Name:          item.Name,
+			Description:   item.Description,
+			LotNumber:     item.LotNumber,
+			StartingPrice: item.StartingPrice,
+			CurrentPrice:  item.CurrentPrice,
+			StartedAt:     item.StartedAt,
+			EndedAt:       item.EndedAt,
+			CanEdit:       canEdit,
+			CanDelete:     canDelete,
+			BidCount:      bidCount,
+		}
+	}
+
+	// Determine if auction can be edited
+	canEdit := auction.Status == domain.AuctionStatusPending
+	var canEditReason *string
+	if !canEdit {
+		reason := "開始後のオークションは編集できません"
+		canEditReason = &reason
+	}
+
+	return &domain.AuctionEditResponse{
+		ID:            auction.ID,
+		Title:         auction.Title,
+		Description:   auction.Description,
+		Status:        auction.Status,
+		StartedAt:     auction.StartedAt,
+		CanEdit:       canEdit,
+		CanEditReason: canEditReason,
+		Items:         itemsWithEdit,
+		CreatedAt:     auction.CreatedAt,
+		UpdatedAt:     auction.UpdatedAt,
+	}, nil
+}
+
+// UpdateItem updates an item's name and/or description
+func (r *AuctionRepository) UpdateItem(itemID string, req *domain.UpdateItemRequest) (*domain.Item, error) {
+	id, err := uuid.Parse(itemID)
+	if err != nil {
+		return nil, err
+	}
+
+	var item domain.Item
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		// Find the item
+		if err := tx.First(&item, "id = ?", id).Error; err != nil {
+			return err
+		}
+
+		// Build updates map
+		updates := make(map[string]interface{})
+		if req.Name != nil {
+			updates["name"] = *req.Name
+		}
+		if req.Description != nil {
+			updates["description"] = *req.Description
+		}
+
+		if len(updates) > 0 {
+			if err := tx.Model(&item).Updates(updates).Error; err != nil {
+				return err
+			}
+		}
+
+		// Reload item to get updated values
+		if err := tx.First(&item, "id = ?", id).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+// DeleteItem deletes an item by ID
+func (r *AuctionRepository) DeleteItem(itemID string) error {
+	id, err := uuid.Parse(itemID)
+	if err != nil {
+		return err
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Find the item first to get auction_id
+		var item domain.Item
+		if err := tx.First(&item, "id = ?", id).Error; err != nil {
+			return err
+		}
+
+		// Delete the item
+		if err := tx.Delete(&item).Error; err != nil {
+			return err
+		}
+
+		// Recalculate lot numbers for remaining items
+		var remainingItems []domain.Item
+		if err := tx.Where("auction_id = ?", item.AuctionID).
+			Order("lot_number ASC").
+			Find(&remainingItems).Error; err != nil {
+			return err
+		}
+
+		for i, remaining := range remainingItems {
+			newLotNumber := i + 1
+			if remaining.LotNumber != newLotNumber {
+				if err := tx.Model(&remaining).Update("lot_number", newLotNumber).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// AddItem adds a new item to an auction
+func (r *AuctionRepository) AddItem(auctionID string, req *domain.AddItemRequest) (*domain.Item, error) {
+	id, err := uuid.Parse(auctionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var item domain.Item
+	err = r.db.Transaction(func(tx *gorm.DB) error {
+		// Get current max lot_number
+		var maxLotNumber int
+		if err := tx.Model(&domain.Item{}).
+			Where("auction_id = ?", id).
+			Select("COALESCE(MAX(lot_number), 0)").
+			Scan(&maxLotNumber).Error; err != nil {
+			return err
+		}
+
+		// Create new item
+		item = domain.Item{
+			AuctionID:     id,
+			Name:          req.Name,
+			Description:   req.Description,
+			LotNumber:     maxLotNumber + 1,
+			StartingPrice: req.StartingPrice,
+		}
+
+		if err := tx.Create(&item).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+// ReorderItems reorders items in an auction
+func (r *AuctionRepository) ReorderItems(auctionID string, itemIDs []uuid.UUID) error {
+	id, err := uuid.Parse(auctionID)
+	if err != nil {
+		return err
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Verify all items belong to this auction
+		var items []domain.Item
+		if err := tx.Where("auction_id = ?", id).Find(&items).Error; err != nil {
+			return err
+		}
+
+		if len(items) != len(itemIDs) {
+			return errors.New("item count mismatch")
+		}
+
+		// Create a map of existing item IDs
+		existingIDs := make(map[uuid.UUID]bool)
+		for _, item := range items {
+			existingIDs[item.ID] = true
+		}
+
+		// Verify all provided IDs exist
+		for _, itemID := range itemIDs {
+			if !existingIDs[itemID] {
+				return errors.New("invalid item ID in reorder request")
+			}
+		}
+
+		// Update lot numbers
+		for i, itemID := range itemIDs {
+			newLotNumber := i + 1
+			if err := tx.Model(&domain.Item{}).
+				Where("id = ?", itemID).
+				Update("lot_number", newLotNumber).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+// GetMaxLotNumber returns the maximum lot number for an auction
+func (r *AuctionRepository) GetMaxLotNumber(auctionID string) (int, error) {
+	id, err := uuid.Parse(auctionID)
+	if err != nil {
+		return 0, err
+	}
+
+	var maxLotNumber int
+	if err := r.db.Model(&domain.Item{}).
+		Where("auction_id = ?", id).
+		Select("COALESCE(MAX(lot_number), 0)").
+		Scan(&maxLotNumber).Error; err != nil {
+		return 0, err
+	}
+
+	return maxLotNumber, nil
+}
+
+// FindItemsForEdit retrieves items with edit permissions for an auction
+func (r *AuctionRepository) FindItemsForEdit(auctionID string) ([]domain.ItemEditInfo, error) {
+	id, err := uuid.Parse(auctionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find items
+	var items []domain.Item
+	if err := r.db.Where("auction_id = ?", id).
+		Order("lot_number ASC").
+		Find(&items).Error; err != nil {
+		return nil, err
+	}
+
+	if len(items) == 0 {
+		return []domain.ItemEditInfo{}, nil
+	}
+
+	// Get bid counts for each item
+	type bidCountResult struct {
+		ItemID   uuid.UUID `gorm:"column:item_id"`
+		BidCount int64     `gorm:"column:bid_count"`
+	}
+	var bidCounts []bidCountResult
+	itemIDs := make([]uuid.UUID, len(items))
+	for i, item := range items {
+		itemIDs[i] = item.ID
+	}
+	if err := r.db.Table("bids").
+		Select("item_id, COUNT(*) as bid_count").
+		Where("item_id IN ?", itemIDs).
+		Group("item_id").
+		Scan(&bidCounts).Error; err != nil {
+		return nil, err
+	}
+
+	// Create bid count map
+	bidCountMap := make(map[uuid.UUID]int64)
+	for _, bc := range bidCounts {
+		bidCountMap[bc.ItemID] = bc.BidCount
+	}
+
+	// Build items with edit info
+	itemsWithEdit := make([]domain.ItemEditInfo, len(items))
+	for i, item := range items {
+		bidCount := bidCountMap[item.ID]
+		canEdit := item.StartedAt == nil
+		canDelete := item.StartedAt == nil && bidCount == 0
+
+		itemsWithEdit[i] = domain.ItemEditInfo{
+			ID:            item.ID,
+			Name:          item.Name,
+			Description:   item.Description,
+			LotNumber:     item.LotNumber,
+			StartingPrice: item.StartingPrice,
+			CurrentPrice:  item.CurrentPrice,
+			StartedAt:     item.StartedAt,
+			EndedAt:       item.EndedAt,
+			CanEdit:       canEdit,
+			CanDelete:     canDelete,
+			BidCount:      bidCount,
+		}
+	}
+
+	// Sort by lot number
+	sort.Slice(itemsWithEdit, func(i, j int) bool {
+		return itemsWithEdit[i].LotNumber < itemsWithEdit[j].LotNumber
+	})
+
+	return itemsWithEdit, nil
 }
