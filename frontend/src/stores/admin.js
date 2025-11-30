@@ -4,11 +4,12 @@
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getAdminList, updateAdminStatus } from '@/services/adminApi'
+import { getAdminList, getAdmin, updateAdminStatus, updateAdmin as updateAdminApi } from '@/services/adminApi'
 
 export const useAdminStore = defineStore('admin', () => {
   // State
   const admins = ref([])
+  const currentAdmin = ref(null)
   const pagination = ref({
     currentPage: 1,
     totalPages: 1,
@@ -81,6 +82,28 @@ export const useAdminStore = defineStore('admin', () => {
   }
 
   /**
+   * 管理者詳細を取得
+   * @param {number} adminId - 管理者ID
+   * @returns {Promise<object|null>} 管理者データ
+   */
+  async function fetchAdmin(adminId) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await getAdmin(adminId)
+      currentAdmin.value = response.admin
+      loading.value = false
+      return response.admin
+    } catch (err) {
+      loading.value = false
+      error.value = err.message || '管理者の取得に失敗しました'
+      currentAdmin.value = null
+      return null
+    }
+  }
+
+  /**
    * 管理者の状態を更新
    * @param {number} adminId - 管理者ID
    * @param {string} status - 新しい状態（active/inactive）
@@ -104,6 +127,38 @@ export const useAdminStore = defineStore('admin', () => {
     } catch (err) {
       error.value = err.message || '状態の更新に失敗しました'
       return false
+    }
+  }
+
+  /**
+   * 管理者を更新
+   * @param {number} adminId - 管理者ID
+   * @param {object} adminData - 管理者情報
+   * @returns {Promise<object>} 更新結果 { success, admin, error }
+   */
+  async function updateAdmin(adminId, adminData) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await updateAdminApi(adminId, adminData)
+
+      // 現在の管理者データを更新
+      currentAdmin.value = response.admin
+
+      // 一覧内の該当管理者を更新
+      const index = admins.value.findIndex((admin) => admin.id === adminId)
+      if (index !== -1) {
+        admins.value[index] = response.admin
+      }
+
+      loading.value = false
+      return { success: true, admin: response.admin }
+    } catch (err) {
+      loading.value = false
+      const errorMessage = err.response?.data?.error || err.message || '管理者の更新に失敗しました'
+      error.value = errorMessage
+      return { success: false, error: err }
     }
   }
 
@@ -164,20 +219,31 @@ export const useAdminStore = defineStore('admin', () => {
     error.value = null
   }
 
+  /**
+   * 現在の管理者データをクリア
+   */
+  function clearCurrentAdmin() {
+    currentAdmin.value = null
+  }
+
   return {
     // State
     admins,
+    currentAdmin,
     pagination,
     loading,
     error,
     filters,
     // Actions
     fetchAdminList,
+    fetchAdmin,
     changeAdminStatus,
+    updateAdmin,
     setFiltersAndFetch,
     changePage,
     changeSort,
     resetFilters,
     clearError,
+    clearCurrentAdmin,
   }
 })

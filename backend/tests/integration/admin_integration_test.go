@@ -25,10 +25,11 @@ func setupAdminTestRouter(db *gorm.DB) *gin.Engine {
 
 	// Setup repositories
 	adminRepo := repository.NewAdminRepository(db)
+	bidderRepo := repository.NewBidderRepository(db)
 
 	// Setup services
 	jwtService := service.NewJWTService("test-secret")
-	authService := service.NewAuthService(adminRepo, jwtService)
+	authService := service.NewAuthService(adminRepo, bidderRepo, jwtService)
 	adminService := service.NewAdminService(adminRepo)
 
 	// Setup handlers

@@ -38,10 +38,11 @@ func setupTestRouter(db *gorm.DB) *gin.Engine {
 
 	// Setup repositories
 	adminRepo := repository.NewAdminRepository(db)
+	bidderRepo := repository.NewBidderRepository(db)
 
 	// Setup services
 	jwtService := service.NewJWTService("")
-	authService := service.NewAuthService(adminRepo, jwtService)
+	authService := service.NewAuthService(adminRepo, bidderRepo, jwtService)
 
 	// Setup handlers
 	authHandler := handler.NewAuthHandler(authService)

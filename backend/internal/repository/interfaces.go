@@ -15,6 +15,8 @@ type AdminRepositoryInterface interface {
 	FindAdminsWithFilters(req *domain.AdminListRequest) ([]domain.Admin, error)
 	CountAdminsWithFilters(req *domain.AdminListRequest) (int64, error)
 	UpdateAdminStatus(id int64, status domain.AdminStatus) error
+	CountActiveSystemAdmins() (int64, error)
+	FindByEmailExcludeID(email string, excludeID int64) (*domain.Admin, error)
 }
 
 // BidderRepositoryInterface defines the interface for bidder repository operations

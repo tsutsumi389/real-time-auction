@@ -65,6 +65,19 @@ func (m *MockAdminRepositoryInterface) UpdateAdminStatus(id int64, status domain
 	return args.Error(0)
 }
 
+func (m *MockAdminRepositoryInterface) CountActiveSystemAdmins() (int64, error) {
+	args := m.Called()
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockAdminRepositoryInterface) FindByEmailExcludeID(email string, excludeID int64) (*domain.Admin, error) {
+	args := m.Called(email, excludeID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Admin), args.Error(1)
+}
+
 func TestAdminService_GetAdminList(t *testing.T) {
 	now := time.Now()
 

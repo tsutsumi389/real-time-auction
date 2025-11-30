@@ -165,3 +165,30 @@ func (r *AdminRepository) UpdateAdminStatus(id int64, status domain.AdminStatus)
 		Where("id = ?", id).
 		Update("status", status).Error
 }
+
+// CountActiveSystemAdmins counts the number of active system admin users
+func (r *AdminRepository) CountActiveSystemAdmins() (int64, error) {
+	var count int64
+	result := r.db.Model(&domain.Admin{}).
+		Where("role = ? AND status = ?", domain.RoleSystemAdmin, domain.StatusActive).
+		Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return count, nil
+}
+
+// FindByEmailExcludeID finds an admin by email excluding the specified ID
+func (r *AdminRepository) FindByEmailExcludeID(email string, excludeID int64) (*domain.Admin, error) {
+	var admin domain.Admin
+	result := r.db.Where("email = ? AND id != ?", email, excludeID).First(&admin)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+
+	return &admin, nil
+}

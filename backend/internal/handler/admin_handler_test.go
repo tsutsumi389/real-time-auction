@@ -52,6 +52,14 @@ func (m *MockAdminService) GetAdminByID(id int64) (*domain.Admin, error) {
 	return args.Get(0).(*domain.Admin), args.Error(1)
 }
 
+func (m *MockAdminService) UpdateAdmin(id int64, req *domain.AdminUpdateRequest, currentUserID int64) (*domain.Admin, error) {
+	args := m.Called(id, req, currentUserID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Admin), args.Error(1)
+}
+
 func TestAdminHandler_GetAdminList(t *testing.T) {
 	now := time.Now()
 
