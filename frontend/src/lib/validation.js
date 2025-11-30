@@ -174,8 +174,12 @@ export function validateOptionalPassword(password) {
  * @returns {string|null} エラーメッセージ（エラーがない場合はnull）
  */
 export function validateOptionalPasswordConfirm(password, confirmPassword) {
-  // パスワードが空欄の場合、確認も不要
+  // パスワードが空欄の場合
   if (!password || password.trim() === '') {
+    // 確認パスワードが入力されている場合は警告
+    if (confirmPassword && confirmPassword.trim() !== '') {
+      return '新しいパスワードを入力してください'
+    }
     return null
   }
 
