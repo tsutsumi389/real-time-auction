@@ -1,5 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-4">
+  <div class="min-h-screen bg-gray-50 p-4 pb-24 md:pb-4 relative">
+    <!-- Confetti Effect -->
+    <Confetti :active="showConfetti" />
+
     <!-- Toast Container -->
     <ToastContainer />
 
@@ -26,7 +29,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="auction" class="max-w-7xl mx-auto space-y-4">
+    <div v-else-if="auction" class="max-w-7xl mx-auto space-y-4 relative z-10">
       <!-- Header -->
       <div class="bg-white rounded-lg shadow-sm p-6">
         <div class="flex items-start justify-between">
@@ -87,11 +90,32 @@
         </div>
       </div>
     </div>
+
+    <!-- Winning Modal -->
+    <div v-if="showWinningModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center transform transition-all animate-bounce-in">
+        <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
+          <svg class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">落札おめでとうございます！</h3>
+        <p class="text-gray-600 mb-6">
+          商品「{{ winningItemName }}」を落札しました。
+        </p>
+        <button
+          @click="closeWinningModal"
+          class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-3 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, computed } from 'vue'
+import { onMounted, onUnmounted, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBidderAuctionLiveStore } from '@/stores/bidderAuctionLive'
@@ -101,6 +125,7 @@ import ItemTabs from '@/components/bidder/ItemTabs.vue'
 import BidPanel from '@/components/bidder/BidPanel.vue'
 import BidderBidHistory from '@/components/bidder/BidderBidHistory.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
+import Confetti from '@/components/ui/Confetti.vue'
 
 const route = useRoute()
 const store = useBidderAuctionLiveStore()
@@ -126,11 +151,54 @@ const {
   isOwnBidWinning,
 } = storeToRefs(store)
 
+// Local state for winning modal
+const showWinningModal = ref(false)
+const showConfetti = ref(false)
+const winningItemName = ref('')
+
+function triggerWinningEffect(itemName) {
+  winningItemName.value = itemName
+  showConfetti.value = true
+  setTimeout(() => {
+    showWinningModal.value = true
+  }, 500)
+  
+  // Stop confetti after 5 seconds
+  setTimeout(() => {
+    showConfetti.value = false
+  }, 5000)
+}
+
+function closeWinningModal() {
+  showWinningModal.value = false
+}
+
 // Current bidder ID (could be retrieved from bidder auth store)
 const currentBidderId = computed(() => {
   // TODO: Get from bidder auth store if available
-  return null
+  // For now, we rely on the store's isOwnBidWinning logic which checks token internally
+  // But for the watcher above, we need the ID. 
+  // Let's try to get it from the store if exposed, or parse token again.
+  // Since store doesn't expose it directly as a ref, we might need to rely on isOwnBidWinning check in a different way
+  // or import the token service here.
+  // For simplicity, let's use a workaround: check if the winning bid in bids array is 'is_own'
+  return null 
 })
+
+// Improved winning check for watcher
+watch(
+  () => currentItem.value?.status,
+  (newStatus, oldStatus) => {
+    if (newStatus === 'ended' && oldStatus === 'active') {
+      // Check if the winning bid is ours
+      const winningBid = bids.value.find(b => b.is_winning)
+      if (winningBid && (winningBid.is_own || winningBid.bidder_id === currentBidderId.value)) {
+        triggerWinningEffect(currentItem.value.name)
+      }
+    }
+  }
+)
+
 
 // Initialization
 onMounted(async () => {
@@ -186,3 +254,15 @@ function handleRetry() {
   store.initialize(auctionId)
 }
 </script>
+
+<style scoped>
+@keyframes bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); opacity: 1; }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
+}
+</style>

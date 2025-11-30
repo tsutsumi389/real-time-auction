@@ -1,122 +1,143 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm p-6">
-    <!-- Item Header -->
-    <div class="mb-6">
-      <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ item.name }}</h2>
-      <p v-if="item.description" class="text-gray-600 text-sm">
-        {{ item.description }}
-      </p>
-      <div class="flex items-center gap-4 mt-3">
-        <span
-          :class="[
-            'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
-            getStatusClass(item.status)
-          ]"
-        >
-          {{ getStatusLabel(item.status) }}
-        </span>
-        <span class="text-sm text-gray-500">
-          ロット番号: {{ item.lot_number }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Current Price Display -->
-    <div class="text-center p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl mb-6 border border-blue-100">
-      <div class="text-sm text-gray-600 mb-2 font-medium">現在価格</div>
-      <div
-        :class="[
-          'text-6xl font-bold transition-all duration-300',
-          priceUpdated ? 'text-blue-600 animate-pulse' : 'text-gray-900'
-        ]"
-      >
-        {{ formatNumber(currentPrice) }}
-      </div>
-      <div class="text-sm text-gray-500 mt-2">ポイント</div>
-    </div>
-
-    <!-- Bid Button -->
-    <button
-      @click="handleBid"
-      :disabled="!canBid"
-      :class="[
-        'w-full py-5 px-6 rounded-xl font-bold text-xl transition-all duration-200 shadow-lg',
-        canBid
-          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0'
-          : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
-      ]"
-    >
-      <span v-if="isLoading" class="flex items-center justify-center">
-        <svg class="animate-spin h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        処理中...
-      </span>
-      <span v-else-if="canBid">
-        {{ formatNumber(currentPrice) }} ポイントで入札
-      </span>
-      <span v-else>
-        {{ disabledReason }}
-      </span>
-    </button>
-
-    <!-- Additional Info -->
-    <div class="mt-6 space-y-3">
-      <!-- Winning Status -->
-      <div
-        v-if="isWinning"
-        class="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start"
-      >
-        <svg class="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-        </svg>
-        <div>
-          <p class="text-sm font-semibold text-green-800">現在あなたが最高入札者です</p>
-          <p class="text-xs text-green-600 mt-1">他の入札者が現れるまでこの価格で落札可能です</p>
-        </div>
+  <div class="bg-white rounded-lg shadow-sm p-6 relative">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Left Column: Image Gallery -->
+      <div>
+        <ProductImageGallery 
+          :images="itemImages" 
+          :alt-text="item.name" 
+        />
       </div>
 
-      <!-- Insufficient Points Warning -->
-      <div
-        v-if="!hasEnoughPoints && item.status === 'active' && currentPrice > 0"
-        class="p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-start"
-      >
-        <svg class="w-5 h-5 text-orange-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-        </svg>
-        <div>
-          <p class="text-sm font-semibold text-orange-800">ポイントが不足しています</p>
-          <p class="text-xs text-orange-600 mt-1">
-            必要: {{ formatNumber(currentPrice) }} / 利用可能: {{ formatNumber(availablePoints) }}
+      <!-- Right Column: Info & Bidding -->
+      <div class="flex flex-col h-full">
+        <!-- Item Header -->
+        <div class="mb-6">
+          <div class="flex items-center gap-2 mb-2">
+            <span
+              :class="[
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                getStatusClass(item.status)
+              ]"
+            >
+              {{ getStatusLabel(item.status) }}
+            </span>
+            <span class="text-xs text-gray-500 font-mono">
+              LOT: {{ item.lot_number }}
+            </span>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-900 leading-tight mb-2">{{ item.name }}</h2>
+          <p v-if="item.description" class="text-gray-600 text-sm leading-relaxed">
+            {{ item.description }}
           </p>
         </div>
-      </div>
 
-      <!-- Item Status Info -->
-      <div
-        v-if="item.status === 'pending'"
-        class="p-4 bg-blue-50 border border-blue-200 rounded-lg"
-      >
-        <p class="text-sm text-blue-800">この商品はまだ開始されていません。開始をお待ちください。</p>
-      </div>
+        <div class="mt-auto space-y-6">
+          <!-- Price Display (Redesigned) -->
+          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 text-center relative overflow-hidden">
+            <!-- Background decoration -->
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-xl"></div>
+            <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-indigo-100 rounded-full opacity-50 blur-xl"></div>
+            
+            <div class="relative z-10">
+              <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Current Price</div>
+              <div class="flex items-baseline justify-center gap-1">
+                <span 
+                  :class="[
+                    'text-5xl sm:text-6xl font-black tracking-tight transition-all duration-300',
+                    priceUpdated ? 'text-blue-600 scale-110' : 'text-gray-900'
+                  ]"
+                >
+                  {{ formatNumber(currentPrice) }}
+                </span>
+                <span class="text-lg font-medium text-gray-500">pts</span>
+              </div>
+            </div>
+          </div>
 
-      <div
-        v-if="item.status === 'ended'"
-        class="p-4 bg-gray-50 border border-gray-200 rounded-lg"
-      >
-        <p class="text-sm text-gray-800 font-semibold">この商品は終了しました</p>
-        <p v-if="item.winner_id" class="text-xs text-gray-600 mt-1">
-          落札者が決定しています
-        </p>
-      </div>
+          <!-- Desktop Bid Button -->
+          <div class="hidden md:block">
+            <button
+              @click="handleBid"
+              :disabled="!canBid"
+              class="relative overflow-hidden w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg transform"
+              :class="[
+                canBid
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:-translate-y-1 active:translate-y-0'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
+              ]"
+            >
+              <span v-if="isLoading" class="flex items-center justify-center relative z-10">
+                <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+              <span v-else-if="canBid" class="relative z-10">
+                入札する
+              </span>
+              <span v-else class="relative z-10">
+                {{ disabledReason }}
+              </span>
+            </button>
+          </div>
 
-      <!-- No Price Opened Yet -->
-      <div
-        v-if="item.status === 'active' && currentPrice === 0"
-        class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
-      >
-        <p class="text-sm text-yellow-800">価格がまだ開示されていません。主催者が価格を開示するまでお待ちください。</p>
+          <!-- Status Messages -->
+          <div class="space-y-3">
+            <!-- Winning Status -->
+            <div
+              v-if="isWinning"
+              class="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center animate-pulse-slow"
+            >
+              <div class="flex-shrink-0 bg-green-100 rounded-full p-1 mr-3">
+                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-green-800">最高入札者です！</p>
+              </div>
+            </div>
+
+            <!-- Insufficient Points -->
+            <div
+              v-if="!hasEnoughPoints && item.status === 'active' && currentPrice > 0"
+              class="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center"
+            >
+              <svg class="w-5 h-5 text-orange-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <p class="text-sm text-orange-800">
+                ポイント不足 (残: {{ formatNumber(availablePoints) }})
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Sticky Bid Button -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 safe-area-bottom">
+      <div class="flex items-center justify-between gap-4 max-w-md mx-auto">
+        <div class="flex-shrink-0">
+          <div class="text-xs text-gray-500">現在価格</div>
+          <div class="text-xl font-bold text-gray-900">{{ formatNumber(currentPrice) }} <span class="text-xs font-normal">pts</span></div>
+        </div>
+        <button
+          @click="handleBid"
+          :disabled="!canBid"
+          :class="[
+            'flex-1 py-3 px-4 rounded-xl font-bold text-base transition-all duration-200 shadow-md',
+            canBid
+              ? 'bg-blue-600 text-white active:bg-blue-700'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          ]"
+        >
+          <span v-if="isLoading">処理中...</span>
+          <span v-else-if="canBid">入札する</span>
+          <span v-else>{{ disabledReason || '入札不可' }}</span>
+        </button>
       </div>
     </div>
   </div>
@@ -124,6 +145,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
+import ProductImageGallery from './ProductImageGallery.vue'
 
 const props = defineProps({
   item: {
@@ -169,7 +191,7 @@ watch(
       priceUpdated.value = true
       setTimeout(() => {
         priceUpdated.value = false
-      }, 1000)
+      }, 300)
     }
   }
 )
@@ -179,8 +201,41 @@ const hasEnoughPoints = computed(() => {
   return props.availablePoints >= props.currentPrice
 })
 
-function handleBid() {
+// Extract images from item
+const itemImages = computed(() => {
+  if (props.item.images && Array.isArray(props.item.images)) {
+    return props.item.images
+  }
+  if (props.item.image_url) {
+    return [props.item.image_url]
+  }
+  return []
+})
+
+function handleBid(event) {
   if (props.canBid) {
+    // Create ripple effect
+    if (event) {
+      const button = event.currentTarget
+      const circle = document.createElement('span')
+      const diameter = Math.max(button.clientWidth, button.clientHeight)
+      const radius = diameter / 2
+
+      const rect = button.getBoundingClientRect()
+      
+      circle.style.width = circle.style.height = `${diameter}px`
+      circle.style.left = `${event.clientX - rect.left - radius}px`
+      circle.style.top = `${event.clientY - rect.top - radius}px`
+      circle.classList.add('ripple')
+
+      const ripple = button.getElementsByClassName('ripple')[0]
+      if (ripple) {
+        ripple.remove()
+      }
+
+      button.appendChild(circle)
+    }
+
     emit('bid')
   }
 }
@@ -192,7 +247,7 @@ function formatNumber(value) {
 function getStatusLabel(status) {
   const labels = {
     pending: '待機中',
-    active: '開始',
+    active: '入札受付中',
     ended: '終了',
   }
   return labels[status] || status
@@ -209,16 +264,42 @@ function getStatusClass(status) {
 </script>
 
 <style scoped>
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Ripple Effect */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
   }
 }
 
-.animate-pulse {
-  animation: pulse 0.5s ease-in-out;
+/* Enhanced Price Animation */
+@keyframes price-pop {
+  0% { transform: scale(1); color: #1f2937; } /* text-gray-900 */
+  50% { transform: scale(1.2); color: #2563eb; } /* text-blue-600 */
+  100% { transform: scale(1); color: #1f2937; }
+}
+
+.price-pop-enter-active {
+  animation: price-pop 0.4s ease-out;
 }
 </style>
