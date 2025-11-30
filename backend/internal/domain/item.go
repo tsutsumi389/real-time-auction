@@ -9,7 +9,7 @@ import (
 // Item represents an auction item
 type Item struct {
 	ID            uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	AuctionID     uuid.UUID  `gorm:"type:uuid;not null;index:idx_items_auction" json:"auction_id"`
+	AuctionID     *uuid.UUID `gorm:"type:uuid;index:idx_items_auction" json:"auction_id"`
 	Name          string     `gorm:"type:varchar(200);not null" json:"name"`
 	Description   string     `gorm:"type:text" json:"description"`
 	StartingPrice *int64     `gorm:"type:bigint" json:"starting_price"`
@@ -137,4 +137,64 @@ type ItemEditInfo struct {
 	CanEdit       bool       `json:"can_edit"`
 	CanDelete     bool       `json:"can_delete"`
 	BidCount      int64      `json:"bid_count"`
+}
+
+// CreateItemRequest represents the request to create a new item without auction assignment
+type CreateItemRequest struct {
+	Name          string `json:"name" binding:"required,max=200"`
+	Description   string `json:"description" binding:"max=2000"`
+	StartingPrice *int64 `json:"starting_price" binding:"omitempty,min=1"`
+}
+
+// AssignItemsRequest represents the request to assign items to an auction
+type AssignItemsRequest struct {
+	ItemIDs []uuid.UUID `json:"item_ids" binding:"required,min=1"`
+}
+
+// UnassignItemRequest represents the request to unassign an item from an auction
+// Note: This is typically used with URL path parameters, not request body
+type UnassignItemRequest struct {
+	ItemID uuid.UUID `json:"item_id"`
+}
+
+// ItemListResponse represents the response for item list with pagination
+type ItemListResponse struct {
+	Items []ItemListItem `json:"items"`
+	Total int64          `json:"total"`
+	Page  int            `json:"page"`
+	Limit int            `json:"limit"`
+}
+
+// ItemListItem represents an item in the list response
+type ItemListItem struct {
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	StartingPrice *int64     `json:"starting_price"`
+	AuctionID     *uuid.UUID `json:"auction_id"`
+	AuctionTitle  *string    `json:"auction_title"`
+	LotNumber     int        `json:"lot_number"`
+	BidCount      int64      `json:"bid_count"`
+	CanDelete     bool       `json:"can_delete"`
+	CreatedAt     time.Time  `json:"created_at"`
+}
+
+// ItemDetailResponse represents the detailed response for a single item
+type ItemDetailResponse struct {
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	StartingPrice *int64     `json:"starting_price"`
+	CurrentPrice  *int64     `json:"current_price"`
+	AuctionID     *uuid.UUID `json:"auction_id"`
+	AuctionTitle  *string    `json:"auction_title"`
+	LotNumber     int        `json:"lot_number"`
+	WinnerID      *uuid.UUID `json:"winner_id"`
+	StartedAt     *time.Time `json:"started_at"`
+	EndedAt       *time.Time `json:"ended_at"`
+	BidCount      int64      `json:"bid_count"`
+	CanEdit       bool       `json:"can_edit"`
+	CanDelete     bool       `json:"can_delete"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
 }
