@@ -595,10 +595,10 @@ func (h *AuctionHandler) UpdateAuction(c *gin.Context) {
 	c.JSON(http.StatusOK, auction)
 }
 
-// UpdateItem handles PUT /api/admin/auctions/:id/items/:item_id
+// UpdateItem handles PUT /api/admin/auctions/:id/items/:itemId
 func (h *AuctionHandler) UpdateItem(c *gin.Context) {
 	// Get item ID from URL parameter
-	itemID := c.Param("item_id")
+	itemID := c.Param("itemId")
 
 	// Parse request body
 	var req domain.UpdateItemRequest
@@ -633,10 +633,10 @@ func (h *AuctionHandler) UpdateItem(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
-// DeleteItem handles DELETE /api/admin/auctions/:id/items/:item_id
+// DeleteItem handles DELETE /api/admin/auctions/:id/items/:itemId
 func (h *AuctionHandler) DeleteItem(c *gin.Context) {
 	// Get item ID from URL parameter
-	itemID := c.Param("item_id")
+	itemID := c.Param("itemId")
 
 	// Call service
 	err := h.auctionService.DeleteItem(itemID)

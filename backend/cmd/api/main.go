@@ -175,9 +175,9 @@ func main() {
 				// 商品追加
 				adminOrAuctioneer.POST("/admin/auctions/:id/items", auctionHandler.AddItem)
 				// 商品更新
-				adminOrAuctioneer.PUT("/admin/auctions/:id/items/:item_id", auctionHandler.UpdateItem)
+				adminOrAuctioneer.PUT("/admin/auctions/:id/items/:itemId", auctionHandler.UpdateItem)
 				// 商品削除
-				adminOrAuctioneer.DELETE("/admin/auctions/:id/items/:item_id", auctionHandler.DeleteItem)
+				adminOrAuctioneer.DELETE("/admin/auctions/:id/items/:itemId", auctionHandler.DeleteItem)
 				// 商品順序変更
 				adminOrAuctioneer.PUT("/admin/auctions/:id/items/reorder", auctionHandler.ReorderItems)
 
