@@ -47,6 +47,16 @@
           詳細
         </button>
 
+        <!-- 編集ボタン（pendingのみ） -->
+        <button
+          v-if="auction.status === 'pending'"
+          @click="$emit('edit', auction.id)"
+          class="text-indigo-600 hover:text-indigo-900"
+          title="編集"
+        >
+          編集
+        </button>
+
         <!-- 開催中ボタン（activeのみ） -->
         <button
           v-if="auction.status === 'active'"
@@ -105,7 +115,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['view-details', 'view-live', 'start', 'end', 'cancel'])
+defineEmits(['view-details', 'view-live', 'start', 'end', 'cancel', 'edit'])
 
 function truncateDescription(description) {
   if (!description) return '-'

@@ -68,4 +68,12 @@ type AuctionRepositoryInterface interface {
 
 	// Cancel auction operations
 	CancelAuctionWithRefunds(auctionID string, reason string) (*domain.CancelAuctionResponse, error)
+
+	// Edit operations
+	UpdateAuction(id string, req *domain.UpdateAuctionRequest) (*domain.Auction, error)
+	GetAuctionForEdit(id string) (*domain.AuctionEditResponse, error)
+	UpdateItem(itemID string, req *domain.UpdateItemRequest) (*domain.Item, error)
+	DeleteItem(itemID string) error
+	AddItem(auctionID string, req *domain.AddItemRequest) (*domain.Item, error)
+	ReorderItems(auctionID string, itemIDs []uuid.UUID) error
 }

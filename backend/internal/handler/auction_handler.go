@@ -533,3 +533,219 @@ func (h *AuctionHandler) CancelAuctionWithReason(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+// GetAuctionForEdit handles GET /api/admin/auctions/:id (for edit)
+func (h *AuctionHandler) GetAuctionForEdit(c *gin.Context) {
+	// Get auction ID from URL parameter
+	id := c.Param("id")
+
+	// Call service
+	response, err := h.auctionService.GetAuctionForEdit(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error: "Internal server error",
+		})
+		return
+	}
+	if response == nil {
+		c.JSON(http.StatusNotFound, ErrorResponse{
+			Error: "Auction not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// UpdateAuction handles PUT /api/admin/auctions/:id
+func (h *AuctionHandler) UpdateAuction(c *gin.Context) {
+	// Get auction ID from URL parameter
+	id := c.Param("id")
+
+	// Parse request body
+	var req domain.UpdateAuctionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Call service
+	auction, err := h.auctionService.UpdateAuction(id, &req)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrAuctionNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Auction not found",
+			})
+		case errors.Is(err, service.ErrAuctionNotEditable):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Auction cannot be edited",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, auction)
+}
+
+// UpdateItem handles PUT /api/admin/auctions/:id/items/:item_id
+func (h *AuctionHandler) UpdateItem(c *gin.Context) {
+	// Get item ID from URL parameter
+	itemID := c.Param("item_id")
+
+	// Parse request body
+	var req domain.UpdateItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Call service
+	item, err := h.auctionService.UpdateItem(itemID, &req)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrItemNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Item not found",
+			})
+		case errors.Is(err, service.ErrItemNotEditable):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Item cannot be edited",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, item)
+}
+
+// DeleteItem handles DELETE /api/admin/auctions/:id/items/:item_id
+func (h *AuctionHandler) DeleteItem(c *gin.Context) {
+	// Get item ID from URL parameter
+	itemID := c.Param("item_id")
+
+	// Call service
+	err := h.auctionService.DeleteItem(itemID)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrItemNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Item not found",
+			})
+		case errors.Is(err, service.ErrItemNotDeletable):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Item cannot be deleted (already started)",
+			})
+		case errors.Is(err, service.ErrItemHasBids):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Item has bids and cannot be deleted",
+			})
+		case errors.Is(err, service.ErrAuctionNotEditable):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Auction cannot be edited",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}
+
+// AddItem handles POST /api/admin/auctions/:id/items
+func (h *AuctionHandler) AddItem(c *gin.Context) {
+	// Get auction ID from URL parameter
+	auctionID := c.Param("id")
+
+	// Parse request body
+	var req domain.AddItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Call service
+	item, err := h.auctionService.AddItem(auctionID, &req)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrAuctionNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Auction not found",
+			})
+		case errors.Is(err, service.ErrAuctionNotEditable):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Auction cannot be edited",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, item)
+}
+
+// ReorderItems handles PUT /api/admin/auctions/:id/items/reorder
+func (h *AuctionHandler) ReorderItems(c *gin.Context) {
+	// Get auction ID from URL parameter
+	auctionID := c.Param("id")
+
+	// Parse request body
+	var req domain.ReorderItemsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Call service
+	err := h.auctionService.ReorderItems(auctionID, &req)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrAuctionNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Auction not found",
+			})
+		case errors.Is(err, service.ErrAuctionNotEditable):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Auction cannot be edited",
+			})
+		case errors.Is(err, service.ErrInvalidItemIDs):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Invalid item IDs",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Items reordered successfully"})
+}

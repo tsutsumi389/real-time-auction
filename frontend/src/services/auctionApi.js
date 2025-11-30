@@ -138,3 +138,75 @@ export async function getAuctionDetail(auctionId) {
   const response = await apiClient.get(`/auctions/${auctionId}`)
   return response.data
 }
+
+/**
+ * オークション詳細を取得（編集用）
+ * @param {string} auctionId - オークションID（UUID）
+ * @returns {Promise<object>} レスポンス（auction詳細情報と編集可否フラグ）
+ */
+export async function getAuctionForEdit(auctionId) {
+  const response = await apiClient.get(`/admin/auctions/${auctionId}`)
+  return response.data
+}
+
+/**
+ * オークションを更新
+ * @param {string} auctionId - オークションID（UUID）
+ * @param {object} data - 更新データ
+ * @param {string} data.title - オークションタイトル
+ * @param {string} data.description - オークション説明
+ * @returns {Promise<object>} レスポンス（更新後のオークション情報）
+ */
+export async function updateAuction(auctionId, data) {
+  const response = await apiClient.put(`/admin/auctions/${auctionId}`, data)
+  return response.data
+}
+
+/**
+ * 商品を更新
+ * @param {string} auctionId - オークションID（UUID）
+ * @param {string} itemId - 商品ID（UUID）
+ * @param {object} data - 更新データ
+ * @param {string} data.name - 商品名
+ * @param {string} data.description - 商品説明
+ * @returns {Promise<object>} レスポンス（更新後の商品情報）
+ */
+export async function updateItem(auctionId, itemId, data) {
+  const response = await apiClient.put(`/admin/auctions/${auctionId}/items/${itemId}`, data)
+  return response.data
+}
+
+/**
+ * 商品を削除
+ * @param {string} auctionId - オークションID（UUID）
+ * @param {string} itemId - 商品ID（UUID）
+ * @returns {Promise<void>}
+ */
+export async function deleteItem(auctionId, itemId) {
+  await apiClient.delete(`/admin/auctions/${auctionId}/items/${itemId}`)
+}
+
+/**
+ * 商品を追加
+ * @param {string} auctionId - オークションID（UUID）
+ * @param {object} data - 商品データ
+ * @param {string} data.name - 商品名
+ * @param {string} data.description - 商品説明
+ * @param {number} data.starting_price - 開始価格
+ * @returns {Promise<object>} レスポンス（追加された商品情報）
+ */
+export async function addItem(auctionId, data) {
+  const response = await apiClient.post(`/admin/auctions/${auctionId}/items`, data)
+  return response.data
+}
+
+/**
+ * 商品の順序を変更
+ * @param {string} auctionId - オークションID（UUID）
+ * @param {string[]} itemIds - 新しい順序の商品ID配列
+ * @returns {Promise<object>} レスポンス
+ */
+export async function reorderItems(auctionId, itemIds) {
+  const response = await apiClient.put(`/admin/auctions/${auctionId}/items/reorder`, { item_ids: itemIds })
+  return response.data
+}

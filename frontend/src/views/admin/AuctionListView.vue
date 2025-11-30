@@ -72,6 +72,7 @@
       @start="openStartDialog"
       @end="openEndDialog"
       @cancel="openCancelDialog"
+      @edit="handleEdit"
     />
 
     <!-- ページネーション -->
@@ -162,6 +163,11 @@ function handleSort(field) {
 
 // 詳細表示
 function handleViewDetails(auctionId) {
+  router.push(`/admin/auctions/${auctionId}/edit`)
+}
+
+// 編集画面へ
+function handleEdit(auctionId) {
   router.push(`/admin/auctions/${auctionId}/edit`)
 }
 

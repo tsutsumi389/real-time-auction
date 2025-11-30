@@ -105,3 +105,36 @@ type CancelAuctionResponse struct {
 	TotalRefundedPoints int64     `json:"total_refunded_points"`
 	CancelledAt         time.Time `json:"cancelled_at"`
 }
+
+// UpdateItemRequest represents the request to update an item
+type UpdateItemRequest struct {
+	Name        *string `json:"name" binding:"omitempty,max=200"`
+	Description *string `json:"description"`
+}
+
+// AddItemRequest represents the request to add a new item to an auction
+type AddItemRequest struct {
+	Name          string `json:"name" binding:"required,max=200"`
+	Description   string `json:"description" binding:"max=2000"`
+	StartingPrice *int64 `json:"starting_price" binding:"omitempty,min=1"`
+}
+
+// ReorderItemsRequest represents the request to reorder items in an auction
+type ReorderItemsRequest struct {
+	ItemIDs []uuid.UUID `json:"item_ids" binding:"required,min=1"`
+}
+
+// ItemEditInfo represents an item with edit permissions
+type ItemEditInfo struct {
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	LotNumber     int        `json:"lot_number"`
+	StartingPrice *int64     `json:"starting_price"`
+	CurrentPrice  *int64     `json:"current_price"`
+	StartedAt     *time.Time `json:"started_at"`
+	EndedAt       *time.Time `json:"ended_at"`
+	CanEdit       bool       `json:"can_edit"`
+	CanDelete     bool       `json:"can_delete"`
+	BidCount      int64      `json:"bid_count"`
+}

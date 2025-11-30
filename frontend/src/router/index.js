@@ -67,6 +67,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
     },
     {
+      path: '/admin/auctions/:id/edit',
+      name: 'auction-edit',
+      component: () => import('../views/admin/AuctionEditView.vue'),
+      meta: { requiresAuth: true, requireAdminOrAuctioneer: true }
+    },
+    {
       path: '/admin/auctions/:id/live',
       name: 'auction-live',
       component: () => import('../views/admin/AuctionLive.vue'),

@@ -54,4 +54,12 @@ type AuctionServiceInterface interface {
 	GetBidHistory(itemID string, limit int, offset int) (*domain.BidHistoryResponse, error)
 	GetPriceHistory(itemID string) (*domain.PriceHistoryResponse, error)
 	GetParticipants(auctionID string) (*domain.ParticipantsResponse, error)
+
+	// Edit operations
+	GetAuctionForEdit(id string) (*domain.AuctionEditResponse, error)
+	UpdateAuction(id string, req *domain.UpdateAuctionRequest) (*domain.Auction, error)
+	UpdateItem(itemID string, req *domain.UpdateItemRequest) (*domain.Item, error)
+	DeleteItem(itemID string) error
+	AddItem(auctionID string, req *domain.AddItemRequest) (*domain.Item, error)
+	ReorderItems(auctionID string, req *domain.ReorderItemsRequest) error
 }
