@@ -245,32 +245,24 @@ function validateForm() {
 }
 
 // Item management
-async function handleAddItem() {
-  const newItem = {
+function handleAddItem() {
+  // Add new item locally (will be saved when user clicks save)
+  const newLotNumber = items.value.length + 1
+  items.value.push({
+    id: null, // null indicates new item not yet saved
     name: '',
     description: '',
+    lot_number: newLotNumber,
     starting_price: null,
-  }
-
-  const result = await auctionStore.handleAddItem(auctionId.value, newItem)
-  if (result) {
-    items.value.push({
-      id: result.id,
-      name: result.name,
-      description: result.description,
-      lot_number: result.lot_number,
-      starting_price: result.starting_price,
-      current_price: result.current_price,
-      started_at: null,
-      ended_at: null,
-      can_edit: true,
-      can_delete: true,
-      bid_count: 0,
-    })
-    itemErrors.value.push({ name: '', description: '', starting_price: '' })
-  } else {
-    submitError.value = auctionStore.error || '商品の追加に失敗しました'
-  }
+    current_price: null,
+    started_at: null,
+    ended_at: null,
+    can_edit: true,
+    can_delete: true,
+    bid_count: 0,
+    isNew: true, // flag to indicate this is a new unsaved item
+  })
+  itemErrors.value.push({ name: '', description: '', starting_price: '' })
 }
 
 function requestDeleteItem(index) {
@@ -281,8 +273,24 @@ function requestDeleteItem(index) {
 async function confirmDeleteItem() {
   if (deleteItemIndex.value < 0) return
 
-  isDeleting.value = true
   const item = items.value[deleteItemIndex.value]
+
+  // If item is new (not saved to server yet), just remove locally
+  if (item.isNew || !item.id) {
+    items.value.splice(deleteItemIndex.value, 1)
+    itemErrors.value.splice(deleteItemIndex.value, 1)
+
+    // Recalculate lot numbers
+    items.value.forEach((item, idx) => {
+      item.lot_number = idx + 1
+    })
+
+    showDeleteModal.value = false
+    deleteItemIndex.value = -1
+    return
+  }
+
+  isDeleting.value = true
 
   const success = await auctionStore.handleDeleteItem(auctionId.value, item.id)
   if (success) {
@@ -358,13 +366,42 @@ async function handleSubmit() {
       return
     }
 
-    // Check if item order changed
+    // Save new items
+    const newItems = items.value.filter((item) => item.isNew || !item.id)
+    for (const item of newItems) {
+      if (!item.name.trim()) {
+        submitError.value = '商品名を入力してください'
+        isSubmitting.value = false
+        return
+      }
+
+      const addResult = await auctionStore.handleAddItem(auctionId.value, {
+        name: item.name,
+        description: item.description || '',
+        starting_price: item.starting_price,
+      })
+
+      if (!addResult) {
+        submitError.value = auctionStore.error || '商品の追加に失敗しました'
+        isSubmitting.value = false
+        return
+      }
+
+      // Update local item with server-assigned id
+      item.id = addResult.id
+      item.isNew = false
+    }
+
+    // Check if item order changed (only for existing items)
+    const existingItems = items.value.filter((item) => item.id && !item.isNew)
     const originalItemOrder = originalData.value.items.map((item) => item.id)
-    const currentItemOrder = items.value.map((item) => item.id)
+    const currentItemOrder = existingItems.map((item) => item.id)
     const orderChanged = JSON.stringify(originalItemOrder) !== JSON.stringify(currentItemOrder)
 
-    if (orderChanged) {
-      const reorderSuccess = await auctionStore.handleReorderItems(auctionId.value, currentItemOrder)
+    if (orderChanged || newItems.length > 0) {
+      // If there are new items or order changed, reorder all items
+      const allItemIds = items.value.map((item) => item.id).filter((id) => id)
+      const reorderSuccess = await auctionStore.handleReorderItems(auctionId.value, allItemIds)
       if (!reorderSuccess) {
         submitError.value = auctionStore.error || '商品順序の更新に失敗しました'
         isSubmitting.value = false
