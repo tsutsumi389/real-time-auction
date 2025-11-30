@@ -223,3 +223,119 @@ func (h *AdminHandler) UpdateAdminStatus(c *gin.Context) {
 	// Return successful response
 	c.JSON(http.StatusOK, updatedAdmin)
 }
+
+// GetAdmin handles GET /api/admin/admins/:id
+func (h *AdminHandler) GetAdmin(c *gin.Context) {
+	// Parse admin ID from URL parameter
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid admin ID",
+		})
+		return
+	}
+
+	// Get admin from service
+	admin, err := h.adminService.GetAdminByID(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrAdminNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Admin not found",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusOK, domain.AdminDetailResponse{Admin: admin})
+}
+
+// UpdateAdmin handles PUT /api/admin/admins/:id
+func (h *AdminHandler) UpdateAdmin(c *gin.Context) {
+	// Parse admin ID from URL parameter
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid admin ID",
+		})
+		return
+	}
+
+	// Get current user ID from context (set by auth middleware)
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ErrorResponse{
+			Error: "Unauthorized",
+		})
+		return
+	}
+
+	currentID, ok := currentUserID.(int64)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error: "Invalid user ID format",
+		})
+		return
+	}
+
+	// Parse request body
+	var req domain.AdminUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	// Call service
+	updatedAdmin, err := h.adminService.UpdateAdmin(id, &req, currentID)
+	if err != nil {
+		// Handle different error types
+		switch {
+		case errors.Is(err, service.ErrAdminNotFound):
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				Error: "Admin not found",
+			})
+		case errors.Is(err, service.ErrEmailAlreadyExists):
+			c.JSON(http.StatusConflict, ErrorResponse{
+				Error: "Email already exists",
+			})
+		case errors.Is(err, service.ErrInvalidRole):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Invalid role value",
+			})
+		case errors.Is(err, service.ErrInvalidStatus):
+			c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error: "Invalid status value",
+			})
+		case errors.Is(err, service.ErrCannotChangeOwnRole):
+			c.JSON(http.StatusForbidden, ErrorResponse{
+				Error: "Cannot change own role",
+			})
+		case errors.Is(err, service.ErrCannotSuspendSelf):
+			c.JSON(http.StatusForbidden, ErrorResponse{
+				Error: "Cannot suspend own account",
+			})
+		case errors.Is(err, service.ErrLastSystemAdmin):
+			c.JSON(http.StatusForbidden, ErrorResponse{
+				Error: "Cannot demote or suspend the last system admin",
+			})
+		default:
+			// Log internal errors but don't expose details to client
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				Error: "Internal server error",
+			})
+		}
+		return
+	}
+
+	// Return successful response
+	c.JSON(http.StatusOK, domain.AdminDetailResponse{Admin: updatedAdmin})
+}

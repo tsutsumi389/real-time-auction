@@ -21,6 +21,7 @@ type AdminServiceInterface interface {
 	GetAdminByID(id int64) (*domain.Admin, error)
 	GetAdminList(req *domain.AdminListRequest) (*domain.AdminListResponse, error)
 	UpdateAdminStatus(id int64, status domain.AdminStatus) (*domain.Admin, error)
+	UpdateAdmin(id int64, req *domain.AdminUpdateRequest, currentUserID int64) (*domain.Admin, error)
 }
 
 // BidderServiceInterface defines the interface for bidder service operations

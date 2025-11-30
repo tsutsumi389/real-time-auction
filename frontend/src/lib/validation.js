@@ -149,6 +149,118 @@ export function validateAdminRegistrationForm(formData) {
 }
 
 /**
+ * 管理者編集用パスワードのバリデーション（任意）
+ * @param {string} password - パスワード
+ * @returns {string|null} エラーメッセージ（エラーがない場合はnull）
+ */
+export function validateOptionalPassword(password) {
+  // 任意項目なので空欄の場合はエラーなし
+  if (!password || password.trim() === '') {
+    return null
+  }
+
+  // 8文字以上チェック
+  if (password.length < 8) {
+    return 'パスワードは8文字以上で入力してください'
+  }
+
+  return null
+}
+
+/**
+ * 管理者編集用確認パスワードのバリデーション（パスワードが入力されている場合のみ必須）
+ * @param {string} password - パスワード
+ * @param {string} confirmPassword - 確認用パスワード
+ * @returns {string|null} エラーメッセージ（エラーがない場合はnull）
+ */
+export function validateOptionalPasswordConfirm(password, confirmPassword) {
+  // パスワードが空欄の場合、確認も不要
+  if (!password || password.trim() === '') {
+    return null
+  }
+
+  // パスワードが入力されている場合、確認も必須
+  if (!confirmPassword || confirmPassword.trim() === '') {
+    return '確認用パスワードを入力してください'
+  }
+
+  // パスワード一致チェック
+  if (password !== confirmPassword) {
+    return 'パスワードが一致しません'
+  }
+
+  return null
+}
+
+/**
+ * 状態のバリデーション
+ * @param {string} status - 状態
+ * @returns {string|null} エラーメッセージ（エラーがない場合はnull）
+ */
+export function validateStatus(status) {
+  // 空欄チェック
+  if (!status || status.trim() === '') {
+    return '状態を選択してください'
+  }
+
+  // 有効な状態値チェック
+  const validStatuses = ['active', 'suspended']
+  if (!validStatuses.includes(status)) {
+    return '状態の値が正しくありません'
+  }
+
+  return null
+}
+
+/**
+ * 管理者編集フォーム全体のバリデーション
+ * @param {object} formData - フォームデータ
+ * @param {string} formData.email - メールアドレス
+ * @param {string} formData.display_name - 表示名
+ * @param {string} formData.password - パスワード（任意）
+ * @param {string} formData.password_confirm - 確認用パスワード
+ * @param {string} formData.role - ロール
+ * @param {string} formData.status - 状態
+ * @returns {object} エラーオブジェクト（エラーがない場合は空オブジェクト）
+ */
+export function validateAdminEditForm(formData) {
+  const errors = {}
+
+  // 各フィールドのバリデーション
+  const emailError = validateEmail(formData.email)
+  if (emailError) {
+    errors.email = emailError
+  }
+
+  const displayNameError = validateDisplayName(formData.display_name)
+  if (displayNameError) {
+    errors.display_name = displayNameError
+  }
+
+  const passwordError = validateOptionalPassword(formData.password)
+  if (passwordError) {
+    errors.password = passwordError
+  }
+
+  const passwordConfirmError = validateOptionalPasswordConfirm(formData.password, formData.password_confirm)
+  if (passwordConfirmError) {
+    errors.password_confirm = passwordConfirmError
+  }
+
+  const roleError = validateRole(formData.role)
+  if (roleError) {
+    errors.role = roleError
+  }
+
+  const statusError = validateStatus(formData.status)
+  if (statusError) {
+    errors.status = statusError
+  }
+
+  return errors
+}
+
+/**
  * エラーオブジェクトが空かどうかをチェック
  * @param {object} errors - エラーオブジェクト
  * @returns {boolean} エラーがない場合true

@@ -22,6 +22,16 @@ export async function getAdminList(params = {}) {
 }
 
 /**
+ * 管理者詳細を取得
+ * @param {number} adminId - 管理者ID
+ * @returns {Promise<object>} レスポンス（admin）
+ */
+export async function getAdmin(adminId) {
+  const response = await apiClient.get(`/admin/admins/${adminId}`)
+  return response.data
+}
+
+/**
  * 管理者の状態を更新
  * @param {number} adminId - 管理者ID
  * @param {string} status - 新しい状態（active/inactive）
@@ -31,6 +41,22 @@ export async function updateAdminStatus(adminId, status) {
   const response = await apiClient.patch(`/admin/admins/${adminId}/status`, {
     status,
   })
+  return response.data
+}
+
+/**
+ * 管理者を更新
+ * @param {number} adminId - 管理者ID
+ * @param {object} adminData - 管理者情報
+ * @param {string} adminData.email - メールアドレス
+ * @param {string} adminData.display_name - 表示名（任意）
+ * @param {string} adminData.role - ロール（system_admin/auctioneer）
+ * @param {string} adminData.status - 状態（active/suspended）
+ * @param {string} adminData.password - パスワード（任意、変更する場合のみ）
+ * @returns {Promise<object>} レスポンス（admin）
+ */
+export async function updateAdmin(adminId, adminData) {
+  const response = await apiClient.put(`/admin/admins/${adminId}`, adminData)
   return response.data
 }
 

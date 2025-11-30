@@ -119,6 +119,10 @@ func main() {
 				systemAdmin.POST("/admin/admins", adminHandler.RegisterAdmin)
 				// 管理者一覧取得
 				systemAdmin.GET("/admin/admins", adminHandler.GetAdminList)
+				// 管理者詳細取得
+				systemAdmin.GET("/admin/admins/:id", adminHandler.GetAdmin)
+				// 管理者更新
+				systemAdmin.PUT("/admin/admins/:id", adminHandler.UpdateAdmin)
 				// 管理者状態変更
 				systemAdmin.PATCH("/admin/admins/:id/status", adminHandler.UpdateAdminStatus)
 

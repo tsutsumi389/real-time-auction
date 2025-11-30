@@ -15,7 +15,8 @@ type SecurityCheck struct {
 }
 
 func main() {
-	fmt.Println("=== Security Validation for Admin Login Feature ===\n")
+	fmt.Println("=== Security Validation for Admin Login Feature ===")
+	fmt.Println()
 
 	checks := []SecurityCheck{}
 

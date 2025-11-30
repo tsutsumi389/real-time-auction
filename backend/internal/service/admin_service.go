@@ -10,8 +10,11 @@ import (
 )
 
 var (
-	ErrAdminNotFound = errors.New("admin not found")
-	ErrInvalidRole   = errors.New("invalid role value")
+	ErrAdminNotFound           = errors.New("admin not found")
+	ErrInvalidRole             = errors.New("invalid role value")
+	ErrCannotChangeOwnRole     = errors.New("cannot change own role")
+	ErrCannotSuspendSelf       = errors.New("cannot suspend own account")
+	ErrLastSystemAdmin         = errors.New("cannot demote or suspend the last system admin")
 )
 
 // AdminService handles admin-related business logic
@@ -212,4 +215,87 @@ func isValidSortMode(sort string) bool {
 	}
 
 	return false
+}
+
+// UpdateAdmin updates an existing admin account
+func (s *AdminService) UpdateAdmin(id int64, req *domain.AdminUpdateRequest, currentUserID int64) (*domain.Admin, error) {
+	// Check if admin exists
+	admin, err := s.adminRepo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find admin: %w", err)
+	}
+	if admin == nil {
+		return nil, ErrAdminNotFound
+	}
+
+	// Validate role
+	if !isValidRole(req.Role) {
+		return nil, ErrInvalidRole
+	}
+
+	// Validate status
+	if !isValidStatus(req.Status) {
+		return nil, ErrInvalidStatus
+	}
+
+	// Check if editing own account
+	isSelfEdit := id == currentUserID
+
+	// Prevent self role change
+	if isSelfEdit && admin.Role != req.Role {
+		return nil, ErrCannotChangeOwnRole
+	}
+
+	// Prevent self suspension
+	if isSelfEdit && req.Status == domain.StatusSuspended {
+		return nil, ErrCannotSuspendSelf
+	}
+
+	// Check last system admin protection
+	if admin.Role == domain.RoleSystemAdmin && admin.Status == domain.StatusActive {
+		// If demoting from system_admin or suspending an active system_admin
+		isDemoting := req.Role != domain.RoleSystemAdmin
+		isSuspending := req.Status != domain.StatusActive
+
+		if isDemoting || isSuspending {
+			count, err := s.adminRepo.CountActiveSystemAdmins()
+			if err != nil {
+				return nil, fmt.Errorf("failed to count active system admins: %w", err)
+			}
+			if count <= 1 {
+				return nil, ErrLastSystemAdmin
+			}
+		}
+	}
+
+	// Check if email is taken by another admin
+	existingAdmin, err := s.adminRepo.FindByEmailExcludeID(req.Email, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check email existence: %w", err)
+	}
+	if existingAdmin != nil {
+		return nil, ErrEmailAlreadyExists
+	}
+
+	// Update admin fields
+	admin.Email = req.Email
+	admin.DisplayName = req.DisplayName
+	admin.Role = req.Role
+	admin.Status = req.Status
+
+	// Update password if provided
+	if req.Password != "" {
+		hashedPassword, err := HashPassword(req.Password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to hash password: %w", err)
+		}
+		admin.PasswordHash = hashedPassword
+	}
+
+	// Save to database
+	if err := s.adminRepo.Update(admin); err != nil {
+		return nil, fmt.Errorf("failed to update admin: %w", err)
+	}
+
+	return admin, nil
 }

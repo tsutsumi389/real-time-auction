@@ -89,3 +89,17 @@ type AdminCreateRequest struct {
 type UpdateAdminStatusRequest struct {
 	Status AdminStatus `json:"status" binding:"required"`
 }
+
+// AdminUpdateRequest represents the request body for updating an admin
+type AdminUpdateRequest struct {
+	Email       string      `json:"email" binding:"required,email,max=255"`
+	DisplayName string      `json:"display_name" binding:"omitempty,max=100"`
+	Role        AdminRole   `json:"role" binding:"required,oneof=system_admin auctioneer"`
+	Status      AdminStatus `json:"status" binding:"required,oneof=active suspended"`
+	Password    string      `json:"password" binding:"omitempty,min=8"`
+}
+
+// AdminDetailResponse represents the response for getting a single admin
+type AdminDetailResponse struct {
+	Admin *Admin `json:"admin"`
+}
