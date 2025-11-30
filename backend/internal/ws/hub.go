@@ -307,13 +307,13 @@ func (h *Hub) listenRedis() {
 		// typeフィールドを取得
 		eventType, _ := rawEvent["type"].(string)
 
-		// WebSocketクライアントが期待する形式に変換: { type, payload }
-		// payloadにはtype以外の全フィールドを含める
+		// WebSocketクライアントが期待する形式に変換: { type, data }
+		// dataにはtype以外の全フィールドを含める
 		delete(rawEvent, "type")
 
 		wsMessage := map[string]interface{}{
-			"type":    eventType,
-			"payload": rawEvent,
+			"type": eventType,
+			"data": rawEvent,
 		}
 
 		// メッセージをJSONに変換
