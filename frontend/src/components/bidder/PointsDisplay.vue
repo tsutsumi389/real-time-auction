@@ -26,6 +26,8 @@ const props = defineProps({
 
 // Format number with comma separator
 function formatNumber(value) {
-  return new Intl.NumberFormat('ja-JP').format(value)
+  // undefined, null, NaN を 0 として扱う
+  const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0
+  return new Intl.NumberFormat('ja-JP').format(safeValue)
 }
 </script>
