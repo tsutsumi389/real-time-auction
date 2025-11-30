@@ -483,6 +483,25 @@ function handleBack() {
         </div>
       </Card>
 
+      <!-- Quick Actions Card -->
+      <Card class="p-4 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-medium text-gray-700">商品管理</h3>
+            <p class="text-xs text-gray-500 mt-1">未割当商品の追加・解除を行います</p>
+          </div>
+          <router-link
+            :to="{ name: 'auction-items-assign', params: { id: auctionId } }"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            商品紐づけ管理
+          </router-link>
+        </div>
+      </Card>
+
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <!-- Basic Information Section -->
         <AuctionBasicInfo
