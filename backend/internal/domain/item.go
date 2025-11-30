@@ -139,8 +139,8 @@ type ItemEditInfo struct {
 	BidCount      int64      `json:"bid_count"`
 }
 
-// CreateItemRequest represents the request to create a new item without auction assignment
-type CreateItemRequest struct {
+// StandaloneItemRequest represents the request to create/update an item without auction assignment
+type StandaloneItemRequest struct {
 	Name          string `json:"name" binding:"required,max=200"`
 	Description   string `json:"description" binding:"max=2000"`
 	StartingPrice *int64 `json:"starting_price" binding:"omitempty,min=1"`

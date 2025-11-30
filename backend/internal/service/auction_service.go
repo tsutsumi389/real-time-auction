@@ -419,7 +419,7 @@ func (s *AuctionService) StartItem(itemID string) (*domain.StartItemResponse, er
 	// Build response
 	return &domain.StartItemResponse{
 		ItemID:       item.ID,
-		AuctionID:    item.AuctionID,
+		AuctionID:    *item.AuctionID,
 		CurrentPrice: *item.CurrentPrice,
 		StartedAt:    *item.StartedAt,
 	}, nil
