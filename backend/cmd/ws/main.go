@@ -21,11 +21,11 @@ func main() {
 	env := getEnv("ENV", "development")
 	redisAddr := getEnv("REDIS_ADDR", "redis:6379")
 	redisPassword := getEnv("REDIS_PASSWORD", "")
-	dbHost := getEnv("DB_HOST", "postgres")
-	dbPort := getEnv("DB_PORT", "5432")
-	dbUser := getEnv("DB_USER", "auction_user")
-	dbPassword := getEnv("DB_PASSWORD", "auction_pass")
-	dbName := getEnv("DB_NAME", "auction_db")
+	dbHost := getEnv("POSTGRES_HOST", "postgres")
+	dbPort := getEnv("POSTGRES_PORT", "5432")
+	dbUser := getEnv("POSTGRES_USER", "auction_user")
+	dbPassword := getEnv("POSTGRES_PASSWORD", "auction_pass_dev_only")
+	dbName := getEnv("POSTGRES_DB", "auction_db")
 
 	// Ginモード設定
 	if env == "production" {
