@@ -13,7 +13,7 @@
         :class="[
           'p-4 rounded-lg transition-all duration-200',
           bid.is_winning
-            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-sm'
+            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-auction-gold shadow-sm'
             : isOwnBid(bid)
             ? 'bg-blue-50 border border-blue-100'
             : 'bg-gray-50 border border-gray-100',
@@ -45,7 +45,7 @@
               </span>
               <span
                 v-if="bid.is_winning"
-                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-auction-gold"
               >
                 <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -60,7 +60,7 @@
             <div
               :class="[
                 'text-xl font-bold',
-                bid.is_winning ? 'text-green-600' : 'text-gray-900'
+                bid.is_winning ? 'text-auction-gold' : 'text-gray-900'
               ]"
             >
               {{ formatNumber(bid.price) }}
@@ -89,7 +89,7 @@
       class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-4 text-xs text-gray-600"
     >
       <div class="flex items-center">
-        <span class="inline-block w-3 h-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded mr-2"></span>
+        <span class="inline-block w-3 h-3 bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-auction-gold rounded mr-2"></span>
         最高入札
       </div>
       <div class="flex items-center">

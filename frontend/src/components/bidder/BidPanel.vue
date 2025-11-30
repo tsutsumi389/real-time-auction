@@ -63,7 +63,7 @@
               class="relative overflow-hidden w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg transform"
               :class="[
                 canBid
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:-translate-y-1 active:translate-y-0'
+                  ? 'bg-auction-gold text-white hover:brightness-110 hover:shadow-xl hover:-translate-y-1 active:translate-y-0'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
               ]"
             >
@@ -88,15 +88,15 @@
             <!-- Winning Status -->
             <div
               v-if="isWinning"
-              class="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center animate-pulse-slow"
+              class="p-3 bg-amber-50 border-2 border-auction-gold rounded-lg flex items-center animate-pulse-slow"
             >
-              <div class="flex-shrink-0 bg-green-100 rounded-full p-1 mr-3">
-                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex-shrink-0 bg-amber-100 rounded-full p-1 mr-3">
+                <svg class="w-4 h-4 text-auction-gold" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
               </div>
               <div>
-                <p class="text-sm font-bold text-green-800">最高入札者です！</p>
+                <p class="text-sm font-bold text-auction-gold">最高入札者です！</p>
               </div>
             </div>
 
@@ -130,7 +130,7 @@
           :class="[
             'flex-1 py-3 px-4 rounded-xl font-bold text-base transition-all duration-200 shadow-md',
             canBid
-              ? 'bg-blue-600 text-white active:bg-blue-700'
+              ? 'bg-auction-gold text-white active:brightness-90'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
           ]"
         >
