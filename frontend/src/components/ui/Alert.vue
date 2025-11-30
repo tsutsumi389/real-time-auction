@@ -19,7 +19,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'default',
-    validator: (value) => ['default', 'destructive'].includes(value)
+    validator: (value) => ['default', 'destructive', 'success'].includes(value)
   },
   class: {
     type: String,
@@ -34,6 +34,7 @@ const alertVariants = cva(
       variant: {
         default: 'bg-background text-foreground',
         destructive: 'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
+        success: 'border-green-200 bg-green-50 text-green-800 [&>svg]:text-green-500',
       },
     },
     defaultVariants: {
