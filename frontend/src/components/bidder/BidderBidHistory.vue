@@ -203,15 +203,15 @@ function formatDateTime(dateString) {
 @keyframes slide-in {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
 
 .animate-slide-in {
-  animation: slide-in 0.3s ease-out;
+  animation: slide-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 </style>
