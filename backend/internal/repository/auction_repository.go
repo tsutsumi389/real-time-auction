@@ -649,8 +649,14 @@ func (r *AuctionRepository) FindParticipantsByAuctionID(auctionID string) ([]dom
 }
 
 // GetBidderInfo retrieves bidder information for a specific auction
-func (r *AuctionRepository) GetBidderInfo(bidderID uuid.UUID, auctionID int64) (*domain.ParticipantInfo, error) {
+func (r *AuctionRepository) GetBidderInfo(bidderID uuid.UUID, auctionIDStr string) (*domain.ParticipantInfo, error) {
 	var result domain.ParticipantInfo
+
+	// Parse auction_id UUID string
+	auctionID, err := uuid.Parse(auctionIDStr)
+	if err != nil {
+		return nil, err
+	}
 
 	query := r.db.Table("bidders bd").
 		Select(`bd.id as bidder_id,

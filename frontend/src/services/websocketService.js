@@ -59,10 +59,18 @@ class WebSocketService {
 
       this.ws.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data)
-          this.handleMessage(data)
+          // 改行区切りの複数メッセージに対応
+          const messages = event.data.split('\n').filter(msg => msg.trim())
+          messages.forEach(msg => {
+            try {
+              const data = JSON.parse(msg)
+              this.handleMessage(data)
+            } catch (error) {
+              console.error('[WebSocket] Failed to parse message:', error, 'Raw:', msg)
+            }
+          })
         } catch (error) {
-          console.error('[WebSocket] Failed to parse message:', error)
+          console.error('[WebSocket] Failed to process messages:', error)
         }
       }
 
@@ -114,17 +122,17 @@ class WebSocketService {
 
   /**
    * メッセージを処理
-   * @param {object} data - WebSocketメッセージデータ
+   * @param {object} message - WebSocketメッセージデータ
    */
-  handleMessage(data) {
-    const { type, payload } = data
+  handleMessage(message) {
+    const { type, data } = message
 
     if (!type) {
-      console.warn('[WebSocket] Received message without type:', data)
+      console.warn('[WebSocket] Received message without type:', message)
       return
     }
 
-    console.log('[WebSocket] Received:', type, payload)
+    console.log('[WebSocket] Received:', type, data)
 
     // Ping/Pong処理
     if (type === 'ping') {
@@ -136,8 +144,8 @@ class WebSocketService {
       return
     }
 
-    // イベントを発火
-    this.emit(type, payload)
+    // イベントを発火（dataをpayloadとして渡す）
+    this.emit(type, data)
   }
 
   /**

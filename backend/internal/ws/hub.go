@@ -14,9 +14,9 @@ import (
 // Hub はWebSocket接続を管理する
 type Hub struct {
 	// クライアント管理
-	clients    map[*Client]bool      // 登録されているクライアント
-	rooms      map[int64][]*Client   // オークションID -> クライアントリスト
-	roomsMutex sync.RWMutex          // ルームマップのロック
+	clients    map[*Client]bool       // 登録されているクライアント
+	rooms      map[string][]*Client   // オークションID -> クライアントリスト
+	roomsMutex sync.RWMutex           // ルームマップのロック
 
 	// チャネル
 	register     chan *Client        // クライアント登録
@@ -37,7 +37,7 @@ type Hub struct {
 
 // BroadcastMsg はブロードキャストメッセージを表す
 type BroadcastMsg struct {
-	auctionID int64   // 0の場合は全クライアントに送信
+	auctionID string  // 空文字列の場合は全クライアントに送信
 	event     *Event
 }
 
@@ -51,7 +51,7 @@ type ClientEvent struct {
 func NewHub(redisClient *redis.Client, auctionRepo *repository.AuctionRepository) *Hub {
 	hub := &Hub{
 		clients:      make(map[*Client]bool),
-		rooms:        make(map[int64][]*Client),
+		rooms:        make(map[string][]*Client),
 		register:     make(chan *Client),
 		unregister:   make(chan *Client),
 		broadcast:    make(chan *BroadcastMsg, 256),
@@ -120,7 +120,7 @@ func (h *Hub) broadcastMessage(msg *BroadcastMsg) {
 		return
 	}
 
-	if msg.auctionID == 0 {
+	if msg.auctionID == "" {
 		// 全クライアントにブロードキャスト
 		for client := range h.clients {
 			select {
@@ -148,7 +148,7 @@ func (h *Hub) broadcastMessage(msg *BroadcastMsg) {
 }
 
 // AddClientToRoom はクライアントをオークションルームに追加する
-func (h *Hub) AddClientToRoom(auctionID int64, client *Client) {
+func (h *Hub) AddClientToRoom(auctionID string, client *Client) {
 	h.roomsMutex.Lock()
 	defer h.roomsMutex.Unlock()
 
@@ -166,7 +166,7 @@ func (h *Hub) AddClientToRoom(auctionID int64, client *Client) {
 	h.rooms[auctionID] = append(h.rooms[auctionID], client)
 	client.subscribe(auctionID)
 
-	log.Printf("Client added to room: userID=%s, auctionID=%d", client.userID, auctionID)
+	log.Printf("Client added to room: userID=%s, auctionID=%s", client.userID, auctionID)
 
 	// bidderの場合のみ参加イベントを送信
 	if client.userRole == "bidder" && client.bidderID != nil {
@@ -175,7 +175,7 @@ func (h *Hub) AddClientToRoom(auctionID int64, client *Client) {
 }
 
 // broadcastParticipantJoined は参加者参加イベントをブロードキャストする
-func (h *Hub) broadcastParticipantJoined(auctionID int64, client *Client) {
+func (h *Hub) broadcastParticipantJoined(auctionID string, client *Client) {
 	// データベースから入札者情報を取得
 	bidderUUID, err := uuid.Parse(*client.bidderID)
 	if err != nil {
@@ -208,7 +208,7 @@ func (h *Hub) broadcastParticipantJoined(auctionID int64, client *Client) {
 }
 
 // RemoveClientFromRoom はクライアントをオークションルームから削除する
-func (h *Hub) RemoveClientFromRoom(auctionID int64, client *Client) {
+func (h *Hub) RemoveClientFromRoom(auctionID string, client *Client) {
 	h.roomsMutex.Lock()
 	defer h.roomsMutex.Unlock()
 
@@ -216,7 +216,7 @@ func (h *Hub) RemoveClientFromRoom(auctionID int64, client *Client) {
 }
 
 // removeClientFromRoom はクライアントをオークションルームから削除する（ロックなし）
-func (h *Hub) removeClientFromRoom(auctionID int64, client *Client) {
+func (h *Hub) removeClientFromRoom(auctionID string, client *Client) {
 	clients, ok := h.rooms[auctionID]
 	if !ok {
 		return
@@ -226,7 +226,7 @@ func (h *Hub) removeClientFromRoom(auctionID int64, client *Client) {
 		if c == client {
 			h.rooms[auctionID] = append(clients[:i], clients[i+1:]...)
 			client.unsubscribe(auctionID)
-			log.Printf("Client removed from room: userID=%s, auctionID=%d", client.userID, auctionID)
+			log.Printf("Client removed from room: userID=%s, auctionID=%s", client.userID, auctionID)
 
 			// bidderの場合のみ退出イベントを送信
 			if c.userRole == "bidder" && c.bidderID != nil {
@@ -243,7 +243,7 @@ func (h *Hub) removeClientFromRoom(auctionID int64, client *Client) {
 }
 
 // broadcastParticipantLeft は参加者退出イベントをブロードキャストする
-func (h *Hub) broadcastParticipantLeft(auctionID int64, client *Client) {
+func (h *Hub) broadcastParticipantLeft(auctionID string, client *Client) {
 	event := NewEvent(EventParticipantLeft, auctionID, ParticipantLeftData{
 		AuctionID: auctionID,
 		BidderID:  *client.bidderID,
@@ -254,7 +254,7 @@ func (h *Hub) broadcastParticipantLeft(auctionID int64, client *Client) {
 }
 
 // BroadcastToAuction はオークションルームにイベントをブロードキャストする
-func (h *Hub) BroadcastToAuction(auctionID int64, event *Event) {
+func (h *Hub) BroadcastToAuction(auctionID string, event *Event) {
 	h.broadcast <- &BroadcastMsg{
 		auctionID: auctionID,
 		event:     event,
@@ -264,7 +264,7 @@ func (h *Hub) BroadcastToAuction(auctionID int64, event *Event) {
 // BroadcastToAll は全クライアントにイベントをブロードキャストする
 func (h *Hub) BroadcastToAll(event *Event) {
 	h.broadcast <- &BroadcastMsg{
-		auctionID: 0,
+		auctionID: "",
 		event:     event,
 	}
 }
@@ -338,7 +338,7 @@ func (h *Hub) listenRedis() {
 }
 
 // GetRoomSize はオークションルームのクライアント数を返す
-func (h *Hub) GetRoomSize(auctionID int64) int {
+func (h *Hub) GetRoomSize(auctionID string) int {
 	h.roomsMutex.RLock()
 	defer h.roomsMutex.RUnlock()
 
@@ -346,7 +346,7 @@ func (h *Hub) GetRoomSize(auctionID int64) int {
 }
 
 // GetActiveParticipants はオークションルームのアクティブ参加者一覧を返す
-func (h *Hub) GetActiveParticipants(auctionID int64) ([]ParticipantData, error) {
+func (h *Hub) GetActiveParticipants(auctionID string) ([]ParticipantData, error) {
 	h.roomsMutex.RLock()
 	clients := h.rooms[auctionID]
 	h.roomsMutex.RUnlock()

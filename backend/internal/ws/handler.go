@@ -34,13 +34,19 @@ func (h *EventHandler) Handle(client *Client, event *Event) {
 
 // handleSubscribe はオークションルームへの参加リクエストを処理する
 func (h *EventHandler) handleSubscribe(client *Client, event *Event) {
+	log.Printf("[Subscribe] Received subscribe event from userID=%s, role=%s", client.userID, client.userRole)
+
 	var data SubscribeData
 	if err := h.parseEventData(event, &data); err != nil {
+		log.Printf("[Subscribe] Failed to parse event data: %v", err)
 		client.sendError("INVALID_DATA", "Invalid subscribe data")
 		return
 	}
 
-	if data.AuctionID <= 0 {
+	log.Printf("[Subscribe] Parsed auction_id=%s", data.AuctionID)
+
+	if data.AuctionID == "" {
+		log.Printf("[Subscribe] Empty auction ID")
 		client.sendError("INVALID_AUCTION_ID", "Invalid auction ID")
 		return
 	}
@@ -81,7 +87,7 @@ func (h *EventHandler) handleUnsubscribe(client *Client, event *Event) {
 		return
 	}
 
-	if data.AuctionID <= 0 {
+	if data.AuctionID == "" {
 		client.sendError("INVALID_AUCTION_ID", "Invalid auction ID")
 		return
 	}
@@ -99,7 +105,7 @@ func (h *EventHandler) handleUnsubscribe(client *Client, event *Event) {
 
 // handlePing はPingリクエストを処理する
 func (h *EventHandler) handlePing(client *Client, event *Event) {
-	response := NewEvent(EventPong, 0, map[string]interface{}{
+	response := NewEvent(EventPong, "", map[string]interface{}{
 		"message": "pong",
 	})
 	client.sendEvent(response)

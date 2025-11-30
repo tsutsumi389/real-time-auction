@@ -392,15 +392,16 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: 参加者リスト（初期データ）
-   * @param {object} payload - イベントペイロード
+   * @param {object} data - イベントデータ
    */
-  function onParticipantsList(payload) {
-    // payloadから参加者リストを取得
-    const actualPayload = payload.payload || payload
-    const participantsList = actualPayload.participants || []
+  function onParticipantsList(data) {
+    console.log('[AuctionLive] Received participants:list:', data)
+
+    // dataオブジェクトから参加者リストを取得
+    const participantsList = data?.participants || []
 
     if (!Array.isArray(participantsList)) {
-      console.error('Invalid participants:list payload:', payload)
+      console.error('Invalid participants:list data:', data)
       return
     }
 
@@ -418,14 +419,16 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: 参加者が参加した
-   * @param {object} payload - イベントペイロード
+   * @param {object} data - イベントデータ
    */
-  function onParticipantJoined(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    const participant = payload.payload?.participant || payload.participant
+  function onParticipantJoined(data) {
+    console.log('[AuctionLive] Received participant:joined:', data)
+
+    // dataオブジェクトから参加者情報を取得
+    const participant = data?.participant
 
     if (!participant || !participant.bidder_id) {
-      console.error('Invalid participant:joined payload:', payload)
+      console.error('Invalid participant:joined data:', data)
       return
     }
 
@@ -445,15 +448,16 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: 参加者が退出した
-   * @param {object} payload - イベントペイロード
+   * @param {object} data - イベントデータ
    */
-  function onParticipantLeft(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    const actualPayload = payload.payload || payload
-    const bidder_id = actualPayload.bidder_id
+  function onParticipantLeft(data) {
+    console.log('[AuctionLive] Received participant:left:', data)
+
+    // dataオブジェクトからbidder_idを取得
+    const bidder_id = data?.bidder_id
 
     if (!bidder_id) {
-      console.error('Invalid participant:left payload:', payload)
+      console.error('Invalid participant:left data:', data)
       return
     }
 
@@ -518,6 +522,15 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
     websocketService.on('connected', () => {
       wsConnected.value = true
       wsReconnecting.value = false
+
+      // オークションルームに参加
+      websocketService.send({
+        type: 'subscribe',
+        data: {
+          auction_id: auctionId
+        }
+      })
+      console.log('Sent subscribe event for auction:', auctionId)
     })
 
     websocketService.on('disconnected', () => {

@@ -25,7 +25,7 @@ type Client struct {
 	userRole    string          // ユーザーロール (bidder, auctioneer, system_admin)
 	bidderID    *string         // 入札者ID (bidderの場合のみ、UUID文字列)
 	displayName string          // 表示名
-	auctionIDs  map[int64]bool  // 購読中のオークションID
+	auctionIDs  map[string]bool // 購読中のオークションID
 }
 
 // NewClient は新しいクライアントを作成する
@@ -38,7 +38,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, userID, userRole string, bidderID
 		userRole:    userRole,
 		bidderID:    bidderID,
 		displayName: displayName,
-		auctionIDs:  make(map[int64]bool),
+		auctionIDs:  make(map[string]bool),
 	}
 }
 
@@ -151,16 +151,16 @@ func (c *Client) sendError(code, message string) {
 }
 
 // subscribe はオークションルームに参加する
-func (c *Client) subscribe(auctionID int64) {
+func (c *Client) subscribe(auctionID string) {
 	c.auctionIDs[auctionID] = true
 }
 
 // unsubscribe はオークションルームから退出する
-func (c *Client) unsubscribe(auctionID int64) {
+func (c *Client) unsubscribe(auctionID string) {
 	delete(c.auctionIDs, auctionID)
 }
 
 // isSubscribed はオークションルームに参加しているかチェック
-func (c *Client) isSubscribed(auctionID int64) bool {
+func (c *Client) isSubscribed(auctionID string) bool {
 	return c.auctionIDs[auctionID]
 }
