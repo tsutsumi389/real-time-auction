@@ -37,14 +37,22 @@
             <h1 class="text-3xl font-bold text-gray-900">{{ auction.title }}</h1>
             <p v-if="auction.description" class="mt-2 text-gray-600">{{ auction.description }}</p>
           </div>
-          <!-- WebSocket Status -->
-          <div class="flex items-center gap-3">
+          <!-- Status & Points -->
+          <div class="flex items-center gap-4">
+            <!-- Available Points -->
+            <div class="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-sm font-semibold text-green-700">{{ formatNumber(points.available) }}</span>
+              <span class="text-xs text-green-600">pts</span>
+            </div>
             <!-- Participant Count -->
             <div class="flex items-center gap-1.5 text-sm text-gray-600">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
               </svg>
-              <span>{{ participantCount }}人参加中</span>
+              <span>{{ participantCount }}人</span>
             </div>
             <!-- Connection Status -->
             <div class="flex items-center gap-2">
@@ -64,9 +72,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Points Display Component -->
-      <PointsDisplay :points="points" />
 
       <!-- Item Tabs Component -->
       <ItemTabs
@@ -158,7 +163,6 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBidderAuctionLiveStore } from '@/stores/bidderAuctionLive'
 import { useToast } from '@/composables/useToast'
-import PointsDisplay from '@/components/bidder/PointsDisplay.vue'
 import ItemTabs from '@/components/bidder/ItemTabs.vue'
 import BidPanel from '@/components/bidder/BidPanel.vue'
 import BidderBidHistory from '@/components/bidder/BidderBidHistory.vue'
