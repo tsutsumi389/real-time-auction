@@ -25,6 +25,7 @@ class WebSocketService {
       'item:ended': [],
       'price:opened': [],
       'bid:placed': [],
+      'participants:list': [],
       'participant:joined': [],
       'participant:left': [],
       'error': [],

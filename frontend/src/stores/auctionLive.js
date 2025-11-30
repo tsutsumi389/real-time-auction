@@ -391,6 +391,32 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
   }
 
   /**
+   * WebSocketイベント: 参加者リスト（初期データ）
+   * @param {object} payload - イベントペイロード
+   */
+  function onParticipantsList(payload) {
+    // payloadから参加者リストを取得
+    const actualPayload = payload.payload || payload
+    const participantsList = actualPayload.participants || []
+
+    if (!Array.isArray(participantsList)) {
+      console.error('Invalid participants:list payload:', payload)
+      return
+    }
+
+    // 参加者リストを置き換え
+    participants.value = participantsList.map(p => ({
+      bidder_id: p.bidder_id,
+      display_name: p.display_name,
+      is_online: p.is_online,
+      bid_count: p.bid_count,
+      last_bid_at: p.last_bid_at
+    }))
+
+    console.log('Participants list updated:', participants.value.length, 'participants')
+  }
+
+  /**
    * WebSocketイベント: 参加者が参加した
    * @param {object} payload - イベントペイロード
    */
@@ -398,15 +424,22 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
     // payloadから必要なデータを取得（二重ネストに対応）
     const participant = payload.payload?.participant || payload.participant
 
-    if (!participant || !participant.id) {
+    if (!participant || !participant.bidder_id) {
       console.error('Invalid participant:joined payload:', payload)
       return
     }
 
-    // 既に存在しない場合のみ追加
-    const exists = participants.value.some(p => p.id === participant.id)
+    // bidder_idで重複チェック（同一ユーザーの複数接続対策）
+    const exists = participants.value.some(p => p.bidder_id === participant.bidder_id)
     if (!exists) {
-      participants.value.push(participant)
+      participants.value.push({
+        bidder_id: participant.bidder_id,
+        display_name: participant.display_name,
+        is_online: participant.is_online,
+        bid_count: participant.bid_count,
+        last_bid_at: participant.last_bid_at
+      })
+      console.log('Participant joined:', participant.display_name)
     }
   }
 
@@ -424,10 +457,12 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
       return
     }
 
-    // 参加者のステータスを更新または削除
-    const index = participants.value.findIndex(p => p.id === bidder_id)
+    // 参加者を削除
+    const index = participants.value.findIndex(p => p.bidder_id === bidder_id)
     if (index !== -1) {
+      const participant = participants.value[index]
       participants.value.splice(index, 1)
+      console.log('Participant left:', participant.display_name)
     }
   }
 
@@ -474,6 +509,7 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
     websocketService.on('price:opened', onPriceOpened)
     websocketService.on('item:started', onItemStarted)
     websocketService.on('item:ended', onItemEnded)
+    websocketService.on('participants:list', onParticipantsList)
     websocketService.on('participant:joined', onParticipantJoined)
     websocketService.on('participant:left', onParticipantLeft)
     websocketService.on('auction:ended', onAuctionEnded)

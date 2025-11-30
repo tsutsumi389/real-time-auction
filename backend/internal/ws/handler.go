@@ -48,8 +48,22 @@ func (h *EventHandler) handleSubscribe(client *Client, event *Event) {
 	// TODO: オークションが存在し、アクティブかチェック
 	// TODO: 権限チェック（入札者は自分が参加可能なオークションのみ）
 
-	// クライアントをルームに追加
+	// クライアントをルームに追加（これにより participant:joined イベントが送信される）
 	h.hub.AddClientToRoom(data.AuctionID, client)
+
+	// 現在のアクティブ参加者一覧を取得
+	participants, err := h.hub.GetActiveParticipants(data.AuctionID)
+	if err != nil {
+		log.Printf("Failed to get active participants: %v", err)
+		participants = []ParticipantData{} // エラー時は空配列
+	}
+
+	// 初期参加者リストを送信
+	participantsListEvent := NewEvent(EventParticipantsList, data.AuctionID, ParticipantsListData{
+		AuctionID:    data.AuctionID,
+		Participants: participants,
+	})
+	client.sendEvent(participantsListEvent)
 
 	// 確認メッセージを送信
 	response := NewEvent("subscribed", data.AuctionID, map[string]interface{}{

@@ -53,6 +53,8 @@ func ServeWs(hub *Hub, c *gin.Context) {
 	// ユーザー情報を取得
 	var userID string
 	var userRole string
+	var bidderID *string
+	var displayName string
 
 	if claims.UserType == domain.UserTypeAdmin {
 		// 管理者の場合、int64のIDを文字列に変換
@@ -72,16 +74,32 @@ func ServeWs(hub *Hub, c *gin.Context) {
 		default:
 			userRole = "admin"
 		}
+		// 管理者の表示名を取得（現時点ではemailを使用、後で改善可能）
+		if claims.Email != "" {
+			displayName = claims.Email
+		} else {
+			displayName = "Admin"
+		}
+		bidderID = nil // 管理者の場合はnil
 	} else {
 		// 入札者の場合、文字列のUUIDをそのまま使用
 		if id, ok := claims.GetUserIDAsString(); ok {
 			userID = id
+			bidderID = &id // bidderの場合はUUIDを設定
 		} else {
 			log.Printf("Failed to get bidder user ID")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID"})
 			return
 		}
 		userRole = "bidder"
+
+		// 入札者の表示名を取得（データベースから取得する必要がある）
+		// ここではひとまずemailを使用、後でRepositoryから取得するように改善
+		if claims.Email != "" {
+			displayName = claims.Email
+		} else {
+			displayName = "Bidder"
+		}
 	}
 
 	// WebSocket接続にアップグレード
@@ -92,7 +110,7 @@ func ServeWs(hub *Hub, c *gin.Context) {
 	}
 
 	// クライアントを作成
-	client := NewClient(hub, conn, userID, userRole)
+	client := NewClient(hub, conn, userID, userRole, bidderID, displayName)
 
 	// Hubに登録
 	hub.register <- client
