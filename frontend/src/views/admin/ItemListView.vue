@@ -230,14 +230,10 @@ function shortId(id) {
   return id.substring(0, 8) + '...'
 }
 
-// 価格フォーマット
+// 価格フォーマット（ポイント表示）
 function formatPrice(price) {
   if (price === null || price === undefined) return '-'
-  return new Intl.NumberFormat('ja-JP', {
-    style: 'currency',
-    currency: 'JPY',
-    minimumFractionDigits: 0,
-  }).format(price)
+  return new Intl.NumberFormat('ja-JP').format(price) + ' pt'
 }
 
 // 日付フォーマット
