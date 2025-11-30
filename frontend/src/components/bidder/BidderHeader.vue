@@ -23,11 +23,8 @@
             </router-link>
           </nav>
 
-          <!-- ログイン済みの場合：ポイント表示 + ユーザーメニュー -->
+          <!-- ログイン済みの場合：ユーザーメニュー -->
           <div v-if="bidderAuthStore.isAuthenticated" class="flex items-center gap-3">
-            <!-- ポイント表示 -->
-            <PointsDisplay :points="userPoints" />
-
             <!-- ユーザーアイコン（ドロップダウントリガー） -->
             <div class="relative">
               <button
@@ -141,7 +138,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { LogOut } from 'lucide-vue-next'
 import { useBidderAuthStore } from '@/stores/bidderAuthStore'
-import PointsDisplay from '@/components/bidder/PointsDisplay.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -165,15 +161,6 @@ const userInitial = computed(() => {
 // 表示名
 const displayName = computed(() => {
   return bidderAuthStore.user?.displayName || bidderAuthStore.user?.email || 'ゲスト'
-})
-
-// ポイント情報（エッジケース対応：undefinedの場合は0で初期化）
-const userPoints = computed(() => {
-  return bidderAuthStore.user?.points || {
-    total: 0,
-    available: 0,
-    reserved: 0,
-  }
 })
 
 // メニューの開閉
