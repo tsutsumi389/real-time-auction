@@ -543,17 +543,14 @@ func (s *AuctionService) OpenPrice(itemID string, newPrice int64, adminID int64)
 		event := map[string]interface{}{
 			"type":    "price:opened",
 			"item_id": item.ID.String(),
-			"payload": map[string]interface{}{
-				"item_id": item.ID.String(),
-				"price":   newPrice,
-				"price_history": map[string]interface{}{
-					"id":           priceHistory.ID,
-					"item_id":      priceHistory.ItemID.String(),
-					"price":        priceHistory.Price,
-					"disclosed_by": priceHistory.DisclosedBy,
-					"had_bid":      priceHistory.HadBid,
-					"disclosed_at": priceHistory.DisclosedAt,
-				},
+			"price":   newPrice,
+			"price_history": map[string]interface{}{
+				"id":           priceHistory.ID,
+				"item_id":      priceHistory.ItemID.String(),
+				"price":        priceHistory.Price,
+				"disclosed_by": priceHistory.DisclosedBy,
+				"had_bid":      priceHistory.HadBid,
+				"disclosed_at": priceHistory.DisclosedAt,
 			},
 		}
 		eventJSON, err := json.Marshal(event)
@@ -731,16 +728,14 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 		event := map[string]interface{}{
 			"type":    "item:ended",
 			"item_id": endedItem.ID.String(),
-			"payload": map[string]interface{}{
-				"item": map[string]interface{}{
-					"id":          endedItem.ID.String(),
-					"auction_id":  endedItem.AuctionID.String(),
-					"name":        endedItem.Name,
-					"final_price": finalPrice,
-					"winner_id":   endedItem.WinnerID,
-					"ended_at":    endedItem.EndedAt,
-					"status":      "ended",
-				},
+			"item": map[string]interface{}{
+				"id":          endedItem.ID.String(),
+				"auction_id":  endedItem.AuctionID.String(),
+				"name":        endedItem.Name,
+				"final_price": finalPrice,
+				"winner_id":   endedItem.WinnerID,
+				"ended_at":    endedItem.EndedAt,
+				"status":      "ended",
 			},
 		}
 		eventJSON, err := json.Marshal(event)

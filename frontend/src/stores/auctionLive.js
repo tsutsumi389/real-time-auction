@@ -322,18 +322,13 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: 価格が開示された
-   * @param {object} payload - イベントペイロード
+   * @param {object} data - イベントデータ { item_id, price, price_history }
    */
-  function onPriceOpened(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    // Backend hub wraps: { item_id, payload: { item_id, price, price_history } }
-    const actualPayload = payload.payload || payload
-    const item_id = actualPayload.item_id || payload.item_id
-    const price = actualPayload.price
-    const price_history = actualPayload.price_history
+  function onPriceOpened(data) {
+    const { item_id, price, price_history } = data || {}
 
     if (!price_history || !item_id) {
-      console.error('Invalid price:opened payload:', payload)
+      console.error('Invalid price:opened data:', data)
       return
     }
 
@@ -372,14 +367,13 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: 商品が終了された
-   * @param {object} payload - { item: { id, auction_id, status, winner_id, ended_at } }
+   * @param {object} data - { item: { id, auction_id, status, winner_id, ended_at } }
    */
-  function onItemEnded(payload) {
-    // payloadから商品情報を取得（二重ネストに対応）
-    const item = payload.payload?.item || payload.item
+  function onItemEnded(data) {
+    const item = data?.item
 
     if (!item || !item.id) {
-      console.error('Invalid item:ended payload:', payload)
+      console.error('Invalid item:ended data:', data)
       return
     }
 
@@ -472,14 +466,13 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: オークションが終了された
-   * @param {object} payload - イベントペイロード
+   * @param {object} data - イベントデータ { auction }
    */
-  function onAuctionEnded(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    const updatedAuction = payload.payload?.auction || payload.auction || payload
+  function onAuctionEnded(data) {
+    const updatedAuction = data?.auction || data
 
     if (!updatedAuction) {
-      console.error('Invalid auction:ended payload:', payload)
+      console.error('Invalid auction:ended data:', data)
       return
     }
 
@@ -488,14 +481,13 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
 
   /**
    * WebSocketイベント: オークションが中止された
-   * @param {object} payload - イベントペイロード
+   * @param {object} data - イベントデータ { auction }
    */
-  function onAuctionCancelled(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    const updatedAuction = payload.payload?.auction || payload.auction || payload
+  function onAuctionCancelled(data) {
+    const updatedAuction = data?.auction || data
 
     if (!updatedAuction) {
-      console.error('Invalid auction:cancelled payload:', payload)
+      console.error('Invalid auction:cancelled data:', data)
       return
     }
 
