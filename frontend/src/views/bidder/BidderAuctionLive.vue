@@ -73,13 +73,6 @@
         </div>
       </div>
 
-      <!-- Item Tabs Component -->
-      <ItemTabs
-        :items="items"
-        :selected-item-id="currentItem?.id"
-        @select="handleSelectItem"
-      />
-
       <!-- Main Layout: Bid Panel + History (3 columns on desktop, stacked on mobile) -->
       <div v-if="currentItem" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Bid Panel Component (takes 2 columns on desktop) -->
@@ -104,6 +97,13 @@
           />
         </div>
       </div>
+
+      <!-- Item Tabs Component (moved below bid panel and history) -->
+      <ItemTabs
+        :items="items"
+        :selected-item-id="currentItem?.id"
+        @select="handleSelectItem"
+      />
     </div>
 
     <!-- Winning Modal -->
