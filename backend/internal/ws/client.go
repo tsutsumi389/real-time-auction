@@ -18,23 +18,27 @@ const (
 
 // Client はWebSocket接続を表す
 type Client struct {
-	hub        *Hub                // Hubへの参照
-	conn       *websocket.Conn     // WebSocket接続
-	send       chan []byte         // 送信チャネル
-	userID     string              // ユーザーID (bidder UUID or admin ID)
-	userRole   string              // ユーザーロール (bidder, auctioneer, system_admin)
-	auctionIDs map[int64]bool      // 購読中のオークションID
+	hub         *Hub            // Hubへの参照
+	conn        *websocket.Conn // WebSocket接続
+	send        chan []byte     // 送信チャネル
+	userID      string          // ユーザーID (bidder UUID or admin ID)
+	userRole    string          // ユーザーロール (bidder, auctioneer, system_admin)
+	bidderID    *string         // 入札者ID (bidderの場合のみ、UUID文字列)
+	displayName string          // 表示名
+	auctionIDs  map[string]bool // 購読中のオークションID
 }
 
 // NewClient は新しいクライアントを作成する
-func NewClient(hub *Hub, conn *websocket.Conn, userID, userRole string) *Client {
+func NewClient(hub *Hub, conn *websocket.Conn, userID, userRole string, bidderID *string, displayName string) *Client {
 	return &Client{
-		hub:        hub,
-		conn:       conn,
-		send:       make(chan []byte, 256),
-		userID:     userID,
-		userRole:   userRole,
-		auctionIDs: make(map[int64]bool),
+		hub:         hub,
+		conn:        conn,
+		send:        make(chan []byte, 256),
+		userID:      userID,
+		userRole:    userRole,
+		bidderID:    bidderID,
+		displayName: displayName,
+		auctionIDs:  make(map[string]bool),
 	}
 }
 
@@ -147,16 +151,16 @@ func (c *Client) sendError(code, message string) {
 }
 
 // subscribe はオークションルームに参加する
-func (c *Client) subscribe(auctionID int64) {
+func (c *Client) subscribe(auctionID string) {
 	c.auctionIDs[auctionID] = true
 }
 
 // unsubscribe はオークションルームから退出する
-func (c *Client) unsubscribe(auctionID int64) {
+func (c *Client) unsubscribe(auctionID string) {
 	delete(c.auctionIDs, auctionID)
 }
 
 // isSubscribed はオークションルームに参加しているかチェック
-func (c *Client) isSubscribed(auctionID int64) bool {
+func (c *Client) isSubscribed(auctionID string) bool {
 	return c.auctionIDs[auctionID]
 }

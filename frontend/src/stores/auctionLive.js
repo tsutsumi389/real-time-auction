@@ -391,43 +391,82 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
   }
 
   /**
-   * WebSocketイベント: 参加者が参加した
-   * @param {object} payload - イベントペイロード
+   * WebSocketイベント: 参加者リスト（初期データ）
+   * @param {object} data - イベントデータ
    */
-  function onParticipantJoined(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    const participant = payload.payload?.participant || payload.participant
+  function onParticipantsList(data) {
+    console.log('[AuctionLive] Received participants:list:', data)
 
-    if (!participant || !participant.id) {
-      console.error('Invalid participant:joined payload:', payload)
+    // dataオブジェクトから参加者リストを取得
+    const participantsList = data?.participants || []
+
+    if (!Array.isArray(participantsList)) {
+      console.error('Invalid participants:list data:', data)
       return
     }
 
-    // 既に存在しない場合のみ追加
-    const exists = participants.value.some(p => p.id === participant.id)
+    // 参加者リストを置き換え
+    participants.value = participantsList.map(p => ({
+      bidder_id: p.bidder_id,
+      display_name: p.display_name,
+      is_online: p.is_online,
+      bid_count: p.bid_count,
+      last_bid_at: p.last_bid_at
+    }))
+
+    console.log('Participants list updated:', participants.value.length, 'participants')
+  }
+
+  /**
+   * WebSocketイベント: 参加者が参加した
+   * @param {object} data - イベントデータ
+   */
+  function onParticipantJoined(data) {
+    console.log('[AuctionLive] Received participant:joined:', data)
+
+    // dataオブジェクトから参加者情報を取得
+    const participant = data?.participant
+
+    if (!participant || !participant.bidder_id) {
+      console.error('Invalid participant:joined data:', data)
+      return
+    }
+
+    // bidder_idで重複チェック（同一ユーザーの複数接続対策）
+    const exists = participants.value.some(p => p.bidder_id === participant.bidder_id)
     if (!exists) {
-      participants.value.push(participant)
+      participants.value.push({
+        bidder_id: participant.bidder_id,
+        display_name: participant.display_name,
+        is_online: participant.is_online,
+        bid_count: participant.bid_count,
+        last_bid_at: participant.last_bid_at
+      })
+      console.log('Participant joined:', participant.display_name)
     }
   }
 
   /**
    * WebSocketイベント: 参加者が退出した
-   * @param {object} payload - イベントペイロード
+   * @param {object} data - イベントデータ
    */
-  function onParticipantLeft(payload) {
-    // payloadから必要なデータを取得（二重ネストに対応）
-    const actualPayload = payload.payload || payload
-    const bidder_id = actualPayload.bidder_id
+  function onParticipantLeft(data) {
+    console.log('[AuctionLive] Received participant:left:', data)
+
+    // dataオブジェクトからbidder_idを取得
+    const bidder_id = data?.bidder_id
 
     if (!bidder_id) {
-      console.error('Invalid participant:left payload:', payload)
+      console.error('Invalid participant:left data:', data)
       return
     }
 
-    // 参加者のステータスを更新または削除
-    const index = participants.value.findIndex(p => p.id === bidder_id)
+    // 参加者を削除
+    const index = participants.value.findIndex(p => p.bidder_id === bidder_id)
     if (index !== -1) {
+      const participant = participants.value[index]
       participants.value.splice(index, 1)
+      console.log('Participant left:', participant.display_name)
     }
   }
 
@@ -474,6 +513,7 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
     websocketService.on('price:opened', onPriceOpened)
     websocketService.on('item:started', onItemStarted)
     websocketService.on('item:ended', onItemEnded)
+    websocketService.on('participants:list', onParticipantsList)
     websocketService.on('participant:joined', onParticipantJoined)
     websocketService.on('participant:left', onParticipantLeft)
     websocketService.on('auction:ended', onAuctionEnded)
@@ -482,6 +522,15 @@ export const useAuctionLiveStore = defineStore('auctionLive', () => {
     websocketService.on('connected', () => {
       wsConnected.value = true
       wsReconnecting.value = false
+
+      // オークションルームに参加
+      websocketService.send({
+        type: 'subscribe',
+        data: {
+          auction_id: auctionId
+        }
+      })
+      console.log('Sent subscribe event for auction:', auctionId)
     })
 
     websocketService.on('disconnected', () => {

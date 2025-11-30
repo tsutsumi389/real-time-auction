@@ -316,6 +316,17 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
     wsConnected.value = true
     wsReconnecting.value = false
     reconnectAttempt.value = 0
+
+    // オークションルームに参加
+    if (auction.value?.id) {
+      websocketService.send({
+        type: 'subscribe',
+        data: {
+          auction_id: auction.value.id
+        }
+      })
+      console.log('[bidderAuctionLive] Sent subscribe event for auction:', auction.value.id)
+    }
   }
 
   function onWebSocketDisconnected() {

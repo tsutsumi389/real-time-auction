@@ -648,6 +648,33 @@ func (r *AuctionRepository) FindParticipantsByAuctionID(auctionID string) ([]dom
 	return results, nil
 }
 
+// GetBidderInfo retrieves bidder information for a specific auction
+func (r *AuctionRepository) GetBidderInfo(bidderID uuid.UUID, auctionIDStr string) (*domain.ParticipantInfo, error) {
+	var result domain.ParticipantInfo
+
+	// Parse auction_id UUID string
+	auctionID, err := uuid.Parse(auctionIDStr)
+	if err != nil {
+		return nil, err
+	}
+
+	query := r.db.Table("bidders bd").
+		Select(`bd.id as bidder_id,
+			bd.display_name,
+			COALESCE(COUNT(b.id), 0) as bid_count,
+			true as is_online,
+			MAX(b.bid_at) as last_bid_at`).
+		Joins("LEFT JOIN bids b ON bd.id = b.bidder_id AND b.item_id IN (SELECT id FROM items WHERE auction_id = ?)", auctionID).
+		Where("bd.id = ?", bidderID).
+		Group("bd.id, bd.display_name")
+
+	if err := query.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 // CancelAuctionWithRefunds cancels an auction and refunds all reserved points
 func (r *AuctionRepository) CancelAuctionWithRefunds(auctionID string, reason string) (*domain.CancelAuctionResponse, error) {
 	id, err := uuid.Parse(auctionID)

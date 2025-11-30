@@ -34,13 +34,19 @@ func (h *EventHandler) Handle(client *Client, event *Event) {
 
 // handleSubscribe はオークションルームへの参加リクエストを処理する
 func (h *EventHandler) handleSubscribe(client *Client, event *Event) {
+	log.Printf("[Subscribe] Received subscribe event from userID=%s, role=%s", client.userID, client.userRole)
+
 	var data SubscribeData
 	if err := h.parseEventData(event, &data); err != nil {
+		log.Printf("[Subscribe] Failed to parse event data: %v", err)
 		client.sendError("INVALID_DATA", "Invalid subscribe data")
 		return
 	}
 
-	if data.AuctionID <= 0 {
+	log.Printf("[Subscribe] Parsed auction_id=%s", data.AuctionID)
+
+	if data.AuctionID == "" {
+		log.Printf("[Subscribe] Empty auction ID")
 		client.sendError("INVALID_AUCTION_ID", "Invalid auction ID")
 		return
 	}
@@ -48,8 +54,22 @@ func (h *EventHandler) handleSubscribe(client *Client, event *Event) {
 	// TODO: オークションが存在し、アクティブかチェック
 	// TODO: 権限チェック（入札者は自分が参加可能なオークションのみ）
 
-	// クライアントをルームに追加
+	// クライアントをルームに追加（これにより participant:joined イベントが送信される）
 	h.hub.AddClientToRoom(data.AuctionID, client)
+
+	// 現在のアクティブ参加者一覧を取得
+	participants, err := h.hub.GetActiveParticipants(data.AuctionID)
+	if err != nil {
+		log.Printf("Failed to get active participants: %v", err)
+		participants = []ParticipantData{} // エラー時は空配列
+	}
+
+	// 初期参加者リストを送信
+	participantsListEvent := NewEvent(EventParticipantsList, data.AuctionID, ParticipantsListData{
+		AuctionID:    data.AuctionID,
+		Participants: participants,
+	})
+	client.sendEvent(participantsListEvent)
 
 	// 確認メッセージを送信
 	response := NewEvent("subscribed", data.AuctionID, map[string]interface{}{
@@ -67,7 +87,7 @@ func (h *EventHandler) handleUnsubscribe(client *Client, event *Event) {
 		return
 	}
 
-	if data.AuctionID <= 0 {
+	if data.AuctionID == "" {
 		client.sendError("INVALID_AUCTION_ID", "Invalid auction ID")
 		return
 	}
@@ -85,7 +105,7 @@ func (h *EventHandler) handleUnsubscribe(client *Client, event *Event) {
 
 // handlePing はPingリクエストを処理する
 func (h *EventHandler) handlePing(client *Client, event *Event) {
-	response := NewEvent(EventPong, 0, map[string]interface{}{
+	response := NewEvent(EventPong, "", map[string]interface{}{
 		"message": "pong",
 	})
 	client.sendEvent(response)
