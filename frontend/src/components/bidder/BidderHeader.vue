@@ -10,7 +10,7 @@
           </div>
         </div>
 
-        <!-- 右側：ナビゲーションとユーザー情報 -->
+        <!-- 右側：ナビゲーション、ポイント、ユーザーメニュー -->
         <div class="flex items-center gap-4">
           <!-- ナビゲーションリンク（デスクトップ） -->
           <nav class="hidden md:flex items-center gap-6">
@@ -21,69 +21,83 @@
             >
               オークション一覧
             </router-link>
-            <!-- TODO: 入札履歴ページ実装後に有効化
-            <router-link
-              v-if="bidderAuthStore.isAuthenticated"
-              to="/my/bids"
-              class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-              :class="{ 'text-blue-600': isCurrentRoute('/my/bids') }"
-            >
-              入札履歴
-            </router-link>
-            -->
-            <!-- TODO: ポイントページ実装後に有効化
-            <router-link
-              v-if="bidderAuthStore.isAuthenticated"
-              to="/my/points"
-              class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-              :class="{ 'text-blue-600': isCurrentRoute('/my/points') }"
-            >
-              ポイント
-            </router-link>
-            -->
           </nav>
 
-          <!-- ユーザー情報（ログイン済みの場合） -->
-          <div v-if="bidderAuthStore.isAuthenticated" class="flex items-center gap-4">
-            <!-- ユーザー情報 -->
-            <div class="hidden sm:block text-right">
-              <p class="text-sm font-medium text-gray-900">{{ bidderAuthStore.user?.displayName || bidderAuthStore.user?.email }}</p>
-              <p class="text-xs text-gray-500">入札者</p>
-            </div>
-
-            <!-- ユーザーアバター -->
-            <div class="flex-shrink-0">
-              <div
-                class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm"
+          <!-- ログイン済みの場合：ユーザーメニュー -->
+          <div v-if="bidderAuthStore.isAuthenticated" class="flex items-center gap-3">
+            <!-- ユーザーアイコン（ドロップダウントリガー） -->
+            <div class="relative">
+              <button
+                @click="toggleMenu"
+                @keydown.enter="toggleMenu"
+                @keydown.space.prevent="toggleMenu"
+                @keydown.escape="closeMenu"
+                :aria-expanded="isMenuOpen"
+                aria-haspopup="true"
+                aria-label="ユーザーメニューを開く"
+                class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm transition-transform duration-200 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                :class="{ 'ring-2 ring-green-500 scale-105': isMenuOpen }"
               >
                 {{ userInitial }}
-              </div>
-            </div>
+              </button>
 
-            <!-- ログアウトボタン -->
-            <button
-              @click="handleLogout"
-              :disabled="loading"
-              class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg
-                v-if="loading"
-                class="animate-spin -ml-0.5 mr-2 h-4 w-4 text-gray-700"
-                fill="none"
-                viewBox="0 0 24 24"
+              <!-- ドロップダウンメニュー -->
+              <Transition
+                enter-active-class="transition duration-150 ease-out"
+                enter-from-class="opacity-0 -translate-y-1 scale-98"
+                enter-to-class="opacity-100 translate-y-0 scale-100"
+                leave-active-class="transition duration-100 ease-in"
+                leave-from-class="opacity-100 translate-y-0 scale-100"
+                leave-to-class="opacity-0 -translate-y-1 scale-98"
               >
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              {{ loading ? 'ログアウト中...' : 'ログアウト' }}
-            </button>
+                <div
+                  v-if="isMenuOpen"
+                  ref="menuRef"
+                  role="menu"
+                  aria-orientation="vertical"
+                  class="absolute right-0 top-full mt-2 w-60 bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-50"
+                >
+                  <!-- ユーザー情報セクション -->
+                  <div class="px-3 py-2 flex items-start gap-3 mb-1">
+                    <!-- アバター -->
+                    <div class="flex-shrink-0">
+                      <div
+                        class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm"
+                      >
+                        {{ userInitial }}
+                      </div>
+                    </div>
+                    <!-- 名前とメール -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-gray-900 truncate">
+                        {{ displayName }}
+                      </p>
+                      <p class="text-xs text-gray-500 truncate">
+                        {{ bidderAuthStore.user?.email || '' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- セパレーター -->
+                  <div class="border-t border-gray-200 my-1"></div>
+
+                  <!-- ログアウト -->
+                  <button
+                    @click="handleLogout"
+                    :disabled="loading"
+                    role="menuitem"
+                    aria-label="ログアウト"
+                    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 rounded-md hover:bg-red-50 hover:text-red-700 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <LogOut :size="18" :stroke-width="2" />
+                    <span>{{ loading ? 'ログアウト中...' : 'ログアウト' }}</span>
+                  </button>
+                </div>
+              </Transition>
+            </div>
           </div>
 
-          <!-- ログイン/新規登録ボタン（未ログインの場合） -->
+          <!-- 未ログインの場合：ログイン/新規登録ボタン -->
           <div v-else class="flex items-center gap-3">
             <router-link
               to="/login"
@@ -113,28 +127,6 @@
         >
           オークション一覧
         </router-link>
-        <!-- TODO: 入札履歴ページ実装後に有効化
-        <router-link
-          v-if="bidderAuthStore.isAuthenticated"
-          to="/my/bids"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-          :class="{ 'text-blue-600 bg-blue-50': isCurrentRoute('/my/bids') }"
-          @click="showMobileNav = false"
-        >
-          入札履歴
-        </router-link>
-        -->
-        <!-- TODO: ポイントページ実装後に有効化
-        <router-link
-          v-if="bidderAuthStore.isAuthenticated"
-          to="/my/points"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-          :class="{ 'text-blue-600 bg-blue-50': isCurrentRoute('/my/points') }"
-          @click="showMobileNav = false"
-        >
-          ポイント
-        </router-link>
-        -->
       </div>
     </nav>
   </header>
@@ -143,6 +135,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { onClickOutside } from '@vueuse/core'
+import { LogOut } from 'lucide-vue-next'
 import { useBidderAuthStore } from '@/stores/bidderAuthStore'
 
 const router = useRouter()
@@ -150,6 +144,8 @@ const route = useRoute()
 const bidderAuthStore = useBidderAuthStore()
 const loading = ref(false)
 const showMobileNav = ref(false)
+const isMenuOpen = ref(false)
+const menuRef = ref(null)
 
 // 現在のルートチェック
 const isCurrentRoute = (path) => {
@@ -162,11 +158,33 @@ const userInitial = computed(() => {
   return displayName.charAt(0).toUpperCase()
 })
 
+// 表示名
+const displayName = computed(() => {
+  return bidderAuthStore.user?.displayName || bidderAuthStore.user?.email || 'ゲスト'
+})
+
+// メニューの開閉
+function toggleMenu() {
+  isMenuOpen.value = !isMenuOpen.value
+}
+
+function closeMenu() {
+  isMenuOpen.value = false
+}
+
+// メニュー外クリックで閉じる
+onClickOutside(menuRef, () => {
+  if (isMenuOpen.value) {
+    closeMenu()
+  }
+})
+
 // ログアウト処理
 async function handleLogout() {
   loading.value = true
   try {
     await bidderAuthStore.logout()
+    closeMenu()
     router.push({ name: 'bidder-login' })
   } catch (error) {
     console.error('Logout error:', error)
@@ -175,3 +193,15 @@ async function handleLogout() {
   }
 }
 </script>
+
+<style scoped>
+/* モーション低減対応 */
+@media (prefers-reduced-motion: reduce) {
+  .transition,
+  .transition-transform,
+  .transition-colors {
+    transition: opacity 100ms ease !important;
+    transform: none !important;
+  }
+}
+</style>

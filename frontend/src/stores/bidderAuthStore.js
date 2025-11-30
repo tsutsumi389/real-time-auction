@@ -98,10 +98,10 @@ export const useBidderAuthStore = defineStore('bidderAuth', () => {
         email: response.user.email,
         displayName: response.user.display_name,
         userType: response.user.user_type,
-        points: response.user.points || {
-          total: 0,
-          available: 0,
-          reserved: 0,
+        points: {
+          total: response.user.points?.total_points || 0,
+          available: response.user.points?.available_points || 0,
+          reserved: response.user.points?.reserved_points || 0,
         },
       }
 
