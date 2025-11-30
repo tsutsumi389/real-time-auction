@@ -139,7 +139,7 @@
                 :disabled="loading"
               />
               <p v-if="errors.display_name" class="mt-1 text-sm text-red-600">{{ errors.display_name }}</p>
-              <p class="mt-1 text-sm text-gray-500">任意。未入力の場合はメールアドレスが使用されます。</p>
+              <p class="mt-1 text-sm text-gray-500">任意。100文字以内で入力してください。</p>
             </div>
           </div>
 
