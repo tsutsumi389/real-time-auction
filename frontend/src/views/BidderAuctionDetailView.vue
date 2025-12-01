@@ -255,7 +255,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getAuctionDetail } from '@/services/bidderAuctionApi'
 import AuctionStatusBadge from '@/components/bidder/AuctionStatusBadge.vue'
@@ -398,19 +398,46 @@ const handleGoToLive = () => {
   router.push({ name: 'bidder-auction-live', params: { id: auction.value.id } })
 }
 
+// Flag to track if modal was closed via back button
+let closedViaBackButton = false
+
 const handleItemClick = (item) => {
   selectedItem.value = item
   isModalOpen.value = true
+  // Add modal state to browser history for back button support
+  window.history.pushState({ modal: true, itemId: item.id }, '')
 }
 
 const handleCloseModal = () => {
+  // If not closed via back button, we need to go back in history
+  if (!closedViaBackButton && window.history.state?.modal) {
+    window.history.back()
+  }
+  closedViaBackButton = false
   isModalOpen.value = false
   selectedItem.value = null
+}
+
+// Browser back button handler
+const handlePopState = () => {
+  // When back button is pressed and modal is open, close modal
+  if (isModalOpen.value) {
+    closedViaBackButton = true
+    isModalOpen.value = false
+    selectedItem.value = null
+  }
 }
 
 // Lifecycle
 onMounted(() => {
   fetchAuctionDetail()
+  // Add browser back button listener
+  window.addEventListener('popstate', handlePopState)
+})
+
+onUnmounted(() => {
+  // Clean up browser back button listener
+  window.removeEventListener('popstate', handlePopState)
 })
 </script>
 
