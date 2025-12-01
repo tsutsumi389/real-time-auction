@@ -15,15 +15,15 @@
     >
       <!-- ナビゲーションヘッダー -->
       <nav
-        class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        class="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
         aria-label="ページナビゲーション"
       >
         <button
           @click="handleBackToList"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          class="group inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-gray-900"
           aria-label="オークション一覧に戻る"
         >
-          <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-5 w-5 mr-2 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
           </svg>
           一覧に戻る
@@ -32,11 +32,15 @@
         <button
           v-if="auction && auction.status === 'active'"
           @click="handleGoToLive"
-          class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          class="group inline-flex items-center px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-md hover:from-green-600 hover:to-emerald-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-900"
           aria-label="ライブ入札画面へ移動"
         >
+          <span class="relative flex h-2 w-2 mr-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+          </span>
           ライブ入札へ
-          <svg class="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-5 w-5 ml-2 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
           </svg>
         </button>
@@ -151,51 +155,51 @@
       </Alert>
 
       <!-- ローディング状態 -->
-      <div v-if="loading" class="space-y-6" aria-busy="true" aria-label="オークション情報を読み込み中">
+      <div v-if="loading" class="space-y-6 sm:space-y-8" aria-busy="true" aria-label="オークション情報を読み込み中">
         <!-- ローディングスピナー（中央表示） -->
         <div class="flex flex-col items-center justify-center py-12">
           <LoadingSpinner size="lg" text="オークション情報を読み込み中..." center />
         </div>
 
         <!-- オークション概要スケルトン -->
-        <div class="bg-white border border-gray-200 rounded-lg p-6 animate-pulse" aria-hidden="true">
-          <div class="flex flex-col sm:flex-row justify-between gap-4">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 animate-pulse" aria-hidden="true">
+          <div class="flex flex-col sm:flex-row justify-between gap-4 sm:gap-6">
             <div class="flex-1">
-              <div class="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
-              <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+              <div class="h-9 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4 mb-4"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
             </div>
-            <div class="h-6 bg-gray-200 rounded w-24"></div>
+            <div class="h-7 bg-gray-200 dark:bg-gray-700 rounded-full w-24"></div>
           </div>
-          <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="h-5 bg-gray-200 rounded w-48"></div>
-            <div class="h-5 bg-gray-200 rounded w-32"></div>
+          <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="h-16 bg-gray-100 dark:bg-gray-700/50 rounded-xl"></div>
+            <div class="h-16 bg-gray-100 dark:bg-gray-700/50 rounded-xl"></div>
           </div>
         </div>
 
         <!-- アイテムグリッドスケルトン -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" aria-hidden="true">
-          <div v-for="i in 8" :key="i" class="bg-white border border-gray-200 rounded-lg overflow-hidden animate-pulse">
-            <div class="h-48 bg-gray-200"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6" aria-hidden="true">
+          <div v-for="i in 8" :key="i" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden animate-pulse">
+            <div class="aspect-[4/3] bg-gray-200 dark:bg-gray-700"></div>
             <div class="p-4 space-y-3">
-              <div class="h-4 bg-gray-200 rounded w-1/4"></div>
-              <div class="h-5 bg-gray-200 rounded w-3/4"></div>
-              <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+              <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- オークション詳細表示 -->
-      <article v-else-if="auction && !errorState.hasError" aria-label="オークション詳細情報">
+      <article v-else-if="auction && !errorState.hasError" class="auction-detail-content" aria-label="オークション詳細情報">
         <!-- オークション概要セクション -->
-        <header class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
-          <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div class="flex-1">
-              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+        <header class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 sm:p-8 mb-8">
+          <div class="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6">
+            <div class="flex-1 min-w-0">
+              <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
                 {{ auction.title }}
               </h1>
-              <p class="text-gray-600 text-sm sm:text-base mb-4">
+              <p class="text-gray-600 dark:text-gray-300 text-sm sm:text-base leading-relaxed">
                 {{ auction.description || 'オークションの説明はありません' }}
               </p>
             </div>
@@ -204,48 +208,63 @@
             </div>
           </div>
 
-          <dl class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div v-if="auction.started_at" class="flex items-center text-gray-600">
-              <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              <dt class="sr-only">開始予定日時</dt>
-              <dd class="text-sm sm:text-base">開始予定: <time :datetime="auction.started_at">{{ formatDate(auction.started_at) }}</time></dd>
-            </div>
-            <div class="flex items-center text-gray-600">
-              <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-              </svg>
-              <dt class="sr-only">出品アイテム数</dt>
-              <dd class="text-sm sm:text-base">出品アイテム: {{ itemCount }}点</dd>
-            </div>
-          </dl>
+          <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div v-if="auction.started_at" class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <div class="flex-shrink-0 p-2 bg-primary/10 dark:bg-primary/20 rounded-lg mr-3">
+                  <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <dt class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">開始予定日時</dt>
+                  <dd class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mt-0.5">
+                    <time :datetime="auction.started_at">{{ formatDate(auction.started_at) }}</time>
+                  </dd>
+                </div>
+              </div>
+              <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <div class="flex-shrink-0 p-2 bg-primary/10 dark:bg-primary/20 rounded-lg mr-3">
+                  <svg class="h-5 w-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                  </svg>
+                </div>
+                <div>
+                  <dt class="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">出品アイテム数</dt>
+                  <dd class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mt-0.5">{{ itemCount }}点</dd>
+                </div>
+              </div>
+            </dl>
+          </div>
         </header>
 
         <!-- 出品アイテム一覧 -->
         <section aria-labelledby="items-heading">
           <div class="mb-6">
-            <h2 id="items-heading" class="text-xl font-semibold text-gray-900 mb-4">
-              出品アイテム一覧 ({{ itemCount }}点)
+            <h2 id="items-heading" class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+              <span class="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">出品アイテム一覧</span>
+              <span class="ml-3 px-3 py-1 text-sm font-medium bg-primary/10 dark:bg-primary/20 text-primary rounded-full">{{ itemCount }}点</span>
             </h2>
           </div>
 
           <!-- アイテムがない場合の空状態表示 -->
-          <div v-if="itemCount === 0" class="bg-white border border-gray-200 rounded-lg p-12 text-center" role="status">
+          <div v-if="itemCount === 0" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-dashed rounded-2xl p-12 text-center" role="status">
             <div class="flex flex-col items-center">
-              <svg
-                class="h-16 w-16 text-gray-300 mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-              </svg>
-              <h3 class="text-lg font-medium text-gray-900 mb-2">
+              <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
+                <svg
+                  class="h-12 w-12 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 出品アイテムがありません
               </h3>
-              <p class="text-sm text-gray-500 max-w-sm">
+              <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm leading-relaxed">
                 このオークションにはまだアイテムが登録されていません。アイテムが追加されるまでお待ちください。
               </p>
             </div>
@@ -459,5 +478,44 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Styles are now handled by ItemCardGrid component */
+/* Page entrance animation */
+.auction-detail-content {
+  animation: page-fade-in 0.4s ease-out;
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Skeleton pulse animation enhancement */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .auction-detail-content {
+    animation: none;
+  }
+  
+  .animate-pulse {
+    animation: none;
+  }
+}
 </style>
