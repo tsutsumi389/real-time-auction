@@ -308,11 +308,11 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 ## 7. 実装手順（優先度順）
 
 ### Phase 1: 環境構築（2時間）
-- [ ] docker-compose.ymlにMinIO追加
-- [ ] .env設定追加
-- [ ] Makefile更新
-- [ ] `make up`で起動確認
-- [ ] MinIO Console（http://localhost:9001）アクセス確認
+- [x] docker-compose.ymlにMinIO追加
+- [x] .env設定追加
+- [x] Makefile更新
+- [x] `make up`で起動確認
+- [x] MinIO Console（http://localhost:9001）アクセス確認
 
 ### Phase 2: Domain・Repository層（3時間）
 - [ ] internal/domain/item_media.go 実装
