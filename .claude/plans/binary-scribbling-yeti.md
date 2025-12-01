@@ -320,10 +320,10 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - [x] 単体テスト
 
 ### Phase 3: Storage Service（4時間）
-- [ ] internal/service/storage_service.go インターフェース定義
-- [ ] internal/service/storage/minio.go 実装
-- [ ] internal/service/storage/s3.go 骨格実装
-- [ ] MinIO接続テスト
+- [x] internal/service/storage_service.go インターフェース定義
+- [x] internal/service/storage/minio.go 実装
+- [x] internal/service/storage/s3.go 骨格実装
+- [x] MinIO接続テスト
 
 ### Phase 4: 画像処理Service（5時間）
 - [ ] internal/service/image_processor.go 実装

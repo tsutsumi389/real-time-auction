@@ -10,6 +10,7 @@ import (
 	"github.com/tsutsumi389/real-time-auction/internal/middleware"
 	"github.com/tsutsumi389/real-time-auction/internal/repository"
 	"github.com/tsutsumi389/real-time-auction/internal/service"
+	"github.com/tsutsumi389/real-time-auction/internal/service/storage"
 )
 
 func main() {
@@ -43,6 +44,12 @@ func main() {
 	bidRepo := repository.NewBidRepository(db)
 	itemRepo := repository.NewItemRepository(db)
 
+	// ストレージサービス初期化
+	storageService, err := storage.NewStorageService()
+	if err != nil {
+		log.Fatal("Failed to initialize storage service:", err)
+	}
+
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
 	authService := service.NewAuthService(adminRepo, bidderRepo, jwtService)
@@ -60,6 +67,7 @@ func main() {
 	auctionHandler := handler.NewAuctionHandler(auctionService)
 	bidHandler := handler.NewBidHandler(pointService, bidService)
 	itemHandler := handler.NewItemHandler(itemService)
+	storageTestHandler := handler.NewStorageTestHandler(storageService)
 
 	// Ginルーター初期化
 	router := gin.Default()
@@ -75,6 +83,13 @@ func main() {
 			"version": "0.1.0",
 		})
 	})
+
+	// ストレージテストエンドポイント（開発環境のみ）
+	if env == "development" {
+		router.GET("/storage/test/health", storageTestHandler.TestHealthCheck)
+		router.POST("/storage/test/upload", storageTestHandler.TestUpload)
+		router.DELETE("/storage/test/delete", storageTestHandler.TestDelete)
+	}
 
 	// APIルートグループ
 	api := router.Group("/api")
