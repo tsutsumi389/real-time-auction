@@ -10,7 +10,11 @@
 
 ### 決定事項
 - **ストレージ**: MinIO（S3互換）をローカル環境で使用
-- **画像処理**: リサイズ（最大1920x1080）、WebP変換、サムネイル生成（300x300）を実装
+- **画像処理**: リサイズ（最大1920x1080）、JPEG変換、サムネイル生成（300x300）を実装
+  - **画像フォーマット変更（2025-12-01）**: 当初WebPを予定していたが、CGO依存の問題によりJPEG形式に変更
+  - WebPライブラリ（chai2010/webp、kolesa-team/go-webp）はlibwebp（C言語実装）をCGO経由で呼び出すため、Docker環境でビルドエラーが発生
+  - `github.com/disintegration/imaging` を使用したJPEG形式（品質80）で高品質を維持
+  - 純粋なGo実装により、クロスコンパイルとDocker環境での安定性を確保
 - **サムネイル**: アップロード時に自動生成
 - **ファイルサイズ制限**: 画像5MB、動画100MB
 - **MinIO**: AGPLv3ライセンスで完全無料、S3互換APIを使用
@@ -33,7 +37,7 @@
               ┌───────────┴───────────┐
               ↓                       ↓
       [ImageProcessor]        [StorageService]
-        (リサイズ/WebP)         (MinIO/S3/GCS)
+        (リサイズ/JPEG)         (MinIO/S3/GCS)
               ↓                       ↓
       [ItemMediaRepository]           |
               ↓                       |
@@ -43,7 +47,7 @@
 ### ファイルアップロードフロー
 1. JWT認証・ファイルサイズ検証（middleware）
 2. MIMEタイプ検証・ファイル名サニタイズ
-3. 画像処理（リサイズ → WebP変換 → サムネイル生成）
+3. 画像処理（リサイズ → JPEG変換 → サムネイル生成）
 4. ストレージアップロード（オリジナル + サムネイル）
 5. DB保存（トランザクション）
 6. 一時ファイル削除
@@ -160,14 +164,17 @@ clean-minio:
 ### 必要なライブラリ
 
 ```
-github.com/minio/minio-go/v7 v7.0.63
-github.com/disintegration/imaging v1.6.2
-github.com/chai2010/webp v1.1.1
-github.com/aws/aws-sdk-go-v2 v1.21.0
+github.com/minio/minio-go/v7 v7.0.97
+github.com/disintegration/imaging v1.6.2  # JPEG処理用（Pure Go実装）
+github.com/google/uuid v1.6.0
+github.com/aws/aws-sdk-go-v2 v1.21.0      # S3用（本番環境）
 github.com/aws/aws-sdk-go-v2/service/s3 v1.40.0
-cloud.google.com/go/storage v1.33.0
-github.com/google/uuid v1.3.1
+cloud.google.com/go/storage v1.33.0       # GCS用（本番環境）
 ```
+
+**削除したライブラリ:**
+- ~~`github.com/chai2010/webp v1.1.1`~~ - CGO依存のため削除
+- ~~`github.com/kolesa-team/go-webp v1.0.4`~~ - CGO依存のため削除
 
 ### ディレクトリ構造
 
@@ -214,9 +221,10 @@ backend/pkg/utils/
 - HealthCheck(ctx) → error
 
 **ImageProcessor:**
-- ProcessImage(srcPath) → WebP変換+リサイズ
-- GenerateThumbnail(srcPath) → 300x300サムネイル
+- ProcessImage(srcPath) → JPEG変換+リサイズ（品質80、最大1920x1080）
+- GenerateThumbnail(srcPath) → 300x300サムネイル（正方形、中央クロップ）
 - CleanupTempFiles(paths) → 一時ファイル削除
+- ValidateImageFile(filePath) → 画像ファイルバリデーション
 
 #### Handler層（media_handler.go）
 
@@ -250,8 +258,8 @@ media_type: "image" or "video"
   "id": 123,
   "item_id": 45,
   "media_type": "image",
-  "url": "http://localhost:9000/auction-media/items/45/original_abc123.webp",
-  "thumbnail_url": "http://localhost:9000/auction-media/items/45/thumb_abc123.webp",
+  "url": "http://localhost:9000/auction-media/items/45/original_abc123.jpg",
+  "thumbnail_url": "http://localhost:9000/auction-media/items/45/thumb_abc123.jpg",
   "display_order": 1,
   "created_at": "2025-12-01T10:30:00Z"
 }
@@ -326,9 +334,10 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - [x] MinIO接続テスト
 
 ### Phase 4: 画像処理Service（5時間）
-- [ ] internal/service/image_processor.go 実装
-- [ ] リサイズ、WebP変換、サムネイル生成
-- [ ] 画像処理テスト
+- [x] internal/service/image_processor.go 実装
+- [x] リサイズ、JPEG変換、サムネイル生成（WebP→JPEG変更）
+- [x] 画像処理テスト（全8テスト成功）
+- [x] CGO依存の問題を解決（Pure Go実装に変更）
 
 ### Phase 5: Middleware（2時間）
 - [ ] internal/middleware/upload.go 実装
@@ -370,8 +379,8 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 
 ### 機能要件
 - [ ] 画像を5MB以内でアップロード可能
-- [ ] 自動WebP変換・リサイズ（1920x1080以内）
-- [ ] サムネイル（300x300）自動生成
+- [x] 自動JPEG変換・リサイズ（1920x1080以内、品質80）
+- [x] サムネイル（300x300）自動生成（正方形、中央クロップ）
 - [ ] 画像10枚、動画3本まで登録可能
 - [ ] 表示順序変更可能
 - [ ] 削除でDB・ストレージ両方から削除
@@ -440,3 +449,66 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - `docs/database_definition.md` - メディア管理設計方針
 - `docs/screen_list.md` - UI要件（画像10枚、動画3本）
 - `docs/architecture.md` - 外部ストレージ参照
+
+---
+
+## 11. 技術的な補足
+
+### WebP vs JPEG の比較
+
+| 項目 | WebP（当初計画） | JPEG（実装版） |
+|------|----------------|---------------|
+| **ファイルサイズ** | 小さい（JPEGの約30%削減） | やや大きい |
+| **品質** | 高品質 | 高品質（品質80で十分） |
+| **ブラウザ対応** | モダンブラウザのみ | 全ブラウザ対応 |
+| **Go実装** | CGO必須（libwebp依存） | Pure Go（imaging） |
+| **Dockerビルド** | 複雑（gcc、libwebp-dev必須） | シンプル |
+| **クロスコンパイル** | 困難 | 容易 |
+| **保守性** | 低い（C依存関係） | 高い（Goのみ） |
+
+### CGO問題の詳細
+
+**発生したエラー:**
+```
+undefined: webpGetInfo
+undefined: webpDecodeGray
+undefined: webpEncodeRGB
+```
+
+**原因:**
+- WebPライブラリ（chai2010/webp、kolesa-team/go-webp）はC言語のlibwebpをCGO経由で呼び出す
+- Docker環境でのビルドには以下が必要:
+  - Cコンパイラ（gcc、musl-dev）
+  - libwebp開発ヘッダー（libwebp-dev）
+  - CGOの有効化（`CGO_ENABLED=1`）
+
+**解決策の選択肢:**
+1. **Dockerfileに依存関係を追加**（複雑、ビルド時間増加）
+   ```dockerfile
+   RUN apk add --no-cache gcc musl-dev libwebp-dev
+   ```
+2. **Pure Go実装に変更**（採用）
+   - `github.com/disintegration/imaging` を使用
+   - JPEG形式で品質80を設定
+   - シンプルで保守性が高い
+
+### 実装済みファイル
+
+**Phase 4完了ファイル:**
+- `backend/internal/service/image_processor.go` - 画像処理サービス（168行）
+- `backend/internal/service/image_processor_test.go` - テストコード（全8テスト成功）
+- `backend/go.mod` - 依存ライブラリ追加（disintegration/imaging v1.6.2）
+
+**テスト結果:**
+```
+✓ TestNewImageProcessor - インスタンス生成
+✓ TestProcessImage - 画像処理全体（リサイズ＋サムネイル）
+✓ TestResizeImage - リサイズ機能（4パターン）
+✓ TestGenerateThumbnail - サムネイル生成
+✓ TestSaveAsJPEG - JPEG保存
+✓ TestCleanupTempFiles - 一時ファイル削除
+✓ TestValidateImageFile - バリデーション（3パターン）
+✓ TestProcessImage_InvalidFile - エラーハンドリング
+
+PASS: 全8テスト (0.195秒)
+```
