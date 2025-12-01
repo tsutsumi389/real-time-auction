@@ -771,12 +771,12 @@ VITE_API_BASE_URL=https://auction.example.com/api
 - [x] AuctionCard.vueの「詳細を見る」ボタン更新
 
 ### フェーズ2: オークション概要表示（所要時間: 1-2時間）
-- [ ] オークション情報の表示実装
-  - [ ] タイトル、説明文の表示
-  - [ ] AuctionStatusBadgeコンポーネントの統合
-  - [ ] 開始日時のフォーマット表示
-- [ ] Shadcn Vue CardコンポーネントでのUI実装
-- [ ] レスポンシブデザインの適用
+- [x] オークション情報の表示実装
+  - [x] タイトル、説明文の表示
+  - [x] AuctionStatusBadgeコンポーネントの統合
+  - [x] 開始日時のフォーマット表示
+- [x] Shadcn Vue CardコンポーネントでのUI実装
+- [x] レスポンシブデザインの適用
 
 ### フェーズ3: アイテムカードグリッドの実装（所要時間: 2-3時間）
 - [ ] ItemCardGrid.vueコンポーネントの作成
