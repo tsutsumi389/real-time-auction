@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tsutsumi389/real-time-auction/internal/handler"
@@ -43,12 +44,19 @@ func main() {
 	pointRepo := repository.NewPointRepository(db)
 	bidRepo := repository.NewBidRepository(db)
 	itemRepo := repository.NewItemRepository(db)
+	mediaRepo := repository.NewItemMediaRepository(db)
 
 	// ストレージサービス初期化
 	storageService, err := storage.NewStorageService()
 	if err != nil {
 		log.Fatal("Failed to initialize storage service:", err)
 	}
+
+	// 画像処理サービス初期化
+	maxWidth := getEnvAsInt("IMAGE_MAX_WIDTH", 1920)
+	maxHeight := getEnvAsInt("IMAGE_MAX_HEIGHT", 1080)
+	thumbnailSize := getEnvAsInt("THUMBNAIL_SIZE", 300)
+	imageProcessor := service.NewImageProcessor(maxWidth, maxHeight, thumbnailSize, 80)
 
 	// サービス初期化
 	jwtService := service.NewJWTService(jwtSecret)
@@ -68,6 +76,19 @@ func main() {
 	bidHandler := handler.NewBidHandler(pointService, bidService)
 	itemHandler := handler.NewItemHandler(itemService)
 	storageTestHandler := handler.NewStorageTestHandler(storageService)
+
+	// メディアハンドラ初期化
+	mediaHandler := handler.NewMediaHandler(&handler.MediaHandlerConfig{
+		MediaRepo:        mediaRepo,
+		ItemRepo:         itemRepo,
+		StorageService:   storageService,
+		ImageProcessor:   imageProcessor,
+		StorageBucket:    getEnv("MINIO_BUCKET", "auction-media"),
+		MaxImageSize:     getEnvAsInt64("MAX_IMAGE_SIZE", 5242880),      // 5MB
+		MaxVideoSize:     getEnvAsInt64("MAX_VIDEO_SIZE", 104857600),    // 100MB
+		MaxImagesPerItem: 10,
+		MaxVideosPerItem: 3,
+	})
 
 	// Ginルーター初期化
 	router := gin.Default()
@@ -106,6 +127,8 @@ func main() {
 		api.GET("/auctions", auctionHandler.GetBidderAuctionList)
 		// オークション詳細取得（すべてのユーザーがアクセス可能）
 		api.GET("/auctions/:id", auctionHandler.GetAuctionDetail)
+		// 商品メディア一覧取得（すべてのユーザーがアクセス可能）
+		api.GET("/items/:id/media", mediaHandler.GetMediaList)
 
 		// 保護されたエンドポイント（認証が必要）
 		protected := api.Group("")
@@ -203,6 +226,11 @@ func main() {
 				adminOrAuctioneer.PUT("/admin/items/:id", itemHandler.UpdateItem)
 				adminOrAuctioneer.DELETE("/admin/items/:id", itemHandler.DeleteItem)
 
+				// 商品メディア管理API
+				adminOrAuctioneer.POST("/admin/items/:id/media", mediaHandler.UploadMedia)
+				adminOrAuctioneer.DELETE("/admin/items/:id/media/:mediaId", mediaHandler.DeleteMedia)
+				adminOrAuctioneer.PUT("/admin/items/:id/media/reorder", mediaHandler.ReorderMedia)
+
 				// 商品開始
 				adminOrAuctioneer.POST("/admin/items/:id/start", auctionHandler.StartItem)
 				// 価格開示
@@ -229,4 +257,30 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return defaultValue
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		log.Printf("Warning: Invalid integer value for %s: %s, using default: %d", key, valueStr, defaultValue)
+		return defaultValue
+	}
+	return value
+}
+
+func getEnvAsInt64(key string, defaultValue int64) int64 {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return defaultValue
+	}
+	value, err := strconv.ParseInt(valueStr, 10, 64)
+	if err != nil {
+		log.Printf("Warning: Invalid int64 value for %s: %s, using default: %d", key, valueStr, defaultValue)
+		return defaultValue
+	}
+	return value
 }

@@ -346,10 +346,10 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - [x] ユニットテスト作成（全テスト成功）
 
 ### Phase 6: Handler実装（6時間）
-- [ ] internal/handler/media_handler.go 実装
-- [ ] ルーティング設定（cmd/api/main.go）
-- [ ] エラーハンドリング
-- [ ] ロールバック処理
+- [x] internal/handler/media_handler.go 実装
+- [x] ルーティング設定（cmd/api/main.go）
+- [x] エラーハンドリング
+- [x] ロールバック処理
 
 ### Phase 7: 統合テスト（4時間）
 - [ ] Postmanでエンドポイントテスト
