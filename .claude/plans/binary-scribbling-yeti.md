@@ -315,9 +315,9 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - [x] MinIO Console（http://localhost:9001）アクセス確認
 
 ### Phase 2: Domain・Repository層（3時間）
-- [ ] internal/domain/item_media.go 実装
-- [ ] internal/repository/item_media_repository.go 実装
-- [ ] 単体テスト
+- [x] internal/domain/item_media.go 実装
+- [x] internal/repository/item_media_repository.go 実装
+- [x] 単体テスト
 
 ### Phase 3: Storage Service（4時間）
 - [ ] internal/service/storage_service.go インターフェース定義
