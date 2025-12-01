@@ -23,7 +23,7 @@
             class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2 text-gray-400 hover:text-gray-600 bg-white rounded-full shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="モーダルを閉じる"
           >
-            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
@@ -37,7 +37,7 @@
                 <img
                   v-if="currentMedia && currentMedia.media_type === 'image'"
                   :src="currentMedia.url"
-                  :alt="item.name"
+                  :alt="`${item.name} - 画像 ${currentMediaIndex + 1}/${mediaList.length || 1}`"
                   class="w-full h-full object-contain transition-opacity duration-200"
                   :class="{ 'opacity-0': isImageChanging }"
                   @load="handleImageLoad"
@@ -48,14 +48,21 @@
                   :src="currentMedia.url"
                   controls
                   class="w-full h-full object-contain"
+                  :title="`${item.name} - 動画`"
+                  :aria-label="`${item.name}の動画`"
                 >
                   お使いのブラウザは動画タグをサポートしていません。
                 </video>
-                <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                  <svg class="h-16 w-16 sm:h-24 sm:w-24 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div
+                  v-else
+                  class="w-full h-full flex flex-col items-center justify-center text-gray-400"
+                  role="img"
+                  aria-label="画像がありません"
+                >
+                  <svg class="h-16 w-16 sm:h-24 sm:w-24 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
-                  <span class="text-sm">画像がありません</span>
+                  <span class="text-sm" aria-hidden="true">画像がありません</span>
                 </div>
 
                 <!-- ナビゲーションボタン（常に表示、無効化で対応） -->
@@ -64,9 +71,9 @@
                   @click="previousMedia"
                   :disabled="currentMediaIndex === 0"
                   class="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 p-2 sm:p-3 bg-white/90 rounded-full shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
-                  aria-label="前の画像"
+                  :aria-label="`前の画像へ（現在 ${currentMediaIndex + 1}枚目 / 全${mediaList.length}枚）`"
                 >
-                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                   </svg>
                 </button>
@@ -76,9 +83,9 @@
                   @click="nextMedia"
                   :disabled="currentMediaIndex >= mediaList.length - 1"
                   class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 p-2 sm:p-3 bg-white/90 rounded-full shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white"
-                  aria-label="次の画像"
+                  :aria-label="`次の画像へ（現在 ${currentMediaIndex + 1}枚目 / 全${mediaList.length}枚）`"
                 >
-                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                   </svg>
                 </button>
@@ -118,12 +125,12 @@
                   <img
                     v-if="media.media_type === 'image'"
                     :src="media.thumbnail_url || media.url"
-                    :alt="`サムネイル ${index + 1}`"
+                    alt=""
                     class="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <div v-else class="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <svg class="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div v-else class="w-full h-full bg-gray-200 flex items-center justify-center" aria-hidden="true">
+                    <svg class="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -161,20 +168,22 @@
                 </h2>
 
                 <!-- 価格情報 -->
-                <div class="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                  <div class="mb-2">
-                    <p class="text-xs sm:text-sm text-gray-600 mb-0.5">開始価格</p>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-900">
-                      ¥{{ formatPrice(item.starting_price) }}
-                    </p>
-                  </div>
-                  <!-- 現在価格（入札がある場合） -->
-                  <div v-if="item.current_price && item.current_price > item.starting_price" class="mt-3 pt-3 border-t border-gray-200">
-                    <p class="text-xs sm:text-sm text-green-600 mb-0.5">現在価格</p>
-                    <p class="text-xl sm:text-2xl font-bold text-green-600">
-                      ¥{{ formatPrice(item.current_price) }}
-                    </p>
-                  </div>
+                <div class="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg" role="region" aria-label="価格情報">
+                  <dl>
+                    <div class="mb-2">
+                      <dt class="text-xs sm:text-sm text-gray-600 mb-0.5">開始価格</dt>
+                      <dd class="text-2xl sm:text-3xl font-bold text-gray-900">
+                        ¥{{ formatPrice(item.starting_price) }}
+                      </dd>
+                    </div>
+                    <!-- 現在価格（入札がある場合） -->
+                    <div v-if="item.current_price && item.current_price > item.starting_price" class="mt-3 pt-3 border-t border-gray-200">
+                      <dt class="text-xs sm:text-sm text-green-600 mb-0.5">現在価格</dt>
+                      <dd class="text-xl sm:text-2xl font-bold text-green-600">
+                        ¥{{ formatPrice(item.current_price) }}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
 
                 <!-- 説明文 -->
@@ -189,18 +198,18 @@
                 </div>
 
                 <!-- メタデータ -->
-                <div v-if="hasMetadata" class="mb-4 sm:mb-6">
+                <div v-if="hasMetadata" class="mb-4 sm:mb-6" role="region" aria-label="詳細情報">
                   <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">詳細情報</h3>
-                  <div class="space-y-2 max-h-48 overflow-y-auto">
+                  <dl class="space-y-2 max-h-48 overflow-y-auto">
                     <div
                       v-for="(value, key) in item.metadata"
                       :key="key"
                       class="flex justify-between py-2 border-b border-gray-200 last:border-b-0"
                     >
-                      <span class="text-xs sm:text-sm text-gray-600">{{ formatMetadataKey(key) }}</span>
-                      <span class="text-xs sm:text-sm font-medium text-gray-900 text-right ml-2">{{ value }}</span>
+                      <dt class="text-xs sm:text-sm text-gray-600">{{ formatMetadataKey(key) }}</dt>
+                      <dd class="text-xs sm:text-sm font-medium text-gray-900 text-right ml-2">{{ value }}</dd>
                     </div>
-                  </div>
+                  </dl>
                 </div>
 
                 <!-- 閉じるボタン -->
@@ -372,6 +381,13 @@ watch(() => props.open, async (newValue) => {
     // Disable body scroll
     document.body.style.overflow = 'hidden'
 
+    // Add inert attribute to main content for better accessibility
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+      mainContent.setAttribute('inert', '')
+      mainContent.setAttribute('aria-hidden', 'true')
+    }
+
     // Focus the close button when modal opens
     await nextTick()
     if (closeButton.value) {
@@ -383,6 +399,13 @@ watch(() => props.open, async (newValue) => {
   } else {
     // Enable body scroll
     document.body.style.overflow = ''
+
+    // Remove inert attribute from main content
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+      mainContent.removeAttribute('inert')
+      mainContent.removeAttribute('aria-hidden')
+    }
 
     // Remove tab key listener
     window.removeEventListener('keydown', handleTabKey)
@@ -406,6 +429,13 @@ onUnmounted(() => {
   // Cleanup
   document.body.style.overflow = ''
   previousActiveElement.value = null
+
+  // Remove inert attribute if still present
+  const mainContent = document.getElementById('main-content')
+  if (mainContent) {
+    mainContent.removeAttribute('inert')
+    mainContent.removeAttribute('aria-hidden')
+  }
 })
 </script>
 

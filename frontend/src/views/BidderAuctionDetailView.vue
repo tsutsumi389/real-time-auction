@@ -1,8 +1,23 @@
 <template>
   <div class="bidder-auction-detail-container">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <!-- Skip link for keyboard users -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:outline-none"
+    >
+      メインコンテンツへスキップ
+    </a>
+
+    <main
+      id="main-content"
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8"
+      aria-label="オークション詳細"
+    >
       <!-- ナビゲーションヘッダー -->
-      <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <nav
+        class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        aria-label="ページナビゲーション"
+      >
         <button
           @click="handleBackToList"
           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -25,7 +40,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
           </svg>
         </button>
-      </div>
+      </nav>
 
       <!-- エラー表示 -->
       <Alert
@@ -172,9 +187,9 @@
       </div>
 
       <!-- オークション詳細表示 -->
-      <div v-else-if="auction && !errorState.hasError">
+      <article v-else-if="auction && !errorState.hasError" aria-label="オークション詳細情報">
         <!-- オークション概要セクション -->
-        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+        <header class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
           <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div class="flex-1">
               <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
@@ -189,21 +204,23 @@
             </div>
           </div>
 
-          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <dl class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div v-if="auction.started_at" class="flex items-center text-gray-600">
-              <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
-              <span class="text-sm sm:text-base">開始予定: {{ formatDate(auction.started_at) }}</span>
+              <dt class="sr-only">開始予定日時</dt>
+              <dd class="text-sm sm:text-base">開始予定: <time :datetime="auction.started_at">{{ formatDate(auction.started_at) }}</time></dd>
             </div>
             <div class="flex items-center text-gray-600">
               <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
               </svg>
-              <span class="text-sm sm:text-base">出品アイテム: {{ itemCount }}点</span>
+              <dt class="sr-only">出品アイテム数</dt>
+              <dd class="text-sm sm:text-base">出品アイテム: {{ itemCount }}点</dd>
             </div>
-          </div>
-        </div>
+          </dl>
+        </header>
 
         <!-- 出品アイテム一覧 -->
         <section aria-labelledby="items-heading">
@@ -214,7 +231,7 @@
           </div>
 
           <!-- アイテムがない場合の空状態表示 -->
-          <div v-if="itemCount === 0" class="bg-white border border-gray-200 rounded-lg p-12 text-center">
+          <div v-if="itemCount === 0" class="bg-white border border-gray-200 rounded-lg p-12 text-center" role="status">
             <div class="flex flex-col items-center">
               <svg
                 class="h-16 w-16 text-gray-300 mb-4"
@@ -241,8 +258,8 @@
             @item-click="handleItemClick"
           />
         </section>
-      </div>
-    </div>
+      </article>
+    </main>
 
     <!-- アイテム詳細モーダル -->
     <ItemDetailModal

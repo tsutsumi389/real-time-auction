@@ -817,15 +817,15 @@ VITE_API_BASE_URL=https://auction.example.com/api
 - [x] ブラウザの戻るボタン対応
 
 ### フェーズ7: アクセシビリティ対応（所要時間: 2-3時間）
-- [ ] セマンティックHTML構造の確認
-- [ ] ARIA属性の追加
-  - [ ] role, aria-label, aria-labelledby, aria-describedby
-- [ ] キーボードナビゲーションのテストと改善
-- [ ] フォーカス管理の実装
-  - [ ] モーダルオープン/クローズ時のフォーカス制御
-- [ ] スクリーンリーダーでのテスト
-- [ ] カラーコントラストの確認
-- [ ] prefers-reduced-motion対応
+- [x] セマンティックHTML構造の確認
+- [x] ARIA属性の追加
+  - [x] role, aria-label, aria-labelledby, aria-describedby
+- [x] キーボードナビゲーションのテストと改善
+- [x] フォーカス管理の実装
+  - [x] モーダルオープン/クローズ時のフォーカス制御
+- [x] スクリーンリーダーでのテスト
+- [x] カラーコントラストの確認
+- [x] prefers-reduced-motion対応
 
 ### フェーズ8: スタイリングとUIの洗練（所要時間: 2-3時間）
 - [ ] Tailwind CSSでのデザイン調整
