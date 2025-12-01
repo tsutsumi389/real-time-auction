@@ -85,6 +85,21 @@
         <p class="mt-1 text-sm text-gray-500">オークション開始時のポイント（任意）</p>
       </div>
 
+      <!-- メディアについての案内 -->
+      <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h4 class="text-sm font-medium text-blue-800">画像・動画について</h4>
+            <p class="mt-1 text-sm text-blue-600">
+              画像・動画は商品の作成後に追加できます。作成後、編集画面からアップロードしてください。
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- ボタン -->
       <div class="flex justify-end space-x-3">
         <router-link
@@ -154,8 +169,8 @@ async function handleSubmit() {
     const result = await itemStore.handleCreateItem(data)
 
     if (result) {
-      // 成功時は一覧画面に戻る
-      router.push('/admin/items')
+      // 成功時は編集画面に遷移（メディアをすぐにアップロードできるように）
+      router.push(`/admin/items/${result.id}/edit`)
     } else {
       error.value = itemStore.error || '商品の作成に失敗しました'
     }

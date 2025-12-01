@@ -81,3 +81,21 @@ type AuctionRepositoryInterface interface {
 	AddItem(auctionID string, req *domain.AddItemRequest) (*domain.Item, error)
 	ReorderItems(auctionID string, itemIDs []uuid.UUID) error
 }
+
+// ItemMediaRepositoryInterface defines the interface for item media repository operations
+type ItemMediaRepositoryInterface interface {
+	Create(media *domain.ItemMedia) error
+	FindByItemID(itemID uuid.UUID) ([]domain.ItemMedia, error)
+	FindByID(id int64) (*domain.ItemMedia, error)
+	FindByIDAndItemID(id int64, itemID uuid.UUID) (*domain.ItemMedia, error)
+	Delete(id int64) (*domain.ItemMedia, error)
+	CountByItemIDAndType(itemID uuid.UUID, mediaType domain.MediaType) (int64, error)
+	CountByItemID(itemID uuid.UUID) (int64, error)
+	UpdateDisplayOrder(updates []struct {
+		ID           int64
+		DisplayOrder int
+	}) error
+	GetNextDisplayOrder(itemID uuid.UUID) (int, error)
+	FindByIDsAndItemID(ids []int64, itemID uuid.UUID) ([]domain.ItemMedia, error)
+	DeleteByItemID(itemID uuid.UUID) ([]domain.ItemMedia, error)
+}

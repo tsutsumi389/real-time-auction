@@ -201,13 +201,26 @@ const hasEnoughPoints = computed(() => {
   return props.availablePoints >= props.currentPrice
 })
 
-// Extract images from item
+// Extract images from item (supports media array from API)
 const itemImages = computed(() => {
-  if (props.item.images && Array.isArray(props.item.images)) {
-    return props.item.images
+  // Check for media array from API (preferred format)
+  if (props.item.media && Array.isArray(props.item.media)) {
+    // Filter to only images and map to URLs (prefer thumbnail for gallery)
+    return props.item.media
+      .filter(m => m.media_type === 'image')
+      .sort((a, b) => a.display_order - b.display_order)
+      .map(m => ({
+        url: m.url,
+        thumbnail: m.thumbnail_url || m.url
+      }))
   }
+  // Legacy support for images array
+  if (props.item.images && Array.isArray(props.item.images)) {
+    return props.item.images.map(url => ({ url, thumbnail: url }))
+  }
+  // Legacy support for single image_url
   if (props.item.image_url) {
-    return [props.item.image_url]
+    return [{ url: props.item.image_url, thumbnail: props.item.image_url }]
   }
   return []
 })

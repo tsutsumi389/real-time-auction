@@ -64,10 +64,36 @@ func (r *AuctionRepository) FindAuctionWithItems(id string) (*domain.GetAuctionD
 		return nil, err
 	}
 
-	// Convert items to ItemWithStatus
+	// Collect item IDs for media query
+	itemIDs := make([]uuid.UUID, len(items))
+	for i, item := range items {
+		itemIDs[i] = item.ID
+	}
+
+	// Get media for all items
+	var allMedia []domain.ItemMedia
+	if len(itemIDs) > 0 {
+		if err := r.db.Where("item_id IN ?", itemIDs).
+			Order("display_order ASC").
+			Find(&allMedia).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	// Create media map for quick lookup
+	mediaMap := make(map[uuid.UUID][]domain.ItemMedia)
+	for _, media := range allMedia {
+		mediaMap[media.ItemID] = append(mediaMap[media.ItemID], media)
+	}
+
+	// Convert items to ItemWithStatus with media
 	itemsWithStatus := make([]domain.ItemWithStatus, len(items))
 	for i, item := range items {
-		itemsWithStatus[i] = item.ToItemWithStatus()
+		itemsWithStatus[i] = domain.ItemWithStatus{
+			Item:   item,
+			Status: item.GetStatus(),
+			Media:  mediaMap[item.ID],
+		}
 	}
 
 	return &domain.GetAuctionDetailResponse{

@@ -59,7 +59,7 @@
         class="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all"
         :class="currentIndex === index ? 'border-blue-600 ring-2 ring-blue-100' : 'border-transparent opacity-70 hover:opacity-100'"
       >
-        <img :src="img" class="h-full w-full object-cover" alt="" />
+        <img :src="getThumbnailUrl(img)" class="h-full w-full object-cover" alt="" />
       </button>
     </div>
   </div>
@@ -83,7 +83,20 @@ const currentIndex = ref(0)
 const changing = ref(false)
 
 const hasImages = computed(() => props.images && props.images.length > 0)
-const currentImage = computed(() => hasImages.value ? props.images[currentIndex.value] : null)
+
+// Get the full URL for main display
+const currentImage = computed(() => {
+  if (!hasImages.value) return null
+  const img = props.images[currentIndex.value]
+  // Support both string URLs and object with url/thumbnail
+  return typeof img === 'string' ? img : img.url
+})
+
+// Get thumbnail URL for thumbnails list
+function getThumbnailUrl(img) {
+  if (typeof img === 'string') return img
+  return img.thumbnail || img.url
+}
 
 // Reset index when images change
 watch(() => props.images, () => {

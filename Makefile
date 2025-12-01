@@ -7,13 +7,14 @@ COMPOSE := docker-compose
 COMPOSE_FILE := docker-compose.yml
 
 # サービス名
-SERVICES := postgres redis api ws frontend nginx
+SERVICES := postgres redis minio api ws frontend nginx
 SERVICE_API := api
 SERVICE_WS := ws
 SERVICE_FRONTEND := frontend
 SERVICE_NGINX := nginx
 SERVICE_POSTGRES := postgres
 SERVICE_REDIS := redis
+SERVICE_MINIO := minio
 
 # ============================================
 # ヘルプ
@@ -90,6 +91,18 @@ clean: ## 全サービスを停止し、ボリュームも削除
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		$(COMPOSE) down -v; \
 		echo "✓ All services, volumes, and data removed"; \
+	else \
+		echo "Cancelled."; \
+	fi
+
+.PHONY: clean-minio
+clean-minio: ## MinIOボリュームを削除
+	@echo "⚠️  This will remove MinIO data!"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker volume rm real-time-auction_minio_data 2>/dev/null || true; \
+		echo "✓ MinIO volume removed"; \
 	else \
 		echo "Cancelled."; \
 	fi
@@ -176,6 +189,16 @@ shell-postgres: ## PostgreSQLのシェルに入る
 .PHONY: shell-redis
 shell-redis: ## Redisのシェルに入る
 	$(COMPOSE) exec $(SERVICE_REDIS) redis-cli
+
+.PHONY: shell-minio
+shell-minio: ## MinIOのシェルに入る
+	docker exec -it auction-minio sh
+
+.PHONY: minio-console
+minio-console: ## MinIO Console情報を表示
+	@echo "MinIO Console: http://localhost:9001"
+	@echo "Username: minioadmin"
+	@echo "Password: minioadmin"
 
 # ============================================
 # ビルド
