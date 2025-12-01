@@ -340,9 +340,10 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - [x] CGO依存の問題を解決（Pure Go実装に変更）
 
 ### Phase 5: Middleware（2時間）
-- [ ] internal/middleware/upload.go 実装
-- [ ] pkg/utils/file.go（ファイル名サニタイズ）
-- [ ] pkg/utils/mime.go（MIMEタイプ検証）
+- [x] internal/middleware/upload.go 実装
+- [x] pkg/utils/file.go（ファイル名サニタイズ）
+- [x] pkg/utils/mime.go（MIMEタイプ検証）
+- [x] ユニットテスト作成（全テスト成功）
 
 ### Phase 6: Handler実装（6時間）
 - [ ] internal/handler/media_handler.go 実装
