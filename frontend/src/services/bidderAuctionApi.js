@@ -18,3 +18,13 @@ export async function getBidderAuctionList(params = {}) {
   const response = await apiClient.get('/auctions', { params })
   return response.data
 }
+
+/**
+ * オークション詳細を取得（公開エンドポイント、認証不要）
+ * @param {string} id - オークションID（UUID）
+ * @returns {Promise<object>} オークション詳細情報（auction, items with media）
+ */
+export async function getAuctionDetail(id) {
+  const response = await apiClient.get(`/auctions/${id}`)
+  return response.data
+}

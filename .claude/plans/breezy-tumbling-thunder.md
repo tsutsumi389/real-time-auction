@@ -762,13 +762,13 @@ VITE_API_BASE_URL=https://auction.example.com/api
 ## 実装手順
 
 ### フェーズ1: 基本構造の実装（所要時間: 2-3時間）
-- [ ] BidderAuctionDetailView.vueの作成
-  - [ ] 基本レイアウト構造の実装
-  - [ ] ルートパラメータからオークションID取得
-  - [ ] API呼び出しロジックの実装
-  - [ ] ローディング状態の実装
-- [ ] router/index.jsに新規ルート追加
-- [ ] AuctionCard.vueの「詳細を見る」ボタン更新
+- [x] BidderAuctionDetailView.vueの作成
+  - [x] 基本レイアウト構造の実装
+  - [x] ルートパラメータからオークションID取得
+  - [x] API呼び出しロジックの実装
+  - [x] ローディング状態の実装
+- [x] router/index.jsに新規ルート追加
+- [x] AuctionCard.vueの「詳細を見る」ボタン更新
 
 ### フェーズ2: オークション概要表示（所要時間: 1-2時間）
 - [ ] オークション情報の表示実装
