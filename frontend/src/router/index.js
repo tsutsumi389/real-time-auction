@@ -121,6 +121,12 @@ const router = createRouter({
       meta: { requiresBidderAuth: true }
     },
     {
+      path: '/auctions/:id',
+      name: 'bidder-auction-detail',
+      component: () => import('../views/BidderAuctionDetailView.vue'),
+      meta: { requiresBidderAuth: true, title: 'オークション詳細' }
+    },
+    {
       path: '/auctions/:id/live',
       name: 'bidder-auction-live',
       component: () => import('../views/bidder/BidderAuctionLive.vue'),

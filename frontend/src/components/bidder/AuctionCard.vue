@@ -85,7 +85,10 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import AuctionStatusBadge from './AuctionStatusBadge.vue'
+
+const router = useRouter()
 
 const props = defineProps({
   auction: {
@@ -94,7 +97,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['view-details', 'join-auction'])
+const emit = defineEmits(['join-auction'])
 
 const imageError = ref(false)
 
@@ -115,7 +118,7 @@ const handleImageError = () => {
 }
 
 const handleViewDetails = () => {
-  emit('view-details', props.auction)
+  router.push({ name: 'bidder-auction-detail', params: { id: props.auction.id } })
 }
 
 const handleJoinAuction = () => {
