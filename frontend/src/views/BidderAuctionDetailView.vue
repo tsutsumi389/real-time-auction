@@ -112,55 +112,10 @@
         </div>
 
         <!-- アイテムカードグリッド -->
-        <div v-if="items.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            v-for="item in items"
-            :key="item.id"
-            @click="handleItemClick(item)"
-            class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-          >
-            <!-- サムネイル画像 -->
-            <div class="relative w-full h-48 bg-gray-100">
-              <img
-                v-if="getItemThumbnail(item)"
-                :src="getItemThumbnail(item)"
-                :alt="item.name"
-                class="w-full h-full object-cover"
-                @error="handleImageError"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-                <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-              </div>
-            </div>
-
-            <!-- カード情報 -->
-            <div class="p-4">
-              <div class="mb-2">
-                <span class="inline-block px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded">
-                  LOT {{ item.lot_number }}
-                </span>
-              </div>
-              <h3 class="text-base font-semibold text-gray-900 mb-2 line-clamp-2">
-                {{ item.name }}
-              </h3>
-              <p class="text-lg font-bold text-gray-900">
-                ¥{{ formatPrice(item.starting_price) }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- アイテムがない場合 -->
-        <div v-else class="text-center py-12">
-          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-          </svg>
-          <p class="text-gray-500 text-lg">
-            このオークションにはまだアイテムが登録されていません
-          </p>
-        </div>
+        <ItemCardGrid
+          :items="items"
+          @item-click="handleItemClick"
+        />
       </div>
     </div>
 
@@ -179,6 +134,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getAuctionDetail } from '@/services/bidderAuctionApi'
 import AuctionStatusBadge from '@/components/bidder/AuctionStatusBadge.vue'
+import ItemCardGrid from '@/components/bidder/ItemCardGrid.vue'
 import ItemDetailModal from '@/components/bidder/ItemDetailModal.vue'
 
 const router = useRouter()
@@ -233,20 +189,6 @@ const formatDate = (dateString) => {
   }).format(date)
 }
 
-const formatPrice = (price) => {
-  if (!price) return '0'
-  return new Intl.NumberFormat('ja-JP').format(price)
-}
-
-const getItemThumbnail = (item) => {
-  if (!item.media || item.media.length === 0) return null
-  return item.media[0].thumbnail_url || item.media[0].url
-}
-
-const handleImageError = (event) => {
-  event.target.style.display = 'none'
-}
-
 const handleBackToList = () => {
   router.push({ name: 'bidder-auction-list' })
 }
@@ -272,10 +214,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* Styles are now handled by ItemCardGrid component */
 </style>
