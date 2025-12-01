@@ -39,7 +39,8 @@ const (
 // ItemWithStatus represents an item with computed status field
 type ItemWithStatus struct {
 	Item
-	Status ItemStatus `json:"status"`
+	Status ItemStatus  `json:"status"`
+	Media  []ItemMedia `json:"media,omitempty"`
 }
 
 // GetStatus computes the status of an item based on timestamps
