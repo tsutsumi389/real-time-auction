@@ -154,6 +154,38 @@
           <p class="mt-1 text-sm text-gray-500">オークション開始時のポイント（任意）</p>
         </div>
 
+        <!-- メディア管理セクション -->
+        <div class="mb-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-3">メディア</h3>
+          
+          <!-- メディアアップローダー -->
+          <MediaUploader
+            :item-id="route.params.id"
+            :current-image-count="imageCount"
+            :current-video-count="videoCount"
+            :disabled="item && !item.can_edit"
+            @upload-success="handleUploadSuccess"
+            @upload-error="handleUploadError"
+          />
+          
+          <!-- メディアギャラリー -->
+          <div class="mt-6">
+            <div v-if="mediaLoading" class="text-center py-4">
+              <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+              <p class="mt-2 text-sm text-gray-500">メディアを読み込み中...</p>
+            </div>
+            <MediaGallery
+              v-else
+              :item-id="route.params.id"
+              :media="media"
+              :disabled="item && !item.can_edit"
+              @update:media="handleMediaUpdate"
+              @delete-success="handleDeleteSuccess"
+              @delete-error="handleUploadError"
+            />
+          </div>
+        </div>
+
         <!-- ボタン -->
         <div class="flex justify-between">
           <!-- 削除ボタン -->
@@ -255,6 +287,9 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useItemStore } from '@/stores/item'
+import { getItemMedia } from '@/services/mediaApi'
+import MediaUploader from '@/components/admin/MediaUploader.vue'
+import MediaGallery from '@/components/admin/MediaGallery.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -269,6 +304,12 @@ const successMessage = ref('')
 const notFound = ref(false)
 const showDeleteDialog = ref(false)
 
+// メディア関連の状態
+const media = ref([])
+const mediaLoading = ref(false)
+const imageCount = computed(() => media.value.filter((m) => m.media_type === 'image').length)
+const videoCount = computed(() => media.value.filter((m) => m.media_type === 'video').length)
+
 const form = reactive({
   name: '',
   description: '',
@@ -277,6 +318,45 @@ const form = reactive({
 
 // 現在の商品
 const item = computed(() => itemStore.currentItem)
+
+// メディアを取得
+async function fetchMedia() {
+  const itemId = route.params.id
+  mediaLoading.value = true
+  try {
+    const response = await getItemMedia(itemId)
+    media.value = response.items || []
+  } catch (err) {
+    console.error('Failed to fetch media:', err)
+    media.value = []
+  } finally {
+    mediaLoading.value = false
+  }
+}
+
+// アップロード成功時
+function handleUploadSuccess(uploadedMedia) {
+  media.value.push(uploadedMedia)
+  successMessage.value = 'メディアをアップロードしました'
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
+}
+
+// アップロードエラー時
+function handleUploadError(err) {
+  error.value = err.message || 'メディアのアップロードに失敗しました'
+}
+
+// 削除成功時
+function handleDeleteSuccess(mediaId) {
+  media.value = media.value.filter((m) => m.id !== mediaId)
+}
+
+// 順序変更時
+function handleMediaUpdate(newMedia) {
+  media.value = newMedia
+}
 
 // 初期データ取得
 onMounted(async () => {
@@ -290,6 +370,9 @@ onMounted(async () => {
     form.name = itemStore.currentItem.name || ''
     form.description = itemStore.currentItem.description || ''
     form.starting_price = itemStore.currentItem.starting_price || null
+
+    // メディアを取得
+    await fetchMedia()
   }
 
   pageLoading.value = false

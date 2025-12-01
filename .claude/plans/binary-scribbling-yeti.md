@@ -357,10 +357,11 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - [ ] ロールバック動作確認
 
 ### Phase 8: フロントエンド対応（8時間）
-- [ ] frontend/src/services/media.service.ts
-- [ ] frontend/src/components/MediaUploader.vue
-- [ ] frontend/src/components/MediaGallery.vue
-- [ ] アイテム登録画面への統合
+- [x] frontend/src/services/mediaApi.js - APIクライアント実装
+- [x] frontend/src/components/admin/MediaUploader.vue - ドラッグ&ドロップ対応アップローダー
+- [x] frontend/src/components/admin/MediaGallery.vue - ギャラリー表示、並び替え、削除機能
+- [x] ItemEditView.vueへの統合
+- [x] ItemNewView.vueへのメディア案内追加
 
 ### Phase 9: 本番環境対応（3時間）
 - [ ] S3実装完成
@@ -426,10 +427,14 @@ DB保存失敗 → ストレージ削除 → 一時ファイル削除 → エラ
 - `backend/cmd/api/main.go` - ルーティング追加
 - `backend/go.mod` - 依存ライブラリ追加
 
-### フロントエンド（新規作成）
-- `frontend/src/services/media.service.ts`
-- `frontend/src/components/MediaUploader.vue`
-- `frontend/src/components/MediaGallery.vue`
+### フロントエンド（新規作成・実装済み）
+- `frontend/src/services/mediaApi.js` - メディアAPIクライアント
+- `frontend/src/components/admin/MediaUploader.vue` - ドラッグ&ドロップ対応アップローダー
+- `frontend/src/components/admin/MediaGallery.vue` - ギャラリー表示、並び替え、削除
+
+### フロントエンド（既存修正・実装済み）
+- `frontend/src/views/admin/ItemEditView.vue` - メディア管理セクション追加
+- `frontend/src/views/admin/ItemNewView.vue` - メディア案内追加
 
 ### 既存データベース
 - マイグレーションファイル変更不要（`item_media`テーブルは実装済み）
