@@ -500,12 +500,12 @@ Radix Vue の Select プリミティブを活用した、アクセシブルな�
 ## 実装スケジュール
 
 ### フェーズ1: 基盤コンポーネント（2-3日）
-- [ ] Skeleton.vue 実装
-- [ ] AuctionCardSkeleton.vue 実装
-- [ ] Tailwind Config 拡張
-- [ ] AuctionCardGrid.vue にスケルトン統合
-- [ ] AuctionCard.vue デザイン改善
-- [ ] カードアニメーション実装
+- [x] Skeleton.vue 実装
+- [x] AuctionCardSkeleton.vue 実装
+- [x] Tailwind Config 拡張
+- [x] AuctionCardGrid.vue にスケルトン統合
+- [x] AuctionCard.vue デザイン改善
+- [x] カードアニメーション実装
 
 ### フェーズ2: Select コンポーネント群（2-3日）
 - [ ] Select コンポーネント群（9ファイル）実装
