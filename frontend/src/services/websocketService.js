@@ -2,11 +2,12 @@
  * WebSocket Service
  * オークションライブ画面用のWebSocket接続管理
  */
+import { getWsUrl } from '../config/api'
 
 class WebSocketService {
   constructor() {
     this.ws = null
-    this.url = import.meta.env.VITE_WS_URL || 'ws://localhost/ws'
+    this.url = null // 動的に取得するため初期値はnull
     this.token = null
     this.auctionId = null
     this.reconnectAttempts = 0
@@ -45,6 +46,8 @@ class WebSocketService {
     this.auctionId = auctionId
     this.isIntentionalClose = false
 
+    // 動的にWebSocket URLを取得（ローカルネットワーク対応）
+    this.url = getWsUrl()
     const wsUrl = `${this.url}?token=${encodeURIComponent(token)}&auction_id=${encodeURIComponent(auctionId)}`
 
     try {

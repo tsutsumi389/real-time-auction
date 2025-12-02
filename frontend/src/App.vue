@@ -15,6 +15,7 @@ import { useRoute } from 'vue-router'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
+import { logApiConfig } from '@/config/api'
 
 const route = useRoute()
 
@@ -34,8 +35,8 @@ const layout = computed(() => {
 
 onMounted(() => {
   console.log('Real-Time Auction System - Frontend')
-  console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL)
-  console.log('WebSocket URL:', import.meta.env.VITE_WS_URL)
+  // 動的に生成されたAPI設定を出力
+  logApiConfig()
 })
 </script>
 
