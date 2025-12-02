@@ -508,12 +508,12 @@ Radix Vue の Select プリミティブを活用した、アクセシブルな�
 - [x] カードアニメーション実装
 
 ### フェーズ2: Select コンポーネント群（2-3日）
-- [ ] Select コンポーネント群（9ファイル）実装
-- [ ] Lucide Icons 統合
-- [ ] AuctionFilters.vue 改善
-- [ ] AuctionSearchBar.vue 改善
-- [ ] キーボードナビゲーションテスト
-- [ ] アクセシビリティテスト
+- [x] Select コンポーネント群（9ファイル）実装
+- [x] Lucide Icons 統合
+- [x] AuctionFilters.vue 改善
+- [x] AuctionSearchBar.vue 改善
+- [x] キーボードナビゲーションテスト
+- [x] アクセシビリティテスト
 
 ### フェーズ3: 仕上げと最適化（1-2日）
 - [ ] LoadingSpinner.vue 改善
