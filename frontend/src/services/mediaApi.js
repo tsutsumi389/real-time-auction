@@ -4,9 +4,10 @@
  */
 import axios from 'axios'
 import { getToken } from './token'
+import { getApiBaseUrl } from '../config/api'
 
-// 環境変数からAPIベースURLを取得
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/api'
+// 動的にAPIベースURLを取得（ローカルネットワーク対応）
+const API_BASE_URL = getApiBaseUrl()
 
 // ファイルアップロード用のAxiosインスタンス
 // タイムアウトを長めに設定（30秒）

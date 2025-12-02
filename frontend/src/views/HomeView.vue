@@ -138,8 +138,10 @@ const wsLoading = ref(false)
 const wsResult = ref('')
 const wsSuccess = ref(false)
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/api'
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost/ws'
+// 動的にAPIとWebSocket URLを取得（ローカルネットワーク対応）
+import { getApiBaseUrl, getWsUrl } from '@/config/api'
+const API_BASE_URL = getApiBaseUrl()
+const WS_URL = getWsUrl()
 
 async function testApi() {
   apiLoading.value = true

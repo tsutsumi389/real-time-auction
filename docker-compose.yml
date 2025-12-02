@@ -112,7 +112,7 @@ services:
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
       - MINIO_BUCKET=${MINIO_BUCKET:-auction-media}
       - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
-      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-http://localhost:9000}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-/media}
     ports:
       - "8080:8080"
     volumes:
@@ -164,8 +164,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: auction-frontend
     environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost/api}
-      - VITE_WS_URL=${VITE_WS_URL:-ws://localhost/ws}
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
     ports:
       - "5173:5173"
     volumes:
