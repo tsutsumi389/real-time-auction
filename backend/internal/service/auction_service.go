@@ -597,23 +597,13 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 		return nil, err
 	}
 
-	// Get all bids for this item to process point transactions
-	allBids, err := s.auctionRepo.FindBidsByItemID(itemID, 1000, 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get bids for point processing: %w", err)
-	}
-
-	// Extract winner name
+	// Get winner name from winning bid
 	var winnerName *string
-	if len(allBids) > 0 && allBids[0].IsWinning {
-		winnerName = &allBids[0].BidderName
-	}
-
-	// Group bids by bidder to get unique bidders with their highest bid
-	bidderMap := make(map[string]domain.BidWithBidderInfo)
-	for _, bid := range allBids {
-		if _, exists := bidderMap[bid.BidderID.String()]; !exists {
-			bidderMap[bid.BidderID.String()] = bid
+	if winningBid != nil {
+		// Get the winning bid with bidder info
+		allBids, err := s.auctionRepo.FindBidsByItemID(itemID, 1, 0)
+		if err == nil && len(allBids) > 0 && allBids[0].IsWinning {
+			winnerName = &allBids[0].BidderName
 		}
 	}
 
@@ -652,67 +642,44 @@ func (s *AuctionService) EndItem(itemID string) (*domain.EndItemResponse, error)
 
 		endedItem = &itemToEnd
 
-		// Process each bidder's points
-		for bidderIDStr, bid := range bidderMap {
+		// Process winner's points only
+		// Note: In our bidding system, when a new bid is placed, the previous bidder's 
+		// reserved points are already released. So at the end of an item, only the 
+		// winner (if any) has reserved points that need to be consumed.
+		if winningBid != nil {
+			winnerIDStr := winningBid.BidderID.String()
+
 			// Get current points
-			currentPoints, err := s.pointRepo.GetCurrentPoints(bidderIDStr, tx)
+			currentPoints, err := s.pointRepo.GetCurrentPoints(winnerIDStr, tx)
 			if err != nil {
-				return fmt.Errorf("failed to get points for bidder %s: %w", bidderIDStr, err)
+				return fmt.Errorf("failed to get points for winner %s: %w", winnerIDStr, err)
 			}
 			if currentPoints == nil {
-				return fmt.Errorf("points not found for bidder %s", bidderIDStr)
+				return fmt.Errorf("points not found for winner %s", winnerIDStr)
 			}
 
-			bidPrice := bid.Price
+			// Winner: Consume reserved points (reserved → 0, total decreases)
+			err = s.pointRepo.UpdatePoints(winnerIDStr, 0, -winningBid.Price, tx)
+			if err != nil {
+				return fmt.Errorf("failed to consume points for winner %s: %w", winnerIDStr, err)
+			}
 
-			if bid.IsWinning {
-				// Winner: Consume reserved points (reserved → 0)
-				err = s.pointRepo.UpdatePoints(bidderIDStr, 0, -bidPrice, tx)
-				if err != nil {
-					return fmt.Errorf("failed to consume points for winner %s: %w", bidderIDStr, err)
-				}
-
-				// Create point history record for consumption
-				history := &domain.PointHistory{
-					BidderID:       currentPoints.BidderID,
-					Amount:         bidPrice,
-					Type:           domain.PointHistoryTypeConsume,
-					Reason:         stringPtr(fmt.Sprintf("Won item %s at price %d", itemID, bidPrice)),
-					RelatedBidID:   &bid.ID,
-					BalanceBefore:  currentPoints.AvailablePoints,
-					BalanceAfter:   currentPoints.AvailablePoints,
-					ReservedBefore: currentPoints.ReservedPoints,
-					ReservedAfter:  currentPoints.ReservedPoints - bidPrice,
-					TotalBefore:    currentPoints.TotalPoints,
-					TotalAfter:     currentPoints.TotalPoints - bidPrice,
-				}
-				if err := s.pointRepo.CreatePointHistory(history, tx); err != nil {
-					return fmt.Errorf("failed to create point history for winner %s: %w", bidderIDStr, err)
-				}
-			} else {
-				// Loser: Release reserved points (reserved → available)
-				err = s.pointRepo.UpdatePoints(bidderIDStr, bidPrice, -bidPrice, tx)
-				if err != nil {
-					return fmt.Errorf("failed to release points for bidder %s: %w", bidderIDStr, err)
-				}
-
-				// Create point history record for release
-				history := &domain.PointHistory{
-					BidderID:       currentPoints.BidderID,
-					Amount:         bidPrice,
-					Type:           domain.PointHistoryTypeRelease,
-					Reason:         stringPtr(fmt.Sprintf("Did not win item %s, bid price %d released", itemID, bidPrice)),
-					RelatedBidID:   &bid.ID,
-					BalanceBefore:  currentPoints.AvailablePoints,
-					BalanceAfter:   currentPoints.AvailablePoints + bidPrice,
-					ReservedBefore: currentPoints.ReservedPoints,
-					ReservedAfter:  currentPoints.ReservedPoints - bidPrice,
-					TotalBefore:    currentPoints.TotalPoints,
-					TotalAfter:     currentPoints.TotalPoints,
-				}
-				if err := s.pointRepo.CreatePointHistory(history, tx); err != nil {
-					return fmt.Errorf("failed to create point history for bidder %s: %w", bidderIDStr, err)
-				}
+			// Create point history record for consumption
+			history := &domain.PointHistory{
+				BidderID:       currentPoints.BidderID,
+				Amount:         winningBid.Price,
+				Type:           domain.PointHistoryTypeConsume,
+				Reason:         stringPtr(fmt.Sprintf("Won item %s at price %d", itemID, winningBid.Price)),
+				RelatedBidID:   &winningBid.ID,
+				BalanceBefore:  currentPoints.AvailablePoints,
+				BalanceAfter:   currentPoints.AvailablePoints,
+				ReservedBefore: currentPoints.ReservedPoints,
+				ReservedAfter:  currentPoints.ReservedPoints - winningBid.Price,
+				TotalBefore:    currentPoints.TotalPoints,
+				TotalAfter:     currentPoints.TotalPoints - winningBid.Price,
+			}
+			if err := s.pointRepo.CreatePointHistory(history, tx); err != nil {
+				return fmt.Errorf("failed to create point history for winner %s: %w", winnerIDStr, err)
 			}
 		}
 
