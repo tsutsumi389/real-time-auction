@@ -516,8 +516,8 @@ Radix Vue の Select プリミティブを活用した、アクセシブルな�
 - [x] アクセシビリティテスト
 
 ### フェーズ3: 仕上げと最適化（1-2日）
-- [ ] LoadingSpinner.vue 改善
-- [ ] BidderAuctionListView.vue 最終調整
+- [x] LoadingSpinner.vue 改善
+- [x] BidderAuctionListView.vue 最終調整
 - [ ] レスポンシブデザイン確認
 - [ ] ブラウザ互換性テスト
 - [ ] パフォーマンス最適化

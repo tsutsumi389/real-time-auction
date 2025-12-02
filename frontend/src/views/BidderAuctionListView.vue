@@ -1,17 +1,17 @@
 <template>
   <div class="bidder-auction-list-container">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <!-- ページタイトル -->
+      <!-- Page title -->
       <div class="mb-6 sm:mb-8">
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
           オークション一覧
         </h1>
-        <p class="text-sm sm:text-base text-gray-600">
+        <p class="text-sm sm:text-base text-muted-foreground">
           開催中および終了したオークションを閲覧できます
         </p>
       </div>
 
-      <!-- 検索バー -->
+      <!-- Search bar -->
       <div class="mb-4 sm:mb-6">
         <AuctionSearchBar
           v-model="searchKeyword"
@@ -21,7 +21,7 @@
         />
       </div>
 
-      <!-- フィルタ -->
+      <!-- Filters -->
       <div class="mb-6">
         <AuctionFilters
           :current-status="auctionStore.filters.status"
@@ -33,23 +33,23 @@
         />
       </div>
 
-      <!-- エラー表示 -->
-      <div v-if="auctionStore.error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-        <div class="flex justify-between items-start">
-          <p class="text-red-800 text-sm sm:text-base">{{ auctionStore.error }}</p>
+      <!-- Error display -->
+      <Alert v-if="auctionStore.error" variant="destructive" class="mb-6">
+        <AlertCircle class="h-4 w-4" />
+        <AlertTitle>エラーが発生しました</AlertTitle>
+        <AlertDescription class="flex justify-between items-start">
+          <span>{{ auctionStore.error }}</span>
           <button
             @click="auctionStore.clearError"
-            class="text-red-600 hover:text-red-800 ml-4"
+            class="text-destructive hover:text-destructive/80 ml-4 p-1 rounded-full hover:bg-destructive/10 transition-colors"
             aria-label="エラーを閉じる"
           >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
+            <X class="h-4 w-4" />
           </button>
-        </div>
-      </div>
+        </AlertDescription>
+      </Alert>
 
-      <!-- オークションカードグリッド -->
+      <!-- Auction card grid -->
       <AuctionCardGrid
         :auctions="auctionStore.auctions"
         :loading="auctionStore.loading"
@@ -57,27 +57,26 @@
         @view-details="handleViewDetails"
         @join-auction="handleJoinAuction"
       >
-        <!-- 空の状態のカスタマイズ -->
+        <!-- Custom empty state -->
         <template #empty>
-          <div class="text-center">
-            <svg class="mx-auto h-12 w-12 sm:h-16 sm:w-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-            </svg>
-            <p class="text-gray-500 text-base sm:text-lg mb-4">
+          <div class="text-center animate-fade-in">
+            <Inbox class="mx-auto h-12 w-12 sm:h-16 sm:w-16 mb-4 text-muted-foreground" :stroke-width="1.5" />
+            <p class="text-muted-foreground text-base sm:text-lg mb-4">
               {{ emptyMessage }}
             </p>
-            <button
+            <Button
               v-if="hasActiveFilters"
               @click="handleResetFilters"
-              class="px-4 py-2 sm:px-6 sm:py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm sm:text-base"
+              variant="outline"
             >
+              <RotateCcw class="mr-2 h-4 w-4" />
               フィルタをリセット
-            </button>
+            </Button>
           </div>
         </template>
       </AuctionCardGrid>
 
-      <!-- 無限スクロールトリガー -->
+      <!-- Infinite scroll trigger -->
       <div
         v-if="auctionStore.auctions.length > 0 && auctionStore.pagination.hasMore"
         ref="loadMoreTrigger"
@@ -89,16 +88,18 @@
           text="読み込み中..."
           center
         />
-        <div v-else class="text-gray-500 text-sm sm:text-base">
+        <div v-else class="text-muted-foreground text-sm sm:text-base flex items-center gap-2">
+          <ChevronsDown class="h-4 w-4 animate-bounce" />
           スクロールして続きを読み込む
         </div>
       </div>
 
-      <!-- 読み込み完了メッセージ -->
+      <!-- Load complete message -->
       <div
         v-if="auctionStore.auctions.length > 0 && !auctionStore.pagination.hasMore"
-        class="py-6 sm:py-8 text-center text-gray-500 text-sm sm:text-base"
+        class="py-6 sm:py-8 text-center text-muted-foreground text-sm sm:text-base"
       >
+        <CheckCircle2 class="inline-block h-5 w-5 mr-2 text-green-500" />
         すべてのオークションを表示しました（全{{ auctionStore.pagination.total }}件）
       </div>
     </div>
@@ -106,13 +107,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { AlertCircle, X, Inbox, RotateCcw, ChevronsDown, CheckCircle2 } from 'lucide-vue-next'
 import { useBidderAuctionStore } from '@/stores/bidderAuction'
 import AuctionSearchBar from '@/components/bidder/AuctionSearchBar.vue'
 import AuctionFilters from '@/components/bidder/AuctionFilters.vue'
 import AuctionCardGrid from '@/components/bidder/AuctionCardGrid.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+import Alert from '@/components/ui/Alert.vue'
+import AlertTitle from '@/components/ui/AlertTitle.vue'
+import AlertDescription from '@/components/ui/AlertDescription.vue'
+import Button from '@/components/ui/Button.vue'
 
 const router = useRouter()
 
@@ -185,19 +191,21 @@ const handleResetFilters = () => {
 }
 
 const handleViewDetails = (auction) => {
-  console.log('View details:', auction)
-  // TODO: オークション詳細画面への遷移を実装
+  router.push({
+    name: 'bidder-auction-detail',
+    params: { id: auction.id }
+  })
 }
 
 const handleJoinAuction = (auction) => {
-  // オークション開催中の画面へ遷移
+  // Navigate to live auction screen
   router.push({
     name: 'bidder-auction-live',
     params: { id: auction.id }
   })
 }
 
-// Intersection Observerのセットアップ（無限スクロール）
+// Intersection Observer setup (infinite scroll)
 const setupIntersectionObserver = () => {
   if (observer) {
     observer.disconnect()
@@ -206,50 +214,48 @@ const setupIntersectionObserver = () => {
   observer = new IntersectionObserver(
     (entries) => {
       const entry = entries[0]
-      // トリガー要素が表示されたら追加読み込み
+      // Load more when trigger element is visible
       if (entry.isIntersecting && auctionStore.pagination.hasMore && !auctionStore.loadingMore) {
         auctionStore.loadMoreAuctions()
       }
     },
     {
-      rootMargin: '100px', // 100px手前で読み込み開始
+      rootMargin: '200px', // Start loading 200px before visible
       threshold: 0.1
     }
   )
 
-  // トリガー要素を監視
+  // Observe trigger element
   if (loadMoreTrigger.value) {
     observer.observe(loadMoreTrigger.value)
   }
 }
 
-// has_moreが変更されたときにObserverを再設定
-watch(() => auctionStore.pagination.hasMore, (hasMore) => {
+// Re-setup Observer when hasMore changes
+watch(() => auctionStore.pagination.hasMore, async (hasMore) => {
   if (hasMore) {
-    setTimeout(() => {
-      setupIntersectionObserver()
-    }, 100)
+    await nextTick()
+    setupIntersectionObserver()
   }
 })
 
-// ライフサイクル
+// Lifecycle
 onMounted(async () => {
-  // 初回データ取得
+  // Initial data fetch
   await auctionStore.fetchAuctionList()
 
-  // Intersection Observerのセットアップ（次のティックで実行）
-  setTimeout(() => {
-    setupIntersectionObserver()
-  }, 100)
+  // Setup Intersection Observer after next tick
+  await nextTick()
+  setupIntersectionObserver()
 })
 
 onUnmounted(() => {
-  // Observerのクリーンアップ
+  // Cleanup Observer
   if (observer) {
     observer.disconnect()
   }
 
-  // ストアのリセット
+  // Reset store
   auctionStore.reset()
 })
 </script>
@@ -257,13 +263,13 @@ onUnmounted(() => {
 <style scoped>
 .bidder-auction-list-container {
   min-height: 100vh;
-  background-color: #f9fafb; /* bg-gray-50 */
+  background-color: hsl(var(--background));
 }
 
-/* レスポンシブデザイン対応 */
+/* Responsive design */
 @media (max-width: 640px) {
   .bidder-auction-list-container {
-    background-color: #ffffff;
+    background-color: hsl(var(--background));
   }
 }
 </style>
