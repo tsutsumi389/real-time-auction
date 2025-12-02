@@ -1,34 +1,47 @@
 <template>
-  <div class="search-bar">
+  <div class="search-bar" role="search" aria-label="オークション検索">
     <div class="flex gap-2 sm:gap-4">
-      <input
-        v-model="localKeyword"
-        type="text"
-        :placeholder="placeholder"
-        class="flex-1 px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-        @keyup.enter="handleSearch"
-      />
-      <button
+      <div class="relative flex-1">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" :stroke-width="1.5" />
+        <Input
+          v-model="localKeyword"
+          type="text"
+          :placeholder="placeholder"
+          :disabled="loading"
+          class="pl-10 pr-10"
+          aria-label="検索キーワード"
+          @keyup.enter="handleSearch"
+        />
+        <button
+          v-if="localKeyword"
+          @click="handleClear"
+          :disabled="loading"
+          class="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          aria-label="検索キーワードをクリア"
+          type="button"
+        >
+          <X class="h-4 w-4" :stroke-width="1.5" />
+        </button>
+      </div>
+      <Button
         @click="handleSearch"
         :disabled="loading"
-        class="px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-medium whitespace-nowrap"
+        variant="default"
+        aria-label="検索を実行"
       >
+        <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
+        <Search v-else class="mr-2 h-4 w-4" :stroke-width="1.5" />
         {{ searchButtonText }}
-      </button>
-      <button
-        v-if="showClearButton && localKeyword"
-        @click="handleClear"
-        :disabled="loading"
-        class="px-3 py-2 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base whitespace-nowrap"
-      >
-        クリア
-      </button>
+      </Button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import { Search, X, Loader2 } from 'lucide-vue-next'
+import Input from '@/components/ui/Input.vue'
+import Button from '@/components/ui/Button.vue'
 
 const props = defineProps({
   modelValue: {
@@ -57,7 +70,7 @@ const emit = defineEmits(['update:modelValue', 'search', 'clear'])
 
 const localKeyword = ref(props.modelValue)
 
-// 親コンポーネントからの変更を反映
+// Reflect changes from parent component
 watch(() => props.modelValue, (newValue) => {
   localKeyword.value = newValue
 })
