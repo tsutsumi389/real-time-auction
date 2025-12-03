@@ -19,7 +19,7 @@
                shadow-sm hover:shadow-xl hover:border-primary/30 dark:hover:border-primary/50 hover:-translate-y-1.5
                focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900
                transition-all duration-300 ease-out"
-        :aria-label="`LOT ${item.lot_number}: ${item.name}, 開始価格 ${formatPrice(item.starting_price)}円`"
+        :aria-label="`LOT ${item.lot_number}: ${item.name}, 開始価格 ${formatPrice(item.starting_price)}pt`"
       >
         <!-- サムネイル画像 -->
         <div class="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-700 overflow-hidden">
@@ -94,7 +94,7 @@
             <div class="flex items-baseline justify-between">
               <span class="text-xs text-gray-500 dark:text-gray-400">開始価格</span>
               <span class="text-base sm:text-lg font-bold text-gray-900 dark:text-white tabular-nums">
-                ¥{{ formatPrice(item.starting_price) }}
+                {{ formatPrice(item.starting_price) }}pt
               </span>
             </div>
 
@@ -105,7 +105,7 @@
             >
               <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">現在価格</span>
               <span class="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                ¥{{ formatPrice(item.current_price) }}
+                {{ formatPrice(item.current_price) }}pt
               </span>
             </div>
           </div>

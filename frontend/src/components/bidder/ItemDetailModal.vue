@@ -176,14 +176,14 @@
                     <div class="mb-2">
                       <dt class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mb-1">開始価格</dt>
                       <dd class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
-                        ¥{{ formatPrice(item.starting_price) }}
+                        {{ formatPrice(item.starting_price) }}pt
                       </dd>
                     </div>
                     <!-- 現在価格（入札がある場合） -->
                     <div v-if="item.current_price && item.current_price > item.starting_price" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                       <dt class="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-medium uppercase tracking-wide mb-1">現在価格</dt>
                       <dd class="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                        ¥{{ formatPrice(item.current_price) }}
+                        {{ formatPrice(item.current_price) }}pt
                       </dd>
                     </div>
                   </dl>
