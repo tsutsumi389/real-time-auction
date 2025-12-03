@@ -1,73 +1,73 @@
-# Admin Dashboard Implementation Plan
+# 管理者ダッシュボード実装計画
 
-## Overview
+## 概要
 
-Implement the admin dashboard screen (`/admin/dashboard`) for the real-time auction system. This is the main landing page for administrators (system_admin and auctioneer roles) after login, providing an at-a-glance view of system statistics, recent activities, and quick action buttons.
+リアルタイムオークションシステムの管理者ダッシュボード画面（`/admin/dashboard`）を実装します。これは管理者（system_adminおよびauctioneerロール）がログイン後に最初にアクセスするページで、システム統計、最近のアクティビティ、クイックアクションボタンを一目で確認できます。
 
-**Current State**: The dashboard route exists with only placeholder content showing user information.
+**現状**: ダッシュボードルートは存在しますが、ユーザー情報を表示するプレースホルダーのみです。
 
-**Goal**: Create a fully functional dashboard with:
-- Real-time system statistics (4 cards)
-- Recent activity feeds (latest bids, new bidders, ended auctions)
-- Role-based quick action buttons
-- Responsive design for all devices
+**目標**: 以下を含む完全に機能するダッシュボードを作成：
+- リアルタイムシステム統計（4つのカード）
+- 最近のアクティビティフィード（最新の入札、新規入札者、終了したオークション）
+- ロールベースのクイックアクションボタン
+- 全デバイス対応のレスポンシブデザイン
 
-## Requirements Summary
+## 要件概要
 
-### System Statistics Cards
-1. **Active Auctions Count** - Number of currently active auctions
-2. **Today's Bids Count** - Total bids placed today
-3. **Registered Bidders Count** - Total active bidders in system
-4. **Points Circulation** - Total points distributed across all bidders
+### システム統計カード
+1. **開催中オークション数** - 現在開催中のオークション数
+2. **本日の入札数** - 本日の入札総数
+3. **登録入札者数** - システム内のアクティブな入札者総数
+4. **ポイント流通量** - 全入札者に配布された総ポイント数
 
-### Recent Activities
-1. **Latest Bids** (last 5) - Auction name, bidder name, price, timestamp
-2. **New Bidders** (last 5) - Email, display name, registration date (system_admin only)
-3. **Ended Auctions** (last 5) - Title, winner, final price, end time
+### 最近のアクティビティ
+1. **最新の入札**（直近5件） - オークション名、入札者名、価格、タイムスタンプ
+2. **新規入札者**（直近5件） - メールアドレス、表示名、登録日（system_adminのみ）
+3. **終了したオークション**（直近5件） - タイトル、落札者、最終価格、終了時刻
 
-### Quick Actions (Role-Based)
-1. **Create New Auction** - Available to all admins
-2. **Create New Bidder** - system_admin only
-3. **Grant Points** - system_admin only
+### クイックアクション（ロールベース）
+1. **新規オークション作成** - 全管理者が利用可能
+2. **新規入札者作成** - system_adminのみ
+3. **ポイント付与** - system_adminのみ
 
-## Implementation Approach
+## 実装アプローチ
 
-### Phase 1: Backend API Implementation
+### フェーズ1: バックエンドAPI実装
 
-**New Files to Create:**
-- `backend/internal/domain/dashboard.go` - Dashboard data structures
-- `backend/internal/repository/dashboard_repository.go` - Database queries for statistics
-- `backend/internal/service/dashboard_service.go` - Business logic for dashboard data
-- `backend/internal/handler/dashboard_handler.go` - HTTP handlers for dashboard endpoints
+**作成する新規ファイル:**
+- `backend/internal/domain/dashboard.go` - ダッシュボードデータ構造
+- `backend/internal/repository/dashboard_repository.go` - 統計情報のデータベースクエリ
+- `backend/internal/service/dashboard_service.go` - ダッシュボードデータのビジネスロジック
+- `backend/internal/handler/dashboard_handler.go` - ダッシュボードエンドポイントのHTTPハンドラー
 
-**Existing Files to Modify:**
-- `backend/cmd/api/main.go` - Add dashboard routes to admin protected group
+**変更する既存ファイル:**
+- `backend/cmd/api/main.go` - 管理者保護グループにダッシュボードルートを追加
 
-**API Endpoints:**
-1. `GET /api/admin/dashboard/stats` - Returns all 4 statistics
-2. `GET /api/admin/dashboard/activities` - Returns recent activities (role-based filtering)
+**APIエンドポイント:**
+1. `GET /api/admin/dashboard/stats` - 4つの統計情報を全て返す
+2. `GET /api/admin/dashboard/activities` - 最近のアクティビティを返す（ロールベースフィルタリング）
 
-**Database Queries:**
-- Active auctions: `SELECT COUNT(*) FROM auctions WHERE status = 'active'`
-- Today's bids: `SELECT COUNT(*) FROM bids WHERE bid_at >= CURRENT_DATE`
-- Total bidders: `SELECT COUNT(*) FROM bidders WHERE status = 'active'`
-- Points circulation: `SELECT SUM(total_points) FROM bidder_points`
-- Recent bids: Join `bids`, `items`, `bidders` tables, order by `bid_at DESC`, limit 5
-- New bidders: Select from `bidders`, order by `created_at DESC`, limit 5
-- Ended auctions: Join `auctions`, `items`, `bidders`, filter by `status = 'ended'`, limit 5
+**データベースクエリ:**
+- 開催中オークション: `SELECT COUNT(*) FROM auctions WHERE status = 'active'`
+- 本日の入札: `SELECT COUNT(*) FROM bids WHERE bid_at >= CURRENT_DATE`
+- 入札者総数: `SELECT COUNT(*) FROM bidders WHERE status = 'active'`
+- ポイント流通量: `SELECT SUM(total_points) FROM bidder_points`
+- 最新の入札: `bids`, `items`, `bidders` テーブルをJOIN、`bid_at DESC` でソート、5件取得
+- 新規入札者: `bidders` から選択、`created_at DESC` でソート、5件取得
+- 終了したオークション: `auctions`, `items`, `bidders` をJOIN、`status = 'ended'` でフィルタ、5件取得
 
-**Role-Based Logic:**
-- `new_bidders` data only returned for system_admin role
-- Auctioneer receives empty array or field is omitted
+**ロールベースロジック:**
+- `new_bidders` データはsystem_adminロールにのみ返される
+- Auctioneerには空配列が返されるか、フィールドが省略される
 
-### Phase 2: Frontend State Management
+### フェーズ2: フロントエンド状態管理
 
-**New Files to Create:**
-- `frontend/src/services/api/dashboardApi.js` - API client for dashboard endpoints
-- `frontend/src/stores/dashboardStore.js` - Pinia store for dashboard state
-- `frontend/src/utils/timeFormatter.js` - Utility for relative time formatting (e.g., "3分前")
+**作成する新規ファイル:**
+- `frontend/src/services/api/dashboardApi.js` - ダッシュボードエンドポイント用APIクライアント
+- `frontend/src/stores/dashboardStore.js` - ダッシュボード状態管理用Piniaストア
+- `frontend/src/utils/timeFormatter.js` - 相対時刻フォーマット用ユーティリティ（例: "3分前"）
 
-**Pinia Store Structure:**
+**Piniaストア構造:**
 ```javascript
 {
   state: {
@@ -84,155 +84,155 @@ Implement the admin dashboard screen (`/admin/dashboard`) for the real-time auct
 }
 ```
 
-### Phase 3: Frontend UI Components
+### フェーズ3: フロントエンドUIコンポーネント
 
-**New Components to Create:**
-- `frontend/src/components/admin/StatsCard.vue` - Reusable statistics card with icon, title, and value
-- `frontend/src/components/admin/RecentBidsList.vue` - List of recent bids with relative timestamps
-- `frontend/src/components/admin/NewBiddersList.vue` - List of new bidders (system_admin only)
-- `frontend/src/components/admin/EndedAuctionsList.vue` - List of recently ended auctions
-- `frontend/src/components/admin/QuickActions.vue` - Role-based action buttons
+**作成する新規コンポーネント:**
+- `frontend/src/components/admin/StatsCard.vue` - アイコン、タイトル、値を持つ再利用可能な統計カード
+- `frontend/src/components/admin/RecentBidsList.vue` - 相対時刻付きの最新入札リスト
+- `frontend/src/components/admin/NewBiddersList.vue` - 新規入札者リスト（system_adminのみ）
+- `frontend/src/components/admin/EndedAuctionsList.vue` - 最近終了したオークションリスト
+- `frontend/src/components/admin/QuickActions.vue` - ロールベースアクションボタン
 
-**Existing Files to Modify:**
-- `frontend/src/views/admin/DashboardView.vue` - Replace placeholder with complete dashboard layout
+**変更する既存ファイル:**
+- `frontend/src/views/admin/DashboardView.vue` - プレースホルダーを完全なダッシュボードレイアウトに置き換え
 
-**Component Layout:**
+**コンポーネントレイアウト:**
 ```
 DashboardView.vue
-├── Header ("ダッシュボード")
-├── Stats Grid (4 StatsCard components)
-├── Content Grid (3 columns on desktop, 1-2 on mobile/tablet)
+├── ヘッダー（"ダッシュボード"）
+├── 統計グリッド（4つのStatsCardコンポーネント）
+├── コンテンツグリッド（デスクトップで3カラム、モバイル/タブレットで1-2カラム）
 │   ├── RecentBidsList
 │   ├── EndedAuctionsList
-│   └── Sidebar
+│   └── サイドバー
 │       ├── QuickActions
-│       └── NewBiddersList (if system_admin)
+│       └── NewBiddersList（system_adminの場合）
 ```
 
-### Phase 4: Styling and Responsiveness
+### フェーズ4: スタイリングとレスポンシブ対応
 
-**Responsive Breakpoints:**
-- **Mobile (< 768px)**: 1 column layout, stats cards stacked vertically
-- **Tablet (768px - 1279px)**: 2 column grid for stats, mixed layout for content
-- **Desktop (≥ 1280px)**: 4 column grid for stats, 3 column content layout
+**レスポンシブブレークポイント:**
+- **モバイル（< 768px）**: 1カラムレイアウト、統計カードを縦に積み重ね
+- **タブレット（768px - 1279px）**: 統計は2カラムグリッド、コンテンツは混合レイアウト
+- **デスクトップ（≥ 1280px）**: 統計は4カラムグリッド、コンテンツは3カラムレイアウト
 
-**Design System:**
-- Use Shadcn Vue components (Card, Button) with Tailwind CSS
-- Color scheme: Blue for primary actions, gray for backgrounds
-- Hover effects on stats cards (shadow elevation)
-- Loading skeleton screens while fetching data
-- Error states with retry button
+**デザインシステム:**
+- Shadcn VueコンポーネントとTailwind CSSを使用
+- カラースキーム: プライマリアクションは青、背景はグレー
+- 統計カードにホバーエフェクト（シャドウの高さ変更）
+- データ取得中はローディングスケルトン画面
+- リトライボタン付きのエラー状態
 
-### Phase 5: Testing and Validation
+### フェーズ5: テストと検証
 
-**Backend Tests:**
-- Repository layer: Test each statistics query returns correct count
-- Service layer: Test role-based data filtering
-- Handler layer: Test JWT auth, role verification, response format
+**バックエンドテスト:**
+- リポジトリ層: 各統計クエリが正しいカウントを返すことをテスト
+- サービス層: ロールベースデータフィルタリングをテスト
+- ハンドラー層: JWT認証、ロール検証、レスポンス形式をテスト
 
-**Frontend Tests:**
-- Component tests: Verify stats cards render with correct props
-- Store tests: Verify API calls and state updates
-- Integration tests: Verify role-based UI rendering
+**フロントエンドテスト:**
+- コンポーネントテスト: 統計カードが正しいpropsでレンダリングされることを確認
+- ストアテスト: API呼び出しと状態更新を確認
+- 統合テスト: ロールベースのUIレンダリングを確認
 
-## Critical Files
+## 重要なファイル
 
-### Must Create (Backend):
-1. `backend/internal/handler/dashboard_handler.go` - Core API logic
-2. `backend/internal/repository/dashboard_repository.go` - Database aggregations
-3. `backend/internal/service/dashboard_service.go` - Business logic
-4. `backend/internal/domain/dashboard.go` - Data structures
+### 作成必須（バックエンド）:
+1. `backend/internal/handler/dashboard_handler.go` - コアAPIロジック
+2. `backend/internal/repository/dashboard_repository.go` - データベース集計
+3. `backend/internal/service/dashboard_service.go` - ビジネスロジック
+4. `backend/internal/domain/dashboard.go` - データ構造
 
-### Must Create (Frontend):
-1. `frontend/src/stores/dashboardStore.js` - State management
-2. `frontend/src/components/admin/StatsCard.vue` - Statistics display
-3. `frontend/src/services/api/dashboardApi.js` - API client
-4. `frontend/src/utils/timeFormatter.js` - Time formatting utility
+### 作成必須（フロントエンド）:
+1. `frontend/src/stores/dashboardStore.js` - 状態管理
+2. `frontend/src/components/admin/StatsCard.vue` - 統計表示
+3. `frontend/src/services/api/dashboardApi.js` - APIクライアント
+4. `frontend/src/utils/timeFormatter.js` - 時刻フォーマットユーティリティ
 
-### Must Modify:
-1. `backend/cmd/api/main.go` - Add dashboard routes
-2. `frontend/src/views/admin/DashboardView.vue` - Complete dashboard UI
+### 変更必須:
+1. `backend/cmd/api/main.go` - ダッシュボードルートを追加
+2. `frontend/src/views/admin/DashboardView.vue` - ダッシュボードUI完成
 
-## Implementation Steps
+## 実装手順
 
-### Step 1: Backend Foundation (3-4 hours)
-1. Create domain structs for dashboard data (`dashboard.go`)
-2. Implement repository methods for each statistic (`dashboard_repository.go`)
-3. Implement service layer with role-based filtering (`dashboard_service.go`)
-4. Create HTTP handlers for 2 endpoints (`dashboard_handler.go`)
-5. Register routes in `main.go` under admin protected group
-6. Test with curl/Postman
+### ステップ1: バックエンド基盤（3-4時間）
+1. ダッシュボードデータのドメイン構造体を作成（`dashboard.go`）
+2. 各統計のリポジトリメソッドを実装（`dashboard_repository.go`）
+3. ロールベースフィルタリング付きサービス層を実装（`dashboard_service.go`）
+4. 2つのエンドポイント用HTTPハンドラーを作成（`dashboard_handler.go`）
+5. `main.go` の管理者保護グループにルートを登録
+6. curl/Postmanでテスト
 
-### Step 2: Frontend State Layer (2-3 hours)
-1. Create API client functions (`dashboardApi.js`)
-2. Create Pinia store with state, getters, actions (`dashboardStore.js`)
-3. Create time formatter utility (`timeFormatter.js`)
-4. Test API integration
+### ステップ2: フロントエンド状態層（2-3時間）
+1. APIクライアント関数を作成（`dashboardApi.js`）
+2. state、getters、actionsを持つPiniaストアを作成（`dashboardStore.js`）
+3. 時刻フォーマッターユーティリティを作成（`timeFormatter.js`）
+4. API統合をテスト
 
-### Step 3: Frontend UI Components (4-5 hours)
-1. Build `StatsCard.vue` - Icon, title, large number display
-2. Build `RecentBidsList.vue` - Table/list with relative timestamps
-3. Build `NewBiddersList.vue` - Conditional rendering based on role
-4. Build `EndedAuctionsList.vue` - Winners and final prices
-5. Build `QuickActions.vue` - Role-based button visibility
-6. Update `DashboardView.vue` - Integrate all components, add grid layout
+### ステップ3: フロントエンドUIコンポーネント（4-5時間）
+1. `StatsCard.vue` 構築 - アイコン、タイトル、大きな数値表示
+2. `RecentBidsList.vue` 構築 - 相対時刻付きテーブル/リスト
+3. `NewBiddersList.vue` 構築 - ロールに基づく条件付きレンダリング
+4. `EndedAuctionsList.vue` 構築 - 落札者と最終価格
+5. `QuickActions.vue` 構築 - ロールベースボタン表示
+6. `DashboardView.vue` 更新 - 全コンポーネントを統合、グリッドレイアウト追加
 
-### Step 4: Styling and Polish (2-3 hours)
-1. Implement responsive breakpoints (mobile/tablet/desktop)
-2. Add loading skeletons during data fetch
-3. Add error handling UI with retry button
-4. Add hover effects and transitions
-5. Verify accessibility (keyboard nav, screen readers)
+### ステップ4: スタイリングと仕上げ（2-3時間）
+1. レスポンシブブレークポイントを実装（モバイル/タブレット/デスクトップ）
+2. データ取得中のローディングスケルトンを追加
+3. リトライボタン付きエラーハンドリングUIを追加
+4. ホバーエフェクトとトランジションを追加
+5. アクセシビリティを確認（キーボードナビゲーション、スクリーンリーダー）
 
-### Step 5: Testing (2-3 hours)
-1. Write backend unit tests for repository/service/handler
-2. Write frontend component tests
-3. Manual testing across roles (system_admin vs auctioneer)
-4. Manual testing across devices (responsive)
+### ステップ5: テスト（2-3時間）
+1. バックエンドのリポジトリ/サービス/ハンドラーのユニットテストを記述
+2. フロントエンドコンポーネントテストを記述
+3. ロール別の手動テスト（system_admin vs auctioneer）
+4. デバイス別の手動テスト（レスポンシブ）
 
-**Total Estimated Time**: 13-18 hours
+**総推定時間**: 13-18時間
 
-## Success Criteria
+## 成功基準
 
-- [ ] All 4 statistics display correctly on dashboard load
-- [ ] Recent activities show up to 5 items each
-- [ ] New bidders list only visible to system_admin
-- [ ] Quick action buttons work and respect role permissions
-- [ ] Loading states show during data fetch
-- [ ] Error states display with retry option
-- [ ] Responsive design works on mobile/tablet/desktop
-- [ ] All links navigate to correct pages
-- [ ] Data updates when navigating back to dashboard
-- [ ] All tests pass
+- [ ] ダッシュボード読み込み時に4つの統計が正しく表示される
+- [ ] 最近のアクティビティが各最大5件表示される
+- [ ] 新規入札者リストはsystem_adminのみに表示される
+- [ ] クイックアクションボタンが動作し、ロール権限を尊重する
+- [ ] データ取得中にローディング状態が表示される
+- [ ] リトライオプション付きのエラー状態が表示される
+- [ ] モバイル/タブレット/デスクトップでレスポンシブデザインが機能する
+- [ ] 全てのリンクが正しいページに遷移する
+- [ ] ダッシュボードに戻った時にデータが更新される
+- [ ] 全てのテストが合格する
 
-## Security Considerations
+## セキュリティ考慮事項
 
-1. **Authentication**: All endpoints require valid JWT token
-2. **Authorization**: Dashboard accessible to system_admin and auctioneer only (bidders get 403)
-3. **Data Filtering**: New bidders data filtered out for auctioneer role
-4. **No PII Leakage**: Only display names shown, no sensitive bidder UUIDs exposed
-5. **Rate Limiting**: Consider adding rate limits to statistics endpoints (future)
+1. **認証**: 全エンドポイントで有効なJWTトークンが必要
+2. **認可**: ダッシュボードはsystem_adminとauctioneerのみアクセス可能（bidderは403）
+3. **データフィルタリング**: 新規入札者データはauctioneerロールには除外
+4. **PII漏洩防止**: 表示名のみ表示、機密性の高い入札者UUIDは公開しない
+5. **レート制限**: 統計エンドポイントへのレート制限追加を検討（将来）
 
-## Performance Considerations
+## パフォーマンス考慮事項
 
-1. **Database Queries**: All use COUNT/SUM aggregations with LIMIT for efficiency
-2. **Caching Strategy**: Statistics could be cached for 30-60 seconds (future enhancement)
-3. **Lazy Loading**: Components load data on mount, not all upfront
-4. **Pagination**: Activity lists limited to 5 items to keep response small
+1. **データベースクエリ**: 全てCOUNT/SUM集計とLIMITを使用して効率化
+2. **キャッシュ戦略**: 統計は30-60秒キャッシュ可能（将来の機能拡張）
+3. **遅延読み込み**: コンポーネントはマウント時にデータを読み込み、一度に全て読み込まない
+4. **ページネーション**: アクティビティリストは5件に制限してレスポンスを小さく保つ
 
-## Future Enhancements
+## 将来の機能拡張
 
-1. **Auto-refresh**: WebSocket or polling for real-time updates every 30 seconds
-2. **Charts/Graphs**: Visualize bid trends, auction history over time
-3. **Date Filters**: Allow filtering statistics by date range
-4. **Export**: CSV/PDF reports of statistics
-5. **Customization**: Allow admins to choose which stats to display
-6. **Notifications**: Badge indicators for new activities
+1. **自動更新**: 30秒ごとにWebSocketまたはポーリングでリアルタイム更新
+2. **チャート/グラフ**: 入札トレンド、オークション履歴の時系列視覚化
+3. **日付フィルター**: 日付範囲による統計フィルタリング
+4. **エクスポート**: 統計のCSV/PDFレポート
+5. **カスタマイズ**: 管理者が表示する統計を選択可能に
+6. **通知**: 新しいアクティビティのバッジインジケーター
 
-## References
+## 参考資料
 
-- Requirements: `docs/screen_list.md` (lines 35-59)
-- Database Schema: `docs/database_definition.md`
-- Existing Patterns: `frontend/src/views/admin/AuctionListView.vue`
-- Auth Store: `frontend/src/stores/auth.js` (has `isSystemAdmin`, `isAuctioneer`)
-- API Routes: `backend/cmd/api/main.go`
+- 要件: `docs/screen_list.md`（35-59行目）
+- データベーススキーマ: `docs/database_definition.md`
+- 既存パターン: `frontend/src/views/admin/AuctionListView.vue`
+- 認証ストア: `frontend/src/stores/auth.js`（`isSystemAdmin`、`isAuctioneer`を含む）
+- APIルート: `backend/cmd/api/main.go`
