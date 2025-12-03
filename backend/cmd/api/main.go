@@ -45,6 +45,7 @@ func main() {
 	bidRepo := repository.NewBidRepository(db)
 	itemRepo := repository.NewItemRepository(db)
 	mediaRepo := repository.NewItemMediaRepository(db)
+	dashboardRepo := repository.NewDashboardRepository(db)
 
 	// ストレージサービス初期化
 	storageService, err := storage.NewStorageService()
@@ -67,6 +68,7 @@ func main() {
 	pointService := service.NewPointService(pointRepo)
 	bidService := service.NewBidService(db, redisClient, bidRepo, pointRepo, auctionRepo)
 	itemService := service.NewItemService(itemRepo)
+	dashboardService := service.NewDashboardService(dashboardRepo)
 
 	// ハンドラ初期化
 	authHandler := handler.NewAuthHandler(authService)
@@ -75,6 +77,7 @@ func main() {
 	auctionHandler := handler.NewAuctionHandler(auctionService)
 	bidHandler := handler.NewBidHandler(pointService, bidService)
 	itemHandler := handler.NewItemHandler(itemService)
+	dashboardHandler := handler.NewDashboardHandler(dashboardService)
 	storageTestHandler := handler.NewStorageTestHandler(storageService)
 
 	// メディアハンドラ初期化
@@ -190,6 +193,11 @@ func main() {
 			adminOrAuctioneer := protected.Group("")
 			adminOrAuctioneer.Use(middleware.RequireAdminOrAuctioneer())
 			{
+				// ダッシュボード統計情報取得
+				adminOrAuctioneer.GET("/admin/dashboard/stats", dashboardHandler.GetStats)
+				// ダッシュボード最近のアクティビティ取得
+				adminOrAuctioneer.GET("/admin/dashboard/activities", dashboardHandler.GetActivities)
+
 				// オークション一覧取得
 				adminOrAuctioneer.GET("/admin/auctions", auctionHandler.GetAuctionList)
 				// オークション作成
