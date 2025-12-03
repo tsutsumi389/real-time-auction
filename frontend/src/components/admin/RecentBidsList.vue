@@ -68,8 +68,8 @@ defineProps({
   },
 })
 
-// 価格フォーマット
+// 価格フォーマット（ポイント）
 const formatPrice = (price) => {
-  return `¥${price.toLocaleString()}`
+  return `${price.toLocaleString()} pt`
 }
 </script>
