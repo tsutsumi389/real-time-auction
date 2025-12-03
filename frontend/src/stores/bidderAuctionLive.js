@@ -358,6 +358,14 @@ export const useBidderAuctionLiveStore = defineStore('bidderAuctionLive', () => 
    */
   function onParticipantJoined(payload) {
     console.log('[bidderAuctionLive] Participant joined:', payload)
+
+    // 自分自身の参加イベントは無視（participants:listで正確な人数を受信するため）
+    const user = getUserFromToken('bidder')
+    if (user && payload.participant && payload.participant.bidder_id === user.bidderId) {
+      console.log('[bidderAuctionLive] Ignoring own participant:joined event')
+      return
+    }
+
     if (payload.count !== undefined) {
       participantCount.value = payload.count
     } else {
