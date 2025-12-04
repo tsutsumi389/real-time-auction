@@ -5,7 +5,6 @@ import { useAuctionStore } from '@/stores/auction'
 import Button from '@/components/ui/Button.vue'
 import Alert from '@/components/ui/Alert.vue'
 import AuctionBasicInfo from '@/components/admin/AuctionBasicInfo.vue'
-import ItemList from '@/components/admin/ItemList.vue'
 
 const router = useRouter()
 const auctionStore = useAuctionStore()
@@ -17,20 +16,12 @@ const basicInfo = ref({
   started_at: ''
 })
 
-const items = ref([
-  { name: '', description: '', lot_number: 1, starting_price: null }
-])
-
 // Validation errors
 const basicInfoErrors = ref({
   title: '',
   description: '',
   started_at: ''
 })
-
-const itemErrors = ref([
-  { name: '', description: '', starting_price: '' }
-])
 
 // Form state
 const isSubmitting = ref(false)
@@ -63,40 +54,6 @@ function validateBasicInfoField(field) {
   }
 }
 
-// Validation functions for items
-function validateItemField(index, field) {
-  if (!itemErrors.value[index]) {
-    itemErrors.value[index] = { name: '', description: '', starting_price: '' }
-  }
-
-  if (field === 'name') {
-    if (!items.value[index].name.trim()) {
-      itemErrors.value[index].name = '商品名を入力してください'
-      return false
-    }
-    if (items.value[index].name.length > 200) {
-      itemErrors.value[index].name = '商品名は200文字以内で入力してください'
-      return false
-    }
-    itemErrors.value[index].name = ''
-    return true
-  } else if (field === 'description') {
-    if (items.value[index].description.length > 2000) {
-      itemErrors.value[index].description = '説明は2000文字以内で入力してください'
-      return false
-    }
-    itemErrors.value[index].description = ''
-    return true
-  } else if (field === 'starting_price') {
-    const price = items.value[index].starting_price
-    if (price !== null && price !== '' && price < 1) {
-      itemErrors.value[index].starting_price = '開始価格は1以上で入力してください'
-      return false
-    }
-    itemErrors.value[index].starting_price = ''
-    return true
-  }
-}
 
 function validateForm() {
   let isValid = true
@@ -116,33 +73,9 @@ function validateForm() {
     isValid = false
   }
 
-  // Validate items
-  items.value.forEach((_, index) => {
-    if (!validateItemField(index, 'name')) {
-      isValid = false
-    }
-    if (!validateItemField(index, 'description')) {
-      isValid = false
-    }
-    if (!validateItemField(index, 'starting_price')) {
-      isValid = false
-    }
-  })
-
   return isValid
 }
 
-// Item management
-function handleAddItem() {
-  const newLotNumber = items.value.length + 1
-  items.value.push({
-    name: '',
-    description: '',
-    lot_number: newLotNumber,
-    starting_price: null
-  })
-  itemErrors.value.push({ name: '', description: '', starting_price: '' })
-}
 
 // Form submission
 async function handleSubmit() {
@@ -166,14 +99,18 @@ async function handleSubmit() {
       title: basicInfo.value.title,
       description: basicInfo.value.description,
       started_at: startedAt,
-      items: items.value
+      items: []
     }
 
     const result = await auctionStore.handleCreateAuction(formData)
 
     if (result) {
-      // Success - redirect to auction list
-      router.push({ name: 'auction-list' })
+      // Success - redirect to auction edit page with created flag
+      router.push({
+        name: 'auction-edit',
+        params: { id: result.id },
+        query: { created: 'true' }
+      })
     } else {
       // Failed - show error
       submitError.value = auctionStore.error || 'オークションの作成に失敗しました'
@@ -213,13 +150,26 @@ function handleCancel() {
         @validate="validateBasicInfoField"
       />
 
-      <!-- Items Section -->
-      <ItemList
-        v-model="items"
-        :errors="itemErrors"
-        @validate="validateItemField"
-        @add-item="handleAddItem"
-      />
+      <!-- Info Message -->
+      <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-blue-800">
+              商品はオークション作成後に追加できます
+            </h3>
+            <div class="mt-2 text-sm text-blue-700">
+              <p>
+                オークションを作成すると、編集画面に移動します。そこで商品を追加してオークションを完成させましょう。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Action Buttons -->
       <div class="flex justify-between items-center pt-4">
