@@ -6,9 +6,15 @@ import Button from '@/components/ui/Button.vue'
 import Alert from '@/components/ui/Alert.vue'
 import Card from '@/components/ui/Card.vue'
 import AuctionBasicInfo from '@/components/admin/AuctionBasicInfo.vue'
-import EditItemList from '@/components/admin/EditItemList.vue'
+import EditItemForm from '@/components/admin/EditItemForm.vue'
 import AuctionStatusBadge from '@/components/admin/AuctionStatusBadge.vue'
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal.vue'
+import ItemCreateInline from '@/components/admin/ItemCreateInline.vue'
+import ItemSelectList from '@/components/admin/ItemSelectList.vue'
+import Tabs from '@/components/ui/Tabs.vue'
+import TabsList from '@/components/ui/TabsList.vue'
+import TabsTrigger from '@/components/ui/TabsTrigger.vue'
+import TabsContent from '@/components/ui/TabsContent.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -54,6 +60,13 @@ const isDeleting = ref(false)
 // Success message state
 const showSuccessMessage = ref(false)
 
+// Tab state
+const activeTab = ref('assigned')
+const selectedItemIds = ref([])
+
+// Drag and drop state
+const draggedIndex = ref(null)
+
 // Computed for change detection
 const hasChanges = computed(() => {
   if (!originalData.value) return false
@@ -97,6 +110,7 @@ async function loadAuctionData() {
   // Check if redirected from auction creation
   if (route.query.created === 'true') {
     showSuccessMessage.value = true
+    activeTab.value = 'create' // Default to create tab
     // Auto-hide after 5 seconds
     setTimeout(() => {
       showSuccessMessage.value = false
@@ -447,6 +461,98 @@ function handleBack() {
   }
   router.push({ name: 'auction-list' })
 }
+
+// Handle item created from inline form
+async function handleItemCreated() {
+  // Switch to assigned tab
+  activeTab.value = 'assigned'
+  // Reload auction data to show new item
+  await loadAuctionData()
+}
+
+// Handle items assigned from select list
+async function handleItemsAssigned() {
+  // Switch to assigned tab
+  activeTab.value = 'assigned'
+  // Reload auction data to show new items
+  await loadAuctionData()
+}
+
+// Handle move up/down for items
+function handleMoveUp(index) {
+  if (index === 0) return
+
+  const newItems = [...items.value]
+  const temp = newItems[index]
+  newItems[index] = newItems[index - 1]
+  newItems[index - 1] = temp
+
+  // Recalculate lot numbers
+  newItems.forEach((item, idx) => {
+    item.lot_number = idx + 1
+  })
+
+  items.value = newItems
+
+  // Swap errors
+  const newErrors = [...itemErrors.value]
+  const tempError = newErrors[index]
+  newErrors[index] = newErrors[index - 1]
+  newErrors[index - 1] = tempError
+  itemErrors.value = newErrors
+}
+
+function handleMoveDown(index) {
+  if (index === items.value.length - 1) return
+
+  const newItems = [...items.value]
+  const temp = newItems[index]
+  newItems[index] = newItems[index + 1]
+  newItems[index + 1] = temp
+
+  // Recalculate lot numbers
+  newItems.forEach((item, idx) => {
+    item.lot_number = idx + 1
+  })
+
+  items.value = newItems
+
+  // Swap errors
+  const newErrors = [...itemErrors.value]
+  const tempError = newErrors[index]
+  newErrors[index] = newErrors[index + 1]
+  newErrors[index + 1] = tempError
+  itemErrors.value = newErrors
+}
+
+// Drag and drop handlers
+function handleDragStart(index) {
+  draggedIndex.value = index
+}
+
+function handleDrop({ fromIndex, toIndex }) {
+  if (fromIndex === toIndex) return
+
+  const newItems = [...items.value]
+  const newErrors = [...itemErrors.value]
+
+  // Remove dragged item
+  const [draggedItem] = newItems.splice(fromIndex, 1)
+  const [draggedError] = newErrors.splice(fromIndex, 1)
+
+  // Insert at new position
+  newItems.splice(toIndex, 0, draggedItem)
+  newErrors.splice(toIndex, 0, draggedError)
+
+  // Recalculate lot numbers
+  newItems.forEach((item, idx) => {
+    item.lot_number = idx + 1
+  })
+
+  items.value = newItems
+  itemErrors.value = newErrors
+  draggedIndex.value = null
+}
 </script>
 
 <template>
@@ -561,16 +667,85 @@ function handleBack() {
           :disabled="!canEdit"
         />
 
-        <!-- Items Section -->
-        <EditItemList
-          v-model="items"
-          :errors="itemErrors"
-          :can-edit-auction="canEdit"
-          @validate="validateItemField"
-          @add-item="handleAddItem"
-          @delete-item="requestDeleteItem"
-          @update-item="handleItemUpdate"
-        />
+        <!-- Items Section with Tabs -->
+        <Card class="p-6">
+          <h2 class="text-xl font-semibold mb-4">商品管理</h2>
+
+          <Tabs v-model="activeTab" default-value="assigned">
+            <TabsList class="mb-6">
+              <TabsTrigger value="assigned">
+                割当済み商品 ({{ items.length }})
+              </TabsTrigger>
+              <TabsTrigger value="create">
+                新規作成
+              </TabsTrigger>
+              <TabsTrigger value="select">
+                既存から選択
+              </TabsTrigger>
+            </TabsList>
+
+            <!-- Assigned Items Tab -->
+            <TabsContent value="assigned">
+              <div>
+                <div class="flex justify-between items-center mb-4">
+                  <p class="text-sm text-gray-600">オークションに割り当てられた商品の一覧です</p>
+                  <Button
+                    v-if="canEdit"
+                    type="button"
+                    @click="handleAddItem"
+                    variant="outline"
+                    size="sm"
+                  >
+                    + 商品を追加
+                  </Button>
+                </div>
+
+                <div v-if="items.length === 0" class="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-lg">
+                  商品がありません。「新規作成」または「既存から選択」タブから商品を追加してください。
+                </div>
+
+                <div v-else class="space-y-4">
+                  <EditItemForm
+                    v-for="(item, index) in items"
+                    :key="item.id || index"
+                    :model-value="item"
+                    @update:model-value="(newValue) => { items[index] = newValue; handleItemUpdate(index, newValue) }"
+                    :index="index"
+                    :errors="itemErrors[index] || { name: '', description: '' }"
+                    @validate="(field) => validateItemField(index, field)"
+                    :can-move-up="index > 0 && canEdit"
+                    :can-move-down="index < items.length - 1 && canEdit"
+                    :can-delete="item.can_delete && items.length > 1 && canEdit"
+                    :can-edit="item.can_edit && canEdit"
+                    @move-up="handleMoveUp(index)"
+                    @move-down="handleMoveDown(index)"
+                    @delete="requestDeleteItem(index)"
+                    @drag-start="handleDragStart"
+                    @drop="handleDrop"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <!-- Create New Item Tab -->
+            <TabsContent value="create">
+              <ItemCreateInline
+                :auction-id="auctionId"
+                :loading="isLoading"
+                @item-created="handleItemCreated"
+              />
+            </TabsContent>
+
+            <!-- Select Existing Items Tab -->
+            <TabsContent value="select">
+              <ItemSelectList
+                :auction-id="auctionId"
+                v-model:selected-ids="selectedItemIds"
+                @items-assigned="handleItemsAssigned"
+              />
+            </TabsContent>
+          </Tabs>
+        </Card>
 
         <!-- Action Buttons -->
         <div class="flex justify-between items-center pt-4">

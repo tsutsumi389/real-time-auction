@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import Label from '@/components/ui/Label.vue'
 import Input from '@/components/ui/Input.vue'
 import Button from '@/components/ui/Button.vue'
@@ -45,7 +45,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue', 'validate', 'move-up', 'move-down', 'delete'])
+const emit = defineEmits(['update:modelValue', 'validate', 'move-up', 'move-down', 'delete', 'drag-start', 'drag-over', 'drop'])
 
 const localValue = computed({
   get: () => props.modelValue,
@@ -110,15 +110,59 @@ const statusClass = computed(() => {
   }
   return 'bg-blue-100 text-blue-800'
 })
+
+// Drag and drop state
+const isDragging = ref(false)
+
+// Drag and drop handlers
+function handleDragStart(event) {
+  if (!props.canEdit) return
+  isDragging.value = true
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', props.index.toString())
+  emit('drag-start', props.index)
+}
+
+function handleDragEnd() {
+  isDragging.value = false
+}
+
+function handleDragOver(event) {
+  if (!props.canEdit) return
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'move'
+  emit('drag-over', props.index)
+}
+
+function handleDrop(event) {
+  if (!props.canEdit) return
+  event.preventDefault()
+  const fromIndex = parseInt(event.dataTransfer.getData('text/plain'), 10)
+  emit('drop', { fromIndex, toIndex: props.index })
+}
 </script>
 
 <template>
   <div
-    class="border rounded-lg p-4"
-    :class="canEdit ? 'border-gray-200' : 'border-gray-300 bg-gray-50'"
+    :draggable="canEdit"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
+    @dragover="handleDragOver"
+    @drop="handleDrop"
+    class="border rounded-lg p-4 transition-all duration-200"
+    :class="[
+      canEdit ? 'border-gray-200 hover:border-blue-300 hover:shadow-sm' : 'border-gray-300 bg-gray-50',
+      isDragging ? 'opacity-50 scale-95 shadow-lg border-blue-400' : ''
+    ]"
   >
     <div class="flex justify-between items-center mb-3">
       <div class="flex items-center gap-3">
+        <!-- Drag Handle -->
+        <div v-if="canEdit" class="flex-shrink-0 text-gray-400 cursor-move">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+          </svg>
+        </div>
         <h3 class="font-medium text-gray-700">商品 #{{ index + 1 }}</h3>
         <span
           :class="[
@@ -133,24 +177,6 @@ const statusClass = computed(() => {
         </span>
       </div>
       <div class="flex gap-2">
-        <Button
-          type="button"
-          @click="handleMoveUp"
-          :disabled="!canMoveUp"
-          variant="outline"
-          size="sm"
-        >
-          ▲
-        </Button>
-        <Button
-          type="button"
-          @click="handleMoveDown"
-          :disabled="!canMoveDown"
-          variant="outline"
-          size="sm"
-        >
-          ▼
-        </Button>
         <Button
           type="button"
           @click="handleDelete"
