@@ -164,7 +164,7 @@ function changePage(page) {
 // Format price
 function formatPrice(price) {
   if (price === null || price === undefined) return '-'
-  return `¥${price.toLocaleString()}`
+  return `${price.toLocaleString()}pt`
 }
 </script>
 
