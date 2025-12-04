@@ -38,6 +38,11 @@ make db-migrate         # Apply migrations
 make db-migrate-down    # Rollback one migration
 make db-status          # Check migration status
 make db-create-migration name=description  # Create new migration
+
+# Build commands (must be run inside containers)
+docker compose exec api go build -o /app/bin/api ./cmd/api        # Build REST API server
+docker compose exec ws go build -o /app/bin/ws ./cmd/ws           # Build WebSocket server
+docker compose exec frontend npm run build                         # Build frontend (production)
 ```
 
 **Access Points:**
