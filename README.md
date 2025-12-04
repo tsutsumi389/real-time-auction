@@ -17,22 +17,30 @@
 ## 技術スタック
 
 ### バックエンド
-- **Go 1.21+**
-- **Gin** - Webフレームワーク
+- **Go 1.21+** - 主要言語
+- **Gin** - RESTful APIフレームワーク
 - **Gorilla WebSocket** - WebSocket通信
-- **GORM** - ORM
-- **PostgreSQL 15** - データベース
+- **GORM** - PostgreSQL ORM
+- **go-redis** - Redisクライアント
+- **golang-jwt/jwt** - JWT認証
+- **Air** - ホットリロード（開発環境）
+
+### データベース・キャッシュ
+- **PostgreSQL 15** - メインデータベース
 - **Redis 7** - キャッシュ・Pub/Sub
 
 ### フロントエンド
 - **Vue.js 3** (Composition API)
-- **Vite** - ビルドツール
+- **Vite** - ビルドツール・開発サーバー
 - **Pinia** - 状態管理
+- **Shadcn Vue** - UIコンポーネント
+- **Tailwind CSS** - CSSフレームワーク
 - **Axios** - HTTP通信
 
 ### インフラ
-- **Docker** & **Docker Compose**
+- **Docker** & **Docker Compose** - コンテナ環境
 - **Nginx** - リバースプロキシ
+- **golang-migrate** - DBマイグレーション
 
 ## クイックスタート
 
@@ -74,83 +82,105 @@ docker-compose up -d
 ### 開発コマンド
 
 ```bash
-# 起動
-make up
-
-# 停止
-make down
+# サービス起動・停止
+make up              # 全サービス起動
+make down            # 全サービス停止
+make restart         # 全サービス再起動
+make clean           # データベース・ボリュームを含めて完全削除
 
 # ログ確認
-make logs
-
-# 特定サービスのログ
-make logs service=api
+make logs            # 全サービスのログ
+make logs service=api  # 特定サービスのログ (api, ws, frontend, postgres, redis)
 
 # ステータス確認
-make ps
+make ps              # コンテナ一覧
 
-# 再起動
-make restart
+# サービスシェルアクセス
+make shell-api       # REST APIサーバーコンテナ
+make shell-ws        # WebSocketサーバーコンテナ
+make shell-postgres  # PostgreSQL (psql)
+make shell-redis     # Redis CLI
 
-# データベース・ボリュームを含めて完全削除
-make clean
+# データベースマイグレーション
+make db-migrate      # マイグレーション適用
+make db-migrate-down # 1つ前にロールバック
+make db-status       # マイグレーション状態確認
+make db-create-migration name=description  # 新規マイグレーション作成
 
 # ヘルプ
 make help
+```
+
+### ビルドコマンド
+
+コンテナ内でのビルドが必要な場合:
+
+```bash
+# REST APIサーバーのビルド
+docker compose exec api go build -o /app/bin/api ./cmd/api
+
+# WebSocketサーバーのビルド
+docker compose exec ws go build -o /app/bin/ws ./cmd/ws
+
+# フロントエンドの本番ビルド
+docker compose exec frontend npm run build
 ```
 
 ## プロジェクト構造
 
 ```
 real-time-auction/
-├── backend/              # Go バックエンド
-│   ├── cmd/              # エントリーポイント
-│   │   ├── api/          # REST APIサーバー
-│   │   └── ws/           # WebSocketサーバー
-│   ├── internal/         # アプリケーションロジック
-│   ├── pkg/              # 共通パッケージ
-│   └── migrations/       # DBマイグレーション
-├── frontend/             # Vue.js フロントエンド
-│   ├── src/              # ソースコード
-│   ├── public/           # 静的ファイル
-│   └── package.json      # 依存関係
-├── nginx/                # Nginx設定
-│   └── nginx.conf        # リバースプロキシ設定
-├── docs/                 # ドキュメント
-│   └── architecture.md   # アーキテクチャ設計書
-├── scripts/              # ユーティリティスクリプト
-├── docker-compose.yml    # Docker構成
-├── Makefile              # 開発コマンド
-└── README.md             # このファイル
+├── backend/                  # Go バックエンド
+│   ├── cmd/                  # エントリーポイント
+│   │   ├── api/              # REST APIサーバー
+│   │   └── ws/               # WebSocketサーバー
+│   ├── internal/             # アプリケーションロジック
+│   │   ├── domain/           # ドメインモデル
+│   │   ├── usecase/          # ビジネスロジック
+│   │   ├── adapter/          # インフラ実装
+│   │   └── handler/          # HTTPハンドラ
+│   ├── pkg/                  # 共通パッケージ
+│   └── migrations/           # DBマイグレーション
+├── frontend/                 # Vue.js 3 フロントエンド
+│   ├── src/
+│   │   ├── components/       # Vueコンポーネント
+│   │   ├── stores/           # Pinia状態管理
+│   │   ├── views/            # 画面コンポーネント
+│   │   ├── router/           # ルーティング
+│   │   └── api/              # API通信
+│   ├── public/               # 静的ファイル
+│   └── package.json
+├── nginx/                    # Nginx設定
+│   └── nginx.conf            # リバースプロキシ設定
+├── docs/                     # ドキュメント
+│   ├── architecture.md       # アーキテクチャ設計書
+│   ├── database_definition.md # DB定義書
+│   ├── screen_list.md        # 画面一覧
+│   ├── rule/                 # 開発ガイドライン
+│   └── plan/                 # 実装計画
+├── scripts/                  # ユーティリティスクリプト
+├── docker-compose.yml        # Docker構成
+├── Makefile                  # 開発コマンド
+├── CLAUDE.md                 # Claude Code用ガイド
+└── README.md                 # このファイル
 ```
 
 ## ドキュメント
 
+### 設計書
 - [アーキテクチャ設計書](docs/architecture.md) - システム全体の設計と技術選定
-- [API仕様書](backend/docs/api.md) - REST API エンドポイント仕様（準備中）
-- [WebSocketイベント仕様](backend/docs/websocket.md) - WebSocketイベント定義（準備中）
+- [データベース定義書](docs/database_definition.md) - テーブル設計、ER図、最適化戦略
+- [画面一覧](docs/screen_list.md) - 各画面の仕様とユーザーフロー
 
-## 開発ロードマップ
+### 開発ガイドライン
+- [CLAUDE.md](CLAUDE.md) - Claude Code用プロジェクト概要と開発コマンド
+- [バックエンドガイドライン](docs/rule/backend.md) - Go開発のベストプラクティス
+- [フロントエンドガイドライン](docs/rule/frontend.md) - Vue.js開発のベストプラクティス
+- [実装計画ガイドライン](docs/rule/planning.md) - 実装計画の書き方
 
-### Phase 1: Webアプリケーション（現在）
-
-- [x] プロジェクト基盤構築
-- [x] Docker開発環境セットアップ
-- [ ] データベーススキーマ設計
-- [ ] 認証・認可システム
-- [ ] REST API実装
-- [ ] WebSocket実装
-- [ ] Vue.jsフロントエンド実装
-- [ ] システム管理機能
-- [ ] 主催者管理機能
-- [ ] 入札者機能
-
-### Phase 2: iOSネイティブアプリ（将来）
-
-- [ ] Swift/SwiftUI アプリケーション
-- [ ] APNsプッシュ通知
-- [ ] オフライン対応
-- [ ] Face ID/Touch ID認証
+### API仕様（準備中）
+- REST API エンドポイント仕様
+- WebSocketイベント定義
 
 ## ライセンス
 

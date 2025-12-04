@@ -38,6 +38,8 @@ backend/dist/
 backend/bin/
 backend/coverage.txt
 backend/.air.toml.local
+backend/cmd/api/api
+backend/cmd/ws/ws
 
 # Frontend (Vue.js)
 frontend/node_modules/
