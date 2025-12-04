@@ -74,7 +74,7 @@ type CreateAuctionRequest struct {
 	Title       string              `json:"title" binding:"required,max=200"`
 	Description string              `json:"description" binding:"max=2000"`
 	StartedAt   *time.Time          `json:"started_at"`
-	Items       []CreateItemRequest `json:"items" binding:"required,min=1,dive"`
+	Items       []CreateItemRequest `json:"items" binding:"omitempty,dive"`
 }
 
 // CreateAuctionResponse represents the response for creating an auction
