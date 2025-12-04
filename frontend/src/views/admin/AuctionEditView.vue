@@ -51,6 +51,9 @@ const showDeleteModal = ref(false)
 const deleteItemIndex = ref(-1)
 const isDeleting = ref(false)
 
+// Success message state
+const showSuccessMessage = ref(false)
+
 // Computed for change detection
 const hasChanges = computed(() => {
   if (!originalData.value) return false
@@ -90,6 +93,15 @@ watch(
 async function loadAuctionData() {
   isLoading.value = true
   submitError.value = ''
+
+  // Check if redirected from auction creation
+  if (route.query.created === 'true') {
+    showSuccessMessage.value = true
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      showSuccessMessage.value = false
+    }, 5000)
+  }
 
   try {
     const auction = await auctionStore.fetchAuctionForEdit(auctionId.value)
@@ -452,6 +464,44 @@ function handleBack() {
       </button>
       <h1 class="text-3xl font-bold text-gray-900 mb-2">オークション編集</h1>
       <p class="text-gray-600">オークション情報を編集します</p>
+    </div>
+
+    <!-- Success Message Banner -->
+    <div
+      v-if="showSuccessMessage"
+      class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg shadow-sm"
+    >
+      <div class="flex items-start justify-between">
+        <div class="flex items-start gap-3">
+          <svg
+            class="w-6 h-6 text-green-600 mt-0.5 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div>
+            <p class="font-semibold text-green-900">オークションを作成しました</p>
+            <p class="text-sm text-green-800 mt-1">
+              次に商品を追加してオークションを完成させましょう。下の「商品紐づけ管理」ボタンから商品を追加できます。
+            </p>
+          </div>
+        </div>
+        <button
+          @click="showSuccessMessage = false"
+          class="text-green-600 hover:text-green-800 flex-shrink-0 ml-3"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Loading State -->
