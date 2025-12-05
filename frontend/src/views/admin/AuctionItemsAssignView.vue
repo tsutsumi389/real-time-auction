@@ -176,7 +176,15 @@
         </div>
 
         <!-- オークション内商品リスト（ドラッグ&ドロップ対応） -->
-        <div class="max-h-[500px] overflow-y-auto">
+        <div class="max-h-[500px] overflow-y-auto relative">
+          <!-- ローディングオーバーレイ -->
+          <div v-if="isReordering" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+            <div class="flex flex-col items-center gap-2">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+              <p class="text-sm text-gray-600">順序を更新中...</p>
+            </div>
+          </div>
+
           <div v-if="assignedLoading" class="p-8 text-center">
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-4 border-blue-500 border-t-transparent"></div>
           </div>
@@ -190,18 +198,30 @@
               v-for="(item, index) in assignedItems"
               :key="item.id"
               :data-id="item.id"
-              class="px-6 py-4 hover:bg-gray-50 cursor-move flex items-center gap-4"
+              :class="[
+                'px-6 py-4 flex items-center gap-4 transition-all duration-200',
+                {
+                  'opacity-50 scale-95 shadow-lg z-50': draggedIndex === index,
+                  'border-blue-400 bg-blue-50 border-2 border-dashed': dragOverIndex === index && draggedIndex !== index,
+                  'hover:bg-blue-50': draggedIndex === null && !isReordering,
+                  'cursor-move': !isReordering,
+                  'cursor-not-allowed': isReordering
+                }
+              ]"
               draggable="true"
               @dragstart="handleDragStart($event, index)"
               @dragover.prevent="handleDragOver($event, index)"
               @dragenter.prevent
               @drop="handleDrop($event, index)"
               @dragend="handleDragEnd"
+              @touchstart="handleTouchStart($event, index)"
+              @touchmove="handleTouchMove($event, index)"
+              @touchend="handleTouchEnd($event, index)"
             >
               <!-- ドラッグハンドル -->
-              <div class="flex-shrink-0 text-gray-400">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+              <div class="flex-shrink-0 text-gray-400 cursor-move hover:text-gray-600 transition-colors duration-200 md:w-5 md:h-5 w-8 h-8 flex items-center justify-center">
+                <svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </div>
 
@@ -297,7 +317,14 @@ const isUnassigning = ref(null) // Holds item ID being unassigned
 
 // Drag and drop state
 const draggedIndex = ref(null)
+const dragOverIndex = ref(null)
 const sortableListRef = ref(null)
+const isReordering = ref(false)
+
+// Touch event state
+const touchStartY = ref(0)
+const touchCurrentY = ref(0)
+const isTouching = ref(false)
 
 // Computed: Can modify (add/remove items) - only before auction starts
 const canModify = computed(() => {
@@ -467,50 +494,110 @@ function getUnassignButtonTitle(item) {
 
 // Drag and drop handlers
 function handleDragStart(event, index) {
+  if (isReordering.value) return
   draggedIndex.value = index
   event.dataTransfer.effectAllowed = 'move'
-  event.target.classList.add('opacity-50')
 }
 
 function handleDragOver(event, index) {
   if (draggedIndex.value === null) return
   if (index === draggedIndex.value) return
-  
+
   event.dataTransfer.dropEffect = 'move'
+  dragOverIndex.value = index
 }
 
 async function handleDrop(event, targetIndex) {
   if (draggedIndex.value === null) return
   if (targetIndex === draggedIndex.value) return
-  
+
+  dragOverIndex.value = null
+  isReordering.value = true
+
   // Reorder items locally
   const itemsCopy = [...assignedItems.value]
   const [removed] = itemsCopy.splice(draggedIndex.value, 1)
   itemsCopy.splice(targetIndex, 0, removed)
   assignedItems.value = itemsCopy
-  
+
   // Update lot numbers
   assignedItems.value.forEach((item, idx) => {
     item.lot_number = idx + 1
   })
-  
+
   // Send reorder request to backend
   try {
     const itemIds = assignedItems.value.map(item => item.id)
     await reorderItems(auctionId.value, itemIds)
     successMessage.value = '商品の順序を更新しました'
+    setTimeout(() => {
+      successMessage.value = ''
+    }, 3000)
   } catch (err) {
     errorMessage.value = err.response?.data?.error || err.message || '順序の更新に失敗しました'
     // Reload to restore original order
     await loadAuctionData()
+  } finally {
+    isReordering.value = false
   }
-  
+
   draggedIndex.value = null
 }
 
 function handleDragEnd(event) {
-  event.target.classList.remove('opacity-50')
   draggedIndex.value = null
+  dragOverIndex.value = null
+}
+
+// Touch event handlers for mobile support
+function handleTouchStart(event, index) {
+  if (isReordering.value) return
+  isTouching.value = true
+  draggedIndex.value = index
+  const touch = event.touches[0]
+  touchStartY.value = touch.clientY
+  touchCurrentY.value = touch.clientY
+}
+
+function handleTouchMove(event, index) {
+  if (!isTouching.value || draggedIndex.value === null) return
+  event.preventDefault()
+
+  const touch = event.touches[0]
+  touchCurrentY.value = touch.clientY
+
+  // Calculate which item we're hovering over based on touch position
+  const listItems = sortableListRef.value?.children
+  if (!listItems) return
+
+  for (let i = 0; i < listItems.length; i++) {
+    const rect = listItems[i].getBoundingClientRect()
+    if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+      if (i !== draggedIndex.value) {
+        dragOverIndex.value = i
+      }
+      break
+    }
+  }
+}
+
+async function handleTouchEnd(event, index) {
+  if (!isTouching.value || draggedIndex.value === null) return
+
+  const targetIndex = dragOverIndex.value
+
+  // Reset touch state
+  isTouching.value = false
+  touchStartY.value = 0
+  touchCurrentY.value = 0
+
+  // If we have a valid drop target, perform the reorder
+  if (targetIndex !== null && targetIndex !== draggedIndex.value) {
+    await handleDrop(event, targetIndex)
+  } else {
+    draggedIndex.value = null
+    dragOverIndex.value = null
+  }
 }
 
 // Format price
