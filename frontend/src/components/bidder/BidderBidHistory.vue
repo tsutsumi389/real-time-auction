@@ -243,7 +243,7 @@ function formatDateTime(dateString) {
 <style scoped>
 /* Container Styling */
 .bid-history-container {
-  background: linear-gradient(165deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%);
+  background: hsl(0 0% 4%);
   border: 1px solid rgba(212, 175, 55, 0.2);
   box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.5),

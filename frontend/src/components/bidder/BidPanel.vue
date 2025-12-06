@@ -12,7 +12,7 @@
     </div>
 
     <!-- Main Content Container -->
-    <div class="relative z-10 bg-gradient-to-br from-lux-noir-light via-lux-noir to-lux-noir-medium rounded-2xl overflow-hidden">
+    <div class="relative z-10 rounded-2xl overflow-hidden" style="background: hsl(0 0% 4%)">
       <!-- Decorative Corner Elements -->
       <div class="absolute top-0 left-0 w-20 h-20 pointer-events-none z-20">
         <div class="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-lux-gold/50 rounded-tl-lg"></div>
@@ -49,7 +49,7 @@
         </div>
 
         <!-- Right Column: Info & Bidding -->
-        <div class="flex flex-col p-6 sm:p-8 relative">
+        <div class="flex flex-col p-6 sm:p-8 relative" style="background: hsl(0 0% 4%)">
           <!-- Subtle Background Pattern -->
           <div class="absolute inset-0 opacity-[0.02]" style="background-image: radial-gradient(circle at 1px 1px, rgba(212,175,55,0.8) 1px, transparent 0); background-size: 24px 24px;"></div>
 
@@ -81,7 +81,7 @@
                 {{ item.name }}
               </h2>
 
-              <p v-if="item.description" class="text-sm text-lux-silver/80 leading-relaxed line-clamp-3">
+              <p v-if="item.description" class="text-sm text-lux-cream/70 leading-relaxed line-clamp-3">
                 {{ item.description }}
               </p>
             </div>
@@ -106,7 +106,7 @@
 
                 <!-- Card Content -->
                 <div class="relative z-10 p-6 sm:p-8 text-center">
-                  <div class="text-xs font-bold text-lux-silver/60 uppercase tracking-[0.25em] mb-3">
+                  <div class="text-xs font-bold text-lux-cream/70 uppercase tracking-[0.25em] mb-3">
                     {{ item.status === 'active' ? 'Current Bid' : item.status === 'ended' ? 'Final Price' : 'Starting Price' }}
                   </div>
 
@@ -116,7 +116,7 @@
                         'font-display font-light tracking-tight transition-all duration-500',
                         item.status === 'active' ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl',
                         priceUpdated ? 'lux-shimmer scale-105' :
-                        item.status === 'pending' ? 'text-lux-silver/70' : 'lux-text-gold'
+                        item.status === 'pending' ? 'text-lux-cream/60' : 'lux-text-gold'
                       ]"
                     >
                       {{ currentPrice > 0 ? formatNumber(currentPrice) : '—' }}
@@ -124,7 +124,7 @@
                     <span
                       :class="[
                         'text-lg font-medium transition-colors duration-300',
-                        item.status === 'pending' ? 'text-lux-silver/40' : 'text-lux-gold/50'
+                        item.status === 'pending' ? 'text-lux-cream/40' : 'text-lux-gold/70'
                       ]"
                     >
                       pts
@@ -134,7 +134,7 @@
                   <!-- Waiting Message -->
                   <div
                     v-if="item.status === 'pending'"
-                    class="mt-4 flex items-center justify-center gap-2 text-sm text-lux-silver/60"
+                    class="mt-4 flex items-center justify-center gap-2 text-sm text-lux-cream/60"
                   >
                     <div class="flex gap-1">
                       <span class="w-1.5 h-1.5 rounded-full bg-lux-gold/50 animate-bounce" style="animation-delay: 0ms;"></span>
@@ -392,7 +392,7 @@ function getStatusClass(status) {
 
 /* Price Card Styles */
 .price-card-active {
-  background: linear-gradient(145deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%);
+  background: hsl(0 0% 6%);
   border: 1px solid rgba(212, 175, 55, 0.4);
   box-shadow:
     0 0 40px rgba(212, 175, 55, 0.1),
@@ -401,8 +401,8 @@ function getStatusClass(status) {
 }
 
 .price-card-waiting {
-  background: linear-gradient(145deg, rgba(25, 25, 25, 0.9) 0%, rgba(15, 15, 15, 0.95) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: hsl(0 0% 8%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.02);
@@ -435,6 +435,7 @@ function getStatusClass(status) {
 
 /* Bid Panel Container */
 .bid-panel-container {
+  background: hsl(0 0% 4%);
   box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(212, 175, 55, 0.1);

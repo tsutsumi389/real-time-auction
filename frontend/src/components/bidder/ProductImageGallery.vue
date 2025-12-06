@@ -1,7 +1,7 @@
 <template>
   <div class="product-image-gallery">
     <!-- Main Image Area -->
-    <div class="relative aspect-square w-full overflow-hidden bg-lux-noir-light">
+    <div class="relative aspect-square w-full overflow-hidden" style="background: hsl(0 0% 8%)">
       <template v-if="hasImages">
         <!-- Main Image -->
         <img
@@ -164,5 +164,6 @@ function onImageLoad() {
 <style scoped>
 .product-image-gallery {
   position: relative;
+  background: hsl(0 0% 4%);
 }
 </style>
