@@ -4,7 +4,7 @@
       <div
         v-if="open"
         ref="modalBackdrop"
-        class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-auction-burgundy-dark/80 backdrop-blur-sm"
         @click.self="handleClose"
         role="dialog"
         aria-modal="true"
@@ -13,14 +13,14 @@
       >
         <div
           ref="modalContent"
-          class="relative bg-white dark:bg-gray-900 shadow-2xl w-full h-full sm:h-auto sm:rounded-2xl sm:max-w-6xl sm:max-h-[90vh] overflow-y-auto focus:outline-none"
+          class="relative bg-card dark:bg-gray-900 border-4 border-auction-gold-light shadow-luxury-xl w-full h-full sm:h-auto sm:rounded-2xl sm:max-w-6xl sm:max-h-[90vh] overflow-y-auto focus:outline-none"
           tabindex="-1"
         >
           <!-- 閉じるボタン -->
           <button
             ref="closeButton"
             @click="handleClose"
-            class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+            class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2.5 text-gray-500 dark:text-gray-400 hover:text-auction-gold-light dark:hover:text-auction-gold-light bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-luxury hover:shadow-gold-glow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-auction-gold-light"
             aria-label="モーダルを閉じる"
           >
             <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -146,7 +146,7 @@
               <div class="lg:sticky lg:top-0">
                 <!-- LOT番号 -->
                 <div class="mb-4 flex items-center flex-wrap gap-2">
-                  <span class="inline-flex items-center px-3 py-1.5 text-sm font-bold text-primary bg-primary/10 dark:bg-primary/20 rounded-full">
+                  <span class="inline-flex items-center px-3 py-1.5 text-sm font-bold text-white bg-gold-gradient shadow-luxury rounded-full">
                     LOT {{ item.lot_number }}
                   </span>
                   <!-- ステータスバッジ -->
@@ -166,7 +166,7 @@
                 </div>
 
                 <!-- 商品名 -->
-                <h2 id="modal-title" class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                <h2 id="modal-title" class="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-auction-burgundy dark:text-white mb-4 leading-tight">
                   {{ item.name }}
                 </h2>
 
@@ -228,7 +228,7 @@
                 <!-- 閉じるボタン -->
                 <button
                   @click="handleClose"
-                  class="w-full px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 hover:shadow-md active:scale-[0.98]"
+                  class="w-full px-6 py-3 bg-muted dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-auction-gold-light hover:text-white dark:hover:bg-auction-gold-light transition-all duration-200 font-medium text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-auction-gold-light dark:focus:ring-auction-gold-light hover:shadow-luxury active:scale-[0.98]"
                 >
                   閉じる
                 </button>

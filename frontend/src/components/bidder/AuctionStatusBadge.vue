@@ -1,5 +1,6 @@
 <template>
   <span :class="badgeClasses">
+    <span v-if="props.status === 'active'" class="inline-block w-2 h-2 bg-auction-green-racing rounded-full mr-2 animate-pulse"></span>
     {{ label }}
   </span>
 </template>
@@ -26,12 +27,12 @@ const label = computed(() => {
 })
 
 const badgeClasses = computed(() => {
-  const baseClasses = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium'
+  const baseClasses = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium shadow-sm'
 
   const statusClasses = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    active: 'bg-green-100 text-green-800',
-    ended: 'bg-gray-100 text-gray-800',
+    pending: 'bg-amber-100 text-amber-800',
+    active: 'bg-auction-green-racing/10 text-auction-green-racing border border-auction-green-racing/30',
+    ended: 'bg-muted text-muted-foreground',
     cancelled: 'bg-red-100 text-red-800'
   }
 

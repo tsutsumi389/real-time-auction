@@ -1,12 +1,12 @@
 <template>
-  <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+  <header class="bg-card border-b-4 border-auction-gold-light shadow-luxury sticky top-0 z-20">
     <div class="px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
-        <!-- 左側：ロゴ・タイトル -->
+        <!-- 左側:ロゴ・タイトル -->
         <div class="flex items-center">
           <div class="flex items-center gap-2">
             <div class="text-2xl">🏇</div>
-            <h1 class="text-xl font-bold text-gray-900">リアルタイムオークション</h1>
+            <h1 class="text-xl font-serif font-bold text-auction-burgundy">リアルタイムオークション</h1>
           </div>
         </div>
 
@@ -16,8 +16,8 @@
           <nav class="hidden md:flex items-center gap-6">
             <router-link
               to="/auctions"
-              class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-              :class="{ 'text-blue-600': isCurrentRoute('/auctions') }"
+              class="text-sm font-medium text-gray-700 hover:text-auction-gold-light transition-all relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-auction-gold-light after:transition-all hover:after:w-full"
+              :class="{ 'text-auction-gold-light after:w-full': isCurrentRoute('/auctions') }"
             >
               オークション一覧
             </router-link>
@@ -35,8 +35,8 @@
                 :aria-expanded="isMenuOpen"
                 aria-haspopup="true"
                 aria-label="ユーザーメニューを開く"
-                class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm transition-transform duration-200 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
-                :class="{ 'ring-2 ring-green-500 scale-105': isMenuOpen }"
+                class="h-10 w-10 rounded-full bg-burgundy-gradient border-2 border-auction-gold-light flex items-center justify-center text-white font-semibold text-sm transition-all duration-200 ease-out hover:scale-105 hover:shadow-gold-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-auction-gold-light focus-visible:ring-offset-2"
+                :class="{ 'ring-2 ring-auction-gold-light scale-105 shadow-gold-glow': isMenuOpen }"
               >
                 {{ userInitial }}
               </button>
@@ -62,7 +62,7 @@
                     <!-- アバター -->
                     <div class="flex-shrink-0">
                       <div
-                        class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm"
+                        class="h-10 w-10 rounded-full bg-burgundy-gradient border-2 border-auction-gold-light flex items-center justify-center text-white font-semibold text-sm"
                       >
                         {{ userInitial }}
                       </div>
@@ -101,13 +101,13 @@
           <div v-else class="flex items-center gap-3">
             <router-link
               to="/login"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              class="inline-flex items-center px-4 py-2 border-2 border-auction-gold-light shadow-luxury text-sm font-medium rounded-md text-auction-gold-light bg-white hover:bg-auction-gold-light hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-auction-gold-light"
             >
               ログイン
             </router-link>
             <router-link
               to="/register"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-luxury text-sm font-medium rounded-md text-white bg-gold-gradient hover:shadow-gold-glow transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-auction-gold-light"
             >
               新規登録
             </router-link>
@@ -117,12 +117,12 @@
     </div>
 
     <!-- モバイルナビゲーション -->
-    <nav v-if="showMobileNav" class="md:hidden border-t border-gray-200 bg-white">
+    <nav v-if="showMobileNav" class="md:hidden border-t-2 border-auction-gold-light bg-card">
       <div class="px-4 py-3 space-y-2">
         <router-link
           to="/auctions"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-          :class="{ 'text-blue-600 bg-blue-50': isCurrentRoute('/auctions') }"
+          class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-auction-gold-light hover:bg-auction-cream transition-colors"
+          :class="{ 'text-auction-gold-light bg-auction-cream': isCurrentRoute('/auctions') }"
           @click="showMobileNav = false"
         >
           オークション一覧

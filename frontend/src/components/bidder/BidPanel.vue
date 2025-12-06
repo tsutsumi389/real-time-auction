@@ -33,19 +33,19 @@
         </div>
 
         <div class="mt-auto space-y-6">
-          <!-- Price Display (Redesigned) -->
-          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 text-center relative overflow-hidden">
+          <!-- Price Display (Luxury Redesigned) -->
+          <div class="bg-auction-cream rounded-xl p-6 border-2 border-auction-gold-light shadow-inner-luxury text-center relative overflow-hidden">
             <!-- Background decoration -->
-            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-xl"></div>
-            <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-indigo-100 rounded-full opacity-50 blur-xl"></div>
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-auction-gold-light/20 rounded-full opacity-50 blur-xl"></div>
+            <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-auction-burgundy/10 rounded-full opacity-50 blur-xl"></div>
             
             <div class="relative z-10">
-              <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Current Price</div>
+              <div class="text-sm font-semibold text-auction-gold-light uppercase tracking-widest mb-1">Current Price</div>
               <div class="flex items-baseline justify-center gap-1">
                 <span 
                   :class="[
-                    'text-5xl sm:text-6xl font-black tracking-tight transition-all duration-300',
-                    priceUpdated ? 'text-blue-600 scale-110' : 'text-gray-900'
+                    'text-5xl sm:text-6xl font-serif font-black tracking-tight transition-all duration-300 tabular-nums',
+                    priceUpdated ? 'text-auction-gold-light scale-110' : 'text-auction-burgundy'
                   ]"
                 >
                   {{ formatNumber(currentPrice) }}
@@ -60,10 +60,10 @@
             <button
               @click="handleBid"
               :disabled="!canBid"
-              class="relative overflow-hidden w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg transform"
+              class="relative overflow-hidden w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 transform"
               :class="[
                 canBid
-                  ? 'bg-auction-gold text-white hover:brightness-110 hover:shadow-xl hover:-translate-y-1 active:translate-y-0'
+                  ? 'bg-gold-gradient text-white shadow-gold-glow hover:brightness-110 hover:shadow-luxury-xl hover:-translate-y-1 active:translate-y-0'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
               ]"
             >
@@ -88,15 +88,15 @@
             <!-- Winning Status -->
             <div
               v-if="isWinning"
-              class="p-3 bg-amber-50 border-2 border-auction-gold rounded-lg flex items-center animate-pulse-slow"
+              class="p-3 bg-auction-cream border-2 border-auction-gold-light rounded-lg flex items-center animate-pulse-gold shadow-gold-glow"
             >
-              <div class="flex-shrink-0 bg-amber-100 rounded-full p-1 mr-3">
-                <svg class="w-4 h-4 text-auction-gold" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex-shrink-0 bg-gold-gradient rounded-full p-1 mr-3">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
               </div>
               <div>
-                <p class="text-sm font-bold text-auction-gold">最高入札者です！</p>
+                <p class="text-sm font-bold text-auction-gold-light">最高入札者です!</p>
               </div>
             </div>
 
@@ -128,10 +128,10 @@
           @click="handleBid"
           :disabled="!canBid"
           :class="[
-            'flex-1 py-3 px-4 rounded-xl font-bold text-base transition-all duration-200 shadow-md',
+            'flex-1 py-3 px-4 rounded-xl font-bold text-base transition-all duration-200',
             canBid
-              ? 'bg-auction-gold text-white active:brightness-90'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              ? 'bg-gold-gradient text-white shadow-gold-glow active:brightness-90'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
           ]"
         >
           <span v-if="isLoading">処理中...</span>

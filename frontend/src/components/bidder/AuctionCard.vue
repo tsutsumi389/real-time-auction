@@ -1,6 +1,6 @@
 <template>
   <article
-    class="auction-card bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+    class="auction-card bg-card border border-auction-platinum/50 border-t-4 border-t-auction-gold-light rounded-lg overflow-hidden hover:shadow-luxury-lg hover:scale-[1.02] transition-all duration-300"
     role="article"
     :aria-label="`${auction.title}のオークション`"
   >
@@ -31,7 +31,7 @@
     <!-- Card body -->
     <div class="p-4 sm:p-6">
       <!-- Title -->
-      <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
+      <h3 class="text-lg sm:text-xl font-serif font-semibold text-auction-burgundy mb-2 line-clamp-2">
         {{ auction.title }}
       </h3>
 
@@ -44,19 +44,19 @@
       <div class="space-y-2.5 mb-4">
         <!-- Item count -->
         <div class="flex items-center text-sm text-gray-500">
-          <Package2 class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-400" :stroke-width="1.5" />
+          <Package2 class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-auction-platinum" :stroke-width="1.5" />
           <span>出品物: <strong>{{ auction.item_count }}</strong>点</span>
         </div>
 
         <!-- Start date -->
         <div v-if="auction.started_at" class="flex items-center text-sm text-gray-500">
-          <Calendar class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-400" :stroke-width="1.5" />
+          <Calendar class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-auction-platinum" :stroke-width="1.5" />
           <span>開始: {{ formatDate(auction.started_at) }}</span>
         </div>
 
         <!-- Updated date -->
         <div class="flex items-center text-sm text-gray-500">
-          <Clock class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-400" :stroke-width="1.5" />
+          <Clock class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-auction-platinum" :stroke-width="1.5" />
           <span>更新: {{ formatDate(auction.updated_at) }}</span>
         </div>
       </div>
@@ -64,7 +64,7 @@
       <!-- Action buttons -->
       <div class="flex gap-2">
         <Button
-          variant="default"
+          variant="luxury-outline"
           class="flex-1"
           @click="handleViewDetails"
           :aria-label="`${auction.title}の詳細を見る`"
@@ -73,8 +73,8 @@
         </Button>
         <Button
           v-if="auction.status === 'active'"
-          variant="default"
-          class="bg-green-600 hover:bg-green-700 whitespace-nowrap"
+          variant="luxury-secondary"
+          class="bg-auction-green-racing hover:bg-auction-green-dark whitespace-nowrap"
           @click="handleJoinAuction"
           :aria-label="`${auction.title}に参加する`"
         >
