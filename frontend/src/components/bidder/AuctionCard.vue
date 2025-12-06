@@ -153,4 +153,23 @@ const handleJoinAuction = () => {
 .auction-card > div:last-child > div:last-child {
   margin-top: auto;
 }
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .auction-card {
+    transition: opacity 0.15s ease !important;
+  }
+  
+  .auction-card:hover {
+    transform: none !important;
+  }
+  
+  .auction-card img {
+    transition: opacity 0.15s ease !important;
+  }
+  
+  .auction-card img:hover {
+    transform: none !important;
+  }
+}
 </style>

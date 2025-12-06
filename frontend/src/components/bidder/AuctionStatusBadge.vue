@@ -39,3 +39,12 @@ const badgeClasses = computed(() => {
   return `${baseClasses} ${statusClasses[props.status] || statusClasses.ended}`
 })
 </script>
+
+<style scoped>
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none !important;
+  }
+}
+</style>

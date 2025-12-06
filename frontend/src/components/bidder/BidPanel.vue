@@ -315,4 +315,18 @@ function getStatusClass(status) {
 .price-pop-enter-active {
   animation: price-pop 0.4s ease-out;
 }
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-slow,
+  .animate-pulse-gold,
+  .price-pop-enter-active,
+  .ripple {
+    animation: none !important;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
 </style>
