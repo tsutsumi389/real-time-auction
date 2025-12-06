@@ -2,9 +2,9 @@
   <div class="auction-card-grid">
     <!-- ARIA Live region for screen readers -->
     <div aria-live="polite" aria-atomic="true" class="sr-only">
-      <template v-if="loading">Loading auctions</template>
-      <template v-else-if="auctions.length > 0">Showing {{ auctions.length }} auctions</template>
-      <template v-else>No auctions found</template>
+      <template v-if="loading">読み込み中</template>
+      <template v-else-if="auctions.length > 0">{{ auctions.length }}件のオークションを表示中</template>
+      <template v-else>オークションが見つかりませんでした</template>
     </div>
 
     <!-- Skeleton Loading State -->

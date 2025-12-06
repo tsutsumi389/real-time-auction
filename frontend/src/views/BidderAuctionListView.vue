@@ -27,8 +27,8 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h1 class="font-display text-lg sm:text-2xl text-lux-cream truncate font-medium tracking-wide">Auction Gallery</h1>
-                <p class="text-xs sm:text-sm text-lux-silver/60 truncate hidden sm:block mt-0.5">Browse and join live auctions</p>
+                <h1 class="font-display text-lg sm:text-2xl text-lux-cream truncate font-medium tracking-wide">オークション一覧</h1>
+                <p class="text-xs sm:text-sm text-lux-silver/60 truncate hidden sm:block mt-0.5">開催中および終了したオークションを閲覧できます</p>
               </div>
             </div>
           </div>
@@ -74,13 +74,13 @@
                 <AlertCircle class="h-5 w-5 text-red-400" />
               </div>
               <div class="flex-1 min-w-0">
-                <h3 class="font-display text-base text-red-400 mb-1">Error Occurred</h3>
+                <h3 class="font-display text-base text-red-400 mb-1">エラーが発生しました</h3>
                 <p class="text-sm text-red-300/80">{{ auctionStore.error }}</p>
               </div>
               <button
                 @click="auctionStore.clearError"
                 class="flex-shrink-0 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
-                aria-label="Close error"
+                aria-label="エラーを閉じる"
               >
                 <X class="h-4 w-4 text-red-400" />
               </button>
@@ -112,7 +112,7 @@
                   class="inline-flex items-center gap-2 px-6 py-3 rounded-xl lux-glass border border-lux-gold/30 text-lux-gold text-sm font-medium tracking-wide hover:bg-lux-gold/10 transition-all duration-300"
                 >
                   <RotateCcw class="h-4 w-4" />
-                  Reset Filters
+                  フィルタをリセット
                 </button>
               </div>
             </template>
@@ -130,11 +130,11 @@
               <div class="absolute inset-0 rounded-full border-2 border-lux-gold/20"></div>
               <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-lux-gold animate-spin"></div>
             </div>
-            <span class="text-sm font-medium">Loading more...</span>
+            <span class="text-sm font-medium">読み込み中...</span>
           </div>
           <div v-else class="flex items-center gap-2 text-lux-silver/60 text-sm">
             <ChevronsDown class="h-4 w-4 animate-bounce" />
-            Scroll to load more
+            スクロールして続きを読み込む
           </div>
         </div>
 
@@ -145,7 +145,7 @@
         >
           <div class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
             <CheckCircle2 class="h-4 w-4" />
-            All {{ auctionStore.pagination.total }} auctions loaded
+            すべてのオークションを表示しました（全{{ auctionStore.pagination.total }}件）
           </div>
         </div>
       </main>
@@ -170,17 +170,17 @@ const searchKeyword = ref('')
 
 // Status options
 const statusOptions = [
-  { value: 'active', label: 'Live' },
-  { value: 'ended', label: 'Ended' },
-  { value: 'cancelled', label: 'Cancelled' }
+  { value: 'active', label: '開催中' },
+  { value: 'ended', label: '終了' },
+  { value: 'cancelled', label: '中止' }
 ]
 
 // Sort options
 const sortOptions = [
-  { value: 'started_at_desc', label: 'Newest First' },
-  { value: 'started_at_asc', label: 'Oldest First' },
-  { value: 'updated_at_desc', label: 'Recently Updated' },
-  { value: 'updated_at_asc', label: 'Least Updated' }
+  { value: 'started_at_desc', label: '開始日時が新しい順' },
+  { value: 'started_at_asc', label: '開始日時が古い順' },
+  { value: 'updated_at_desc', label: '更新日時が新しい順' },
+  { value: 'updated_at_asc', label: '更新日時が古い順' }
 ]
 
 // Infinite scroll trigger element
@@ -197,15 +197,15 @@ const hasActiveFilters = computed(() => {
 // Empty state message
 const emptyMessage = computed(() => {
   if (auctionStore.filters.keyword) {
-    return `No auctions found for "${auctionStore.filters.keyword}"`
+    return `「${auctionStore.filters.keyword}」に一致するオークションが見つかりませんでした`
   }
   if (auctionStore.filters.status === 'ended') {
-    return 'No ended auctions yet'
+    return '終了したオークションはまだありません'
   }
   if (auctionStore.filters.status === 'cancelled') {
-    return 'No cancelled auctions'
+    return '中止されたオークションはありません'
   }
-  return 'No live auctions available'
+  return '開催中のオークションはまだありません'
 })
 
 // Event handlers

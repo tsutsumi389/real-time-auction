@@ -5,9 +5,9 @@
       <div class="flex flex-wrap items-center gap-3">
         <span class="flex items-center gap-2 text-xs sm:text-sm font-medium text-lux-silver whitespace-nowrap">
           <Filter class="h-4 w-4 text-lux-gold/60" :stroke-width="1.5" />
-          <span class="hidden sm:inline">Filter:</span>
+          <span class="hidden sm:inline">表示:</span>
         </span>
-        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Auction status filter">
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="オークションステータスフィルタ">
           <button
             v-for="status in statusOptions"
             :key="status.value"
@@ -15,7 +15,7 @@
             :class="getStatusButtonClasses(status.value)"
             role="radio"
             :aria-checked="currentStatus === status.value"
-            :aria-label="`Show ${status.label} auctions`"
+            :aria-label="`${status.label}のオークションを表示`"
           >
             <span class="status-dot" :class="getStatusDotClass(status.value)"></span>
             {{ status.label }}
@@ -27,14 +27,14 @@
       <div class="flex items-center gap-3">
         <span class="flex items-center gap-2 text-xs sm:text-sm font-medium text-lux-silver whitespace-nowrap">
           <ArrowUpDown class="h-4 w-4 text-lux-gold/60" :stroke-width="1.5" />
-          <span class="hidden sm:inline">Sort:</span>
+          <span class="hidden sm:inline">並び替え:</span>
         </span>
         <div class="relative">
           <select
             :value="currentSort"
             @change="handleSortChange($event.target.value)"
             class="sort-select appearance-none w-full sm:w-[200px] h-10 pl-4 pr-10 rounded-lg bg-lux-noir-light border border-lux-noir-soft text-sm text-lux-cream cursor-pointer focus:outline-none focus:border-lux-gold/50 focus:ring-2 focus:ring-lux-gold/10 transition-all duration-300"
-            aria-label="Select sort order"
+            aria-label="並び替え順を選択"
           >
             <option
               v-for="sort in sortOptions"
@@ -69,18 +69,18 @@ const props = defineProps({
   statusOptions: {
     type: Array,
     default: () => [
-      { value: 'active', label: 'Live' },
-      { value: 'ended', label: 'Ended' },
-      { value: 'cancelled', label: 'Cancelled' }
+      { value: 'active', label: '開催中' },
+      { value: 'ended', label: '終了' },
+      { value: 'cancelled', label: '中止' }
     ]
   },
   sortOptions: {
     type: Array,
     default: () => [
-      { value: 'started_at_desc', label: 'Newest First' },
-      { value: 'started_at_asc', label: 'Oldest First' },
-      { value: 'updated_at_desc', label: 'Recently Updated' },
-      { value: 'updated_at_asc', label: 'Least Updated' }
+      { value: 'started_at_desc', label: '開始日時が新しい順' },
+      { value: 'started_at_asc', label: '開始日時が古い順' },
+      { value: 'updated_at_desc', label: '更新日時が新しい順' },
+      { value: 'updated_at_asc', label: '更新日時が古い順' }
     ]
   }
 })

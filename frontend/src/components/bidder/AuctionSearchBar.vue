@@ -1,5 +1,5 @@
 <template>
-  <div class="search-bar" role="search" aria-label="Search auctions">
+  <div class="search-bar" role="search" aria-label="オークション検索">
     <div class="flex gap-3">
       <!-- Search Input -->
       <div class="relative flex-1">
@@ -12,7 +12,7 @@
           :placeholder="placeholder"
           :disabled="loading"
           class="search-input w-full h-12 pl-12 pr-12 rounded-xl lux-input text-base placeholder:text-lux-silver/40 focus:border-lux-gold/50 focus:ring-2 focus:ring-lux-gold/10 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Search keywords"
+          aria-label="検索キーワード"
           @keyup.enter="handleSearch"
         />
         <Transition
@@ -28,7 +28,7 @@
             @click="handleClear"
             :disabled="loading"
             class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-lux-silver/60 hover:text-lux-cream hover:bg-lux-noir-soft/50 transition-all duration-200 disabled:opacity-50"
-            aria-label="Clear search"
+            aria-label="検索キーワードをクリア"
             type="button"
           >
             <X class="h-4 w-4" :stroke-width="1.5" />
@@ -41,7 +41,7 @@
         @click="handleSearch"
         :disabled="loading"
         class="search-button h-12 px-6 rounded-xl lux-btn-gold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="Execute search"
+        aria-label="検索を実行"
       >
         <Loader2 v-if="loading" class="h-5 w-5 animate-spin" />
         <Search v-else class="h-5 w-5" :stroke-width="1.5" />
@@ -62,11 +62,11 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: 'Search auctions by title...'
+    default: 'オークションタイトルで検索...'
   },
   searchButtonText: {
     type: String,
-    default: 'SEARCH'
+    default: '検索'
   },
   showClearButton: {
     type: Boolean,
