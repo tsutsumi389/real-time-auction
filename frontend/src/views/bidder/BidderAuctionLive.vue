@@ -54,53 +54,66 @@
     <!-- Main Content -->
     <div v-else-if="auction" class="relative z-10 min-h-screen pb-28 md:pb-8">
       <!-- Header -->
-      <header class="sticky top-0 z-40 lux-glass border-b border-lux-gold/10">
+      <header class="sticky top-0 z-40 header-glass border-b border-lux-gold/20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16 sm:h-20">
             <!-- Left: Auction Info -->
             <div class="flex items-center gap-4 min-w-0">
-              <div class="hidden sm:block w-10 h-10 rounded-full bg-lux-noir-light border border-lux-gold/30 flex-shrink-0 flex items-center justify-center">
-                <svg class="w-5 h-5 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="hidden sm:flex w-12 h-12 rounded-xl bg-gradient-to-br from-lux-gold/20 to-lux-gold/5 border border-lux-gold/40 flex-shrink-0 items-center justify-center shadow-lg shadow-lux-gold/10">
+                <svg class="w-6 h-6 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
               <div class="min-w-0">
-                <h1 class="font-display text-lg sm:text-xl text-lux-cream truncate">{{ auction.title }}</h1>
-                <p v-if="auction.description" class="text-xs text-lux-silver truncate hidden sm:block">{{ auction.description }}</p>
+                <h1 class="font-display text-lg sm:text-xl text-lux-cream truncate font-medium">{{ auction.title }}</h1>
+                <p v-if="auction.description" class="text-xs text-lux-silver/60 truncate hidden sm:block mt-0.5">{{ auction.description }}</p>
               </div>
             </div>
 
             <!-- Right: Status Indicators -->
             <div class="flex items-center gap-3 sm:gap-4">
               <!-- Available Points -->
-              <div class="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-lux-noir-light border border-lux-gold/30">
-                <svg class="w-4 h-4 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="points-badge flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl">
+                <svg class="w-5 h-5 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span class="text-sm font-semibold lux-text-gold">{{ formatNumber(points.available) }}</span>
-                <span class="text-xs text-lux-silver hidden sm:inline">pts</span>
+                <span class="text-base sm:text-lg font-bold lux-text-gold tabular-nums">{{ formatNumber(points.available) }}</span>
+                <span class="text-xs text-lux-gold/60 hidden sm:inline font-medium">pts</span>
               </div>
 
-              <!-- Participants -->
-              <div class="hidden sm:flex items-center gap-2 text-sm text-lux-silver">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <!-- Participants (hidden on mobile) -->
+              <div class="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-lux-noir-light/50 border border-lux-noir-soft text-sm text-lux-silver">
+                <svg class="w-4 h-4 text-lux-silver/70" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                 </svg>
-                <span>{{ participantCount }}</span>
+                <span class="tabular-nums">{{ participantCount }}</span>
               </div>
 
               <!-- Connection Status -->
-              <div class="flex items-center gap-2">
+              <div
+                :class="[
+                  'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300',
+                  wsConnected ? 'bg-emerald-500/10 border border-emerald-500/30' :
+                  wsReconnecting ? 'bg-amber-500/10 border border-amber-500/30' :
+                  'bg-red-500/10 border border-red-500/30'
+                ]"
+              >
                 <div
                   :class="[
-                    'w-2.5 h-2.5 rounded-full transition-colors',
-                    wsConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : wsReconnecting ? 'bg-amber-400 animate-pulse' : 'bg-red-400'
+                    'w-2 h-2 rounded-full transition-colors',
+                    wsConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' :
+                    wsReconnecting ? 'bg-amber-400 animate-pulse' : 'bg-red-400'
                   ]"
                 ></div>
-                <span class="text-xs text-lux-silver hidden sm:inline">
-                  {{ wsConnected ? 'Live' : wsReconnecting ? 'Reconnecting...' : 'Disconnected' }}
+                <span
+                  :class="[
+                    'text-xs font-medium hidden sm:inline',
+                    wsConnected ? 'text-emerald-400' : wsReconnecting ? 'text-amber-400' : 'text-red-400'
+                  ]"
+                >
+                  {{ wsConnected ? 'Live' : wsReconnecting ? '再接続中...' : '切断' }}
                 </span>
-                <span v-if="wsReconnecting" class="text-xs text-lux-silver/60 hidden sm:inline">
+                <span v-if="wsReconnecting" class="text-xs text-amber-400/60 hidden sm:inline">
                   ({{ reconnectAttempt }}/{{ maxReconnectAttempts }})
                 </span>
               </div>
@@ -110,7 +123,7 @@
       </header>
 
       <!-- Main Layout -->
-      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <!-- Bid Panel + History Grid -->
         <div v-if="currentItem" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Bid Panel (2 columns) -->
@@ -397,3 +410,24 @@ function handleRetry() {
   store.initialize(auctionId)
 }
 </script>
+
+<style scoped>
+/* Header Glass Effect */
+.header-glass {
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 0 rgba(212, 175, 55, 0.1);
+}
+
+/* Points Badge */
+.points-badge {
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(15, 15, 15, 0.95) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+</style>

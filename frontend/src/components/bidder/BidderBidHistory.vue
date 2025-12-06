@@ -188,10 +188,18 @@ function isOwnBid(bid) {
 // Get bidder display name
 function getBidderDisplayName(bid) {
   if (isOwnBid(bid)) {
-    return bid.bidder_display_name || 'You'
+    return bid.bidder_display_name || 'あなた'
   }
   // For privacy, show anonymized name for others
-  return bid.bidder_display_name || 'Bidder'
+  return bid.bidder_display_name || '入札者'
+}
+
+// Get bidder initial for avatar
+function getBidderInitial(bid) {
+  const name = getBidderDisplayName(bid)
+  if (isOwnBid(bid)) return 'Y'
+  // Return first character
+  return name.charAt(0).toUpperCase()
 }
 
 // Format number with comma separator
@@ -233,9 +241,45 @@ function formatDateTime(dateString) {
 </script>
 
 <style scoped>
+/* Container Styling */
+.bid-history-container {
+  background: linear-gradient(165deg, rgba(20, 20, 20, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Bid Card Styles */
+.bid-card-winning {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.04) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.bid-card-own {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.03) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.bid-card-other {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+  border: 1px solid rgba(60, 60, 60, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.bid-card-other:hover {
+  background: linear-gradient(135deg, rgba(35, 35, 35, 0.85) 0%, rgba(25, 25, 25, 0.95) 100%);
+  border-color: rgba(212, 175, 55, 0.15);
+}
+
 /* Bid List Transitions */
 .bid-list-enter-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .bid-list-leave-active {
@@ -244,15 +288,15 @@ function formatDateTime(dateString) {
 
 .bid-list-enter-from {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateY(-15px) scale(0.95);
 }
 
 .bid-list-leave-to {
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateX(20px) scale(0.95);
 }
 
 .bid-list-move {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
