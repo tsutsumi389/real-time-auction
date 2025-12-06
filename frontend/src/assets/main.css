@@ -24,6 +24,15 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    
+    /* Luxury Auction Theme Variables */
+    --auction-gold: 43 74% 49%; /* #D4A84B */
+    --auction-burgundy: 345 65% 35%; /* #8B2942 */
+    --auction-green: 152 45% 35%; /* #3A7D5C */
+    --auction-cream: 40 33% 98%; /* #FAF8F5 */
+    --auction-ivory: 40 20% 99%; /* #FDFCFB */
+    --auction-warm-gray: 40 15% 93%; /* #EDEBE8 */
+    --auction-platinum: 220 15% 75%; /* #B8BCC6 */
   }
 
   .dark {
@@ -46,6 +55,28 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+    
+    /* Dark Mode Luxury Auction Theme */
+    --auction-gold: 43 70% 55%; /* Lighter gold for dark mode */
+    --auction-burgundy: 345 55% 45%; /* Lighter burgundy for dark mode */
+    --auction-green: 152 45% 40%; /* Slightly lighter green */
+    --auction-cream: 220 25% 8%; /* Dark background */
+    --auction-ivory: 220 22% 12%; /* Dark card */
+    --auction-warm-gray: 220 20% 15%; /* Dark muted */
+    --auction-platinum: 220 15% 70%; /* Adjusted platinum */
+  }
+  
+  /* Bidder Theme - Luxury Auction Style */
+  .bidder-theme {
+    --background: var(--auction-cream);
+    --card: var(--auction-ivory);
+    --muted: var(--auction-warm-gray);
+  }
+  
+  .dark .bidder-theme {
+    --background: 220 25% 8%;
+    --card: 220 22% 12%;
+    --muted: 220 20% 15%;
   }
 }
 
@@ -55,11 +86,22 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Luxury Heading Styles */
+  .heading {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  h1, h2, h3 {
+    font-family: 'Playfair Display', Georgia, serif;
   }
 }
 
