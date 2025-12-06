@@ -1,9 +1,9 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 sm:px-6 lg:px-8">
-    <Card class="w-full max-w-md p-6 sm:p-8 space-y-6">
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-auction-cream to-muted px-4 sm:px-6 lg:px-8">
+    <Card class="w-full max-w-md p-6 sm:p-8 space-y-6 border-t-4 border-t-auction-gold-light shadow-luxury-lg">
       <!-- Header -->
       <div class="text-center space-y-2">
-        <h1 class="text-2xl font-bold tracking-tight">ログイン</h1>
+        <h1 class="text-2xl font-serif font-bold tracking-tight text-auction-burgundy">ログイン</h1>
         <p class="text-sm text-muted-foreground">
           入札者としてログインしてオークションに参加しましょう
         </p>
@@ -24,7 +24,7 @@
             type="email"
             v-model="formData.email"
             placeholder="bidder@example.com"
-            :class="{ 'border-destructive': errors.email }"
+            :class="{ 'border-destructive': errors.email, 'focus-visible:ring-auction-gold-light': !errors.email }"
             @blur="validateEmail"
             @keypress.enter="handleSubmit"
             :disabled="loading"
@@ -42,7 +42,7 @@
             type="password"
             v-model="formData.password"
             placeholder="8文字以上"
-            :class="{ 'border-destructive': errors.password }"
+            :class="{ 'border-destructive': errors.password, 'focus-visible:ring-auction-gold-light': !errors.password }"
             @blur="validatePassword"
             @keypress.enter="handleSubmit"
             :disabled="loading"
@@ -55,6 +55,7 @@
         <!-- Submit Button -->
         <Button
           type="submit"
+          variant="luxury"
           class="w-full"
           :disabled="loading"
         >
@@ -66,7 +67,7 @@
       <div class="text-center text-sm">
         <span class="text-muted-foreground">アカウントをお持ちでない方</span>
         <br />
-        <a href="#" class="text-primary hover:underline font-medium" @click.prevent="handleRegisterClick">
+        <a href="#" class="text-auction-gold-light hover:text-auction-gold-dark hover:underline font-medium transition-colors" @click.prevent="handleRegisterClick">
           新規登録はこちら
         </a>
       </div>
