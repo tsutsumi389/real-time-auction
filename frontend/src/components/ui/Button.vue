@@ -12,7 +12,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'default',
-    validator: (value) => ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'].includes(value)
+    validator: (value) => ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link', 'luxury', 'luxury-outline', 'luxury-secondary'].includes(value)
   },
   size: {
     type: String,
@@ -36,6 +36,9 @@ const buttonVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
+        luxury: 'bg-gold-gradient text-white shadow-gold-glow hover:shadow-luxury-lg transform hover:scale-105 transition-all duration-300',
+        'luxury-outline': 'border-2 border-auction-gold-light text-auction-gold-light bg-transparent hover:bg-auction-gold-light hover:text-white transition-all duration-300',
+        'luxury-secondary': 'bg-auction-burgundy text-white hover:bg-auction-burgundy-dark shadow-luxury transition-all duration-300',
       },
       size: {
         default: 'h-10 px-4 py-2',
