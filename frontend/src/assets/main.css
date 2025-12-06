@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Luxury Fonts - Cormorant Garamond for headings, DM Sans for body */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -47,6 +50,48 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
   }
+
+  /* ============================================
+     LUXURY NOIR AUCTION THEME - Bidder Experience
+     ============================================ */
+  .theme-luxury {
+    /* Core Palette - Deep Noir with Champagne Gold */
+    --lux-noir: 0 0% 4%;
+    --lux-noir-light: 0 0% 8%;
+    --lux-noir-medium: 0 0% 12%;
+    --lux-noir-soft: 0 0% 16%;
+
+    /* Champagne Gold Spectrum */
+    --lux-gold: 43 74% 49%;
+    --lux-gold-light: 43 80% 65%;
+    --lux-gold-dark: 38 60% 40%;
+    --lux-gold-muted: 40 30% 45%;
+
+    /* Accent Colors */
+    --lux-cream: 45 30% 96%;
+    --lux-ivory: 40 25% 92%;
+    --lux-pearl: 30 15% 85%;
+    --lux-silver: 220 10% 70%;
+
+    /* Status Colors */
+    --lux-success: 145 50% 45%;
+    --lux-warning: 35 90% 55%;
+    --lux-error: 0 65% 50%;
+
+    /* Glass Effects */
+    --lux-glass-bg: rgba(255, 255, 255, 0.03);
+    --lux-glass-border: rgba(255, 255, 255, 0.08);
+    --lux-glass-shine: rgba(255, 255, 255, 0.15);
+
+    /* Typography */
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+
+    /* Shadows */
+    --shadow-luxury: 0 4px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-gold-glow: 0 0 40px rgba(212, 175, 55, 0.15), 0 0 80px rgba(212, 175, 55, 0.08);
+    --shadow-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
 }
 
 @layer base {
@@ -60,6 +105,14 @@
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Luxury Theme Body Styling */
+  body.theme-luxury {
+    font-family: var(--font-body);
+    background: hsl(var(--lux-noir));
+    color: hsl(var(--lux-cream));
+    letter-spacing: 0.01em;
   }
 }
 
@@ -93,4 +146,295 @@
   .animate-price-update {
     animation: price-update 0.5s ease-in-out;
   }
+}
+
+/* ============================================
+   LUXURY THEME COMPONENTS & UTILITIES
+   ============================================ */
+@layer components {
+  /* Luxury Display Typography */
+  .lux-heading {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+
+  .lux-heading-lg {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+  }
+
+  /* Glass Card Effect */
+  .lux-glass {
+    background: var(--lux-glass-bg);
+    border: 1px solid var(--lux-glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .lux-glass-strong {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+  }
+
+  /* Gold Accent Border */
+  .lux-border-gold {
+    border: 1px solid hsl(var(--lux-gold) / 0.3);
+  }
+
+  .lux-border-gold-strong {
+    border: 1px solid hsl(var(--lux-gold) / 0.6);
+    box-shadow: var(--shadow-gold-glow);
+  }
+
+  /* Luxury Button */
+  .lux-btn-gold {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--lux-gold)) 0%,
+      hsl(var(--lux-gold-dark)) 100%
+    );
+    color: hsl(var(--lux-noir));
+    font-family: var(--font-body);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .lux-btn-gold::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.6s ease;
+  }
+
+  .lux-btn-gold:hover::before {
+    left: 100%;
+  }
+
+  .lux-btn-gold:hover {
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.4), 0 0 60px rgba(212, 175, 55, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .lux-btn-gold:active {
+    transform: translateY(0);
+  }
+
+  .lux-btn-gold:disabled {
+    background: hsl(var(--lux-noir-soft));
+    color: hsl(var(--lux-silver) / 0.5);
+    cursor: not-allowed;
+  }
+
+  .lux-btn-gold:disabled::before {
+    display: none;
+  }
+
+  /* Luxury Input */
+  .lux-input {
+    background: hsl(var(--lux-noir-light));
+    border: 1px solid hsl(var(--lux-noir-soft));
+    color: hsl(var(--lux-cream));
+    font-family: var(--font-body);
+    transition: all 0.3s ease;
+  }
+
+  .lux-input::placeholder {
+    color: hsl(var(--lux-silver) / 0.5);
+  }
+
+  .lux-input:focus {
+    outline: none;
+    border-color: hsl(var(--lux-gold) / 0.5);
+    box-shadow: 0 0 0 3px hsl(var(--lux-gold) / 0.1);
+  }
+
+  /* Noise Texture Overlay */
+  .lux-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Gold Text Gradient */
+  .lux-text-gold {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--lux-gold-light)) 0%,
+      hsl(var(--lux-gold)) 50%,
+      hsl(var(--lux-gold-dark)) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Animated Gold Shimmer */
+  .lux-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--lux-gold-dark)) 0%,
+      hsl(var(--lux-gold-light)) 50%,
+      hsl(var(--lux-gold-dark)) 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer-gold 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-gold {
+    0%, 100% { background-position: 200% center; }
+    50% { background-position: 0% center; }
+  }
+
+  /* Luxury Scrollbar */
+  .lux-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--lux-gold) / 0.3) hsl(var(--lux-noir-medium));
+  }
+
+  .lux-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .lux-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--lux-noir-medium));
+    border-radius: 3px;
+  }
+
+  .lux-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--lux-gold) / 0.4);
+    border-radius: 3px;
+    transition: background 0.3s ease;
+  }
+
+  .lux-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--lux-gold) / 0.6);
+  }
+
+  /* Status Badges */
+  .lux-badge-active {
+    background: hsl(var(--lux-success) / 0.15);
+    color: hsl(145 50% 60%);
+    border: 1px solid hsl(var(--lux-success) / 0.3);
+  }
+
+  .lux-badge-pending {
+    background: hsl(var(--lux-warning) / 0.15);
+    color: hsl(35 90% 65%);
+    border: 1px solid hsl(var(--lux-warning) / 0.3);
+  }
+
+  .lux-badge-ended {
+    background: hsl(var(--lux-silver) / 0.1);
+    color: hsl(var(--lux-silver));
+    border: 1px solid hsl(var(--lux-silver) / 0.2);
+  }
+
+  /* Winning Glow Effect */
+  .lux-winning-glow {
+    position: relative;
+  }
+
+  .lux-winning-glow::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(
+      45deg,
+      hsl(var(--lux-gold)) 0%,
+      hsl(var(--lux-gold-light)) 50%,
+      hsl(var(--lux-gold)) 100%
+    );
+    border-radius: inherit;
+    z-index: -1;
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.5; filter: blur(8px); }
+    50% { opacity: 0.8; filter: blur(12px); }
+  }
+}
+
+/* Luxury Animations */
+@layer utilities {
+  .lux-fade-in {
+    animation: lux-fade-in 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes lux-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .lux-scale-in {
+    animation: lux-scale-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes lux-scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .lux-slide-up {
+    animation: lux-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes lux-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Staggered Animation Delays */
+  .lux-delay-1 { animation-delay: 0.1s; }
+  .lux-delay-2 { animation-delay: 0.2s; }
+  .lux-delay-3 { animation-delay: 0.3s; }
+  .lux-delay-4 { animation-delay: 0.4s; }
+  .lux-delay-5 { animation-delay: 0.5s; }
 }

@@ -1,122 +1,133 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm">
+  <div class="lux-glass-strong rounded-2xl overflow-hidden">
     <!-- Collapsible Header -->
     <button
       @click="toggleCollapsed"
-      class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-lg"
+      class="w-full px-6 py-4 flex items-center justify-between hover:bg-lux-noir-light/50 transition-colors"
     >
-      <div class="flex items-center gap-3">
-        <h2 class="text-sm font-semibold text-gray-700">出品商品</h2>
+      <div class="flex items-center gap-4">
+        <h2 class="font-display text-lg text-lux-cream">Auction Items</h2>
+
         <!-- Progress Indicator -->
-        <div class="flex items-center gap-2">
-          <div class="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              class="h-full bg-auction-gold rounded-full transition-all duration-500"
+        <div class="flex items-center gap-3">
+          <div class="w-32 h-1.5 bg-lux-noir-light rounded-full overflow-hidden">
+            <div
+              class="h-full bg-gradient-to-r from-lux-gold to-lux-gold-light rounded-full transition-all duration-700 ease-out"
               :style="{ width: `${progressPercent}%` }"
             ></div>
           </div>
-          <span class="text-xs text-gray-500">{{ itemStats.ended }}/{{ itemStats.total }}</span>
+          <span class="text-xs text-lux-silver tabular-nums">{{ itemStats.ended }}/{{ itemStats.total }}</span>
         </div>
       </div>
-      <div class="flex items-center gap-2">
+
+      <div class="flex items-center gap-3">
         <!-- Status Summary Pills -->
-        <div class="hidden sm:flex items-center gap-1.5 text-xs">
-          <span v-if="itemStats.started > 0" class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
-            {{ itemStats.started }}件 開催中
+        <div class="hidden sm:flex items-center gap-2">
+          <span v-if="itemStats.started > 0" class="px-2.5 py-1 rounded-full lux-badge-active text-xs font-medium">
+            {{ itemStats.started }} Live
           </span>
-          <span v-if="itemStats.pending > 0" class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 font-medium">
-            {{ itemStats.pending }}件 待機
+          <span v-if="itemStats.pending > 0" class="px-2.5 py-1 rounded-full lux-badge-pending text-xs font-medium">
+            {{ itemStats.pending }} Pending
           </span>
         </div>
+
         <!-- Collapse Arrow -->
-        <svg 
-          :class="['w-5 h-5 text-gray-400 transition-transform duration-200', isCollapsed ? '' : 'rotate-180']"
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+        <div class="w-8 h-8 rounded-full bg-lux-noir-light flex items-center justify-center">
+          <svg
+            :class="['w-4 h-4 text-lux-silver transition-transform duration-300', isCollapsed ? '' : 'rotate-180']"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
     </button>
 
     <!-- Collapsible Content -->
-    <div 
-      :class="[
-        'overflow-hidden transition-all duration-300 ease-in-out',
-        isCollapsed ? 'max-h-0' : 'max-h-[500px]'
-      ]"
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="max-h-0 opacity-0"
+      enter-to-class="max-h-[400px] opacity-100"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="max-h-[400px] opacity-100"
+      leave-to-class="max-h-0 opacity-0"
     >
-      <div class="px-4 pb-4">
-        <!-- Item List (Vertical) -->
-        <div class="space-y-1.5 max-h-64 overflow-y-auto custom-scrollbar">
-          <button
-            v-for="item in sortedItems"
-            :key="item.id"
-            @click="handleSelect(item.id)"
-            :class="[
-              'w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-150 text-left',
-              isSelected(item.id)
-                ? 'bg-auction-gold/10 border border-auction-gold/30 ring-1 ring-auction-gold/20'
-                : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
-            ]"
-          >
-            <div class="flex items-center gap-3 min-w-0">
-              <!-- Lot Number -->
-              <span 
-                :class="[
-                  'flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold',
-                  isSelected(item.id) 
-                    ? 'bg-auction-gold text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                ]"
-              >
-                {{ item.lot_number }}
-              </span>
-              <!-- Item Info -->
-              <div class="min-w-0 flex-1">
-                <div 
-                  :class="[
-                    'text-sm font-medium truncate',
-                    isSelected(item.id) ? 'text-auction-gold-dark' : 'text-gray-800'
-                  ]"
-                >
-                  {{ item.name }}
-                </div>
-                <div v-if="item.current_price > 0" class="text-xs text-gray-500">
-                  現在: {{ formatNumber(item.current_price) }}P
-                </div>
-              </div>
-            </div>
-            <!-- Status Badge -->
-            <span
+      <div v-show="!isCollapsed" class="overflow-hidden">
+        <div class="px-4 pb-4 border-t border-lux-gold/10">
+          <!-- Item List -->
+          <div class="mt-4 space-y-2 max-h-64 overflow-y-auto lux-scrollbar">
+            <button
+              v-for="item in sortedItems"
+              :key="item.id"
+              @click="handleSelect(item.id)"
               :class="[
-                'flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                getStatusClass(item.status)
+                'w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 text-left group',
+                isSelected(item.id)
+                  ? 'bg-gradient-to-r from-lux-gold/15 via-lux-gold/10 to-transparent border border-lux-gold/30'
+                  : 'bg-lux-noir-light/50 hover:bg-lux-noir-light border border-transparent hover:border-lux-gold/10'
               ]"
             >
-              {{ getStatusLabel(item.status) }}
-            </span>
-          </button>
-        </div>
+              <div class="flex items-center gap-3 min-w-0">
+                <!-- Lot Number -->
+                <span
+                  :class="[
+                    'flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors',
+                    isSelected(item.id)
+                      ? 'bg-lux-gold text-lux-noir'
+                      : 'bg-lux-noir-medium text-lux-silver group-hover:text-lux-cream'
+                  ]"
+                >
+                  {{ item.lot_number }}
+                </span>
 
-        <!-- Status Legend (Compact) -->
-        <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-center gap-4 text-xs text-gray-500">
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
-            <span>待機</span>
+                <!-- Item Info -->
+                <div class="min-w-0 flex-1">
+                  <div
+                    :class="[
+                      'text-sm font-medium truncate transition-colors',
+                      isSelected(item.id) ? 'text-lux-gold' : 'text-lux-cream'
+                    ]"
+                  >
+                    {{ item.name }}
+                  </div>
+                  <div v-if="item.current_price > 0" class="text-xs text-lux-silver/60 mt-0.5">
+                    Current: {{ formatNumber(item.current_price) }} pts
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Badge -->
+              <span
+                :class="[
+                  'flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+                  getStatusClass(item.status)
+                ]"
+              >
+                {{ getStatusLabel(item.status) }}
+              </span>
+            </button>
           </div>
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>開催中</span>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
-            <span>終了</span>
+
+          <!-- Status Legend -->
+          <div class="mt-4 pt-4 border-t border-lux-gold/10 flex items-center justify-center gap-6 text-[10px] text-lux-silver/60 uppercase tracking-wider">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>Pending</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Live</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-lux-silver/40"></span>
+              <span>Ended</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
@@ -130,7 +141,7 @@ const props = defineProps({
     default: () => [],
   },
   selectedItemId: {
-    type: [Number, String], // Support both Number and String (UUID)
+    type: [Number, String],
     default: null,
   },
 })
@@ -188,45 +199,19 @@ function formatNumber(value) {
 
 function getStatusLabel(status) {
   const labels = {
-    pending: '待機',
-    active: '開催中',
-    ended: '終了',
+    pending: 'Pending',
+    active: 'Live',
+    ended: 'Ended',
   }
   return labels[status] || status
 }
 
 function getStatusClass(status) {
   const classes = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    active: 'bg-green-100 text-green-700',
-    ended: 'bg-gray-100 text-gray-600',
+    pending: 'lux-badge-pending',
+    active: 'lux-badge-active',
+    ended: 'lux-badge-ended',
   }
-  return classes[status] || 'bg-gray-100 text-gray-600'
+  return classes[status] || 'lux-badge-ended'
 }
 </script>
-
-<style scoped>
-/* Custom scrollbar for vertical scroll */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e0 #f7fafc;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f7fafc;
-  border-radius: 2px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 2px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
-}
-</style>

@@ -1,116 +1,126 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm p-6 relative">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+  <div class="lux-glass-strong rounded-2xl overflow-hidden relative">
+    <!-- Subtle Corner Accents -->
+    <div class="absolute top-0 left-0 w-12 h-12 border-l border-t border-lux-gold/20 rounded-tl-2xl pointer-events-none z-10"></div>
+    <div class="absolute top-0 right-0 w-12 h-12 border-r border-t border-lux-gold/20 rounded-tr-2xl pointer-events-none z-10"></div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
       <!-- Left Column: Image Gallery -->
-      <div>
-        <ProductImageGallery 
-          :images="itemImages" 
-          :alt-text="item.name" 
+      <div class="relative">
+        <ProductImageGallery
+          :images="itemImages"
+          :alt-text="item.name"
         />
       </div>
 
       <!-- Right Column: Info & Bidding -->
-      <div class="flex flex-col h-full">
+      <div class="flex flex-col p-6 sm:p-8">
         <!-- Item Header -->
         <div class="mb-6">
-          <div class="flex items-center gap-2 mb-2">
+          <div class="flex items-center gap-3 mb-4">
             <span
               :class="[
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium tracking-wide',
                 getStatusClass(item.status)
               ]"
             >
               {{ getStatusLabel(item.status) }}
             </span>
-            <span class="text-xs text-gray-500 font-mono">
-              LOT: {{ item.lot_number }}
+            <span class="text-xs text-lux-silver font-mono tracking-wider">
+              LOT {{ item.lot_number }}
             </span>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 leading-tight mb-2">{{ item.name }}</h2>
-          <p v-if="item.description" class="text-gray-600 text-sm leading-relaxed">
+
+          <h2 class="font-display text-2xl sm:text-3xl text-lux-cream leading-tight mb-3">
+            {{ item.name }}
+          </h2>
+
+          <p v-if="item.description" class="text-sm text-lux-silver leading-relaxed line-clamp-3">
             {{ item.description }}
           </p>
         </div>
 
-        <div class="mt-auto space-y-6">
-          <!-- Price Display (Redesigned) -->
-          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 text-center relative overflow-hidden">
-            <!-- Background decoration -->
-            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-xl"></div>
-            <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-indigo-100 rounded-full opacity-50 blur-xl"></div>
-            
+        <!-- Spacer -->
+        <div class="flex-grow"></div>
+
+        <!-- Price Display -->
+        <div class="mb-6">
+          <div class="relative rounded-xl bg-lux-noir-light border border-lux-gold/20 p-6 text-center overflow-hidden">
+            <!-- Background Glow -->
+            <div class="absolute inset-0 bg-gradient-to-br from-lux-gold/5 via-transparent to-lux-gold/5 pointer-events-none"></div>
+
             <div class="relative z-10">
-              <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Current Price</div>
-              <div class="flex items-baseline justify-center gap-1">
-                <span 
+              <div class="text-xs font-semibold text-lux-silver uppercase tracking-[0.2em] mb-2">
+                Current Price
+              </div>
+              <div class="flex items-baseline justify-center gap-2">
+                <span
                   :class="[
-                    'text-5xl sm:text-6xl font-black tracking-tight transition-all duration-300',
-                    priceUpdated ? 'text-blue-600 scale-110' : 'text-gray-900'
+                    'font-display text-5xl sm:text-6xl font-light tracking-tight transition-all duration-300',
+                    priceUpdated ? 'lux-shimmer scale-105' : 'lux-text-gold'
                   ]"
                 >
                   {{ formatNumber(currentPrice) }}
                 </span>
-                <span class="text-lg font-medium text-gray-500">pts</span>
+                <span class="text-lg font-medium text-lux-silver/70">pts</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Desktop Bid Button -->
-          <div class="hidden md:block">
-            <button
-              @click="handleBid"
-              :disabled="!canBid"
-              class="relative overflow-hidden w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg transform"
-              :class="[
-                canBid
-                  ? 'bg-auction-gold text-white hover:brightness-110 hover:shadow-xl hover:-translate-y-1 active:translate-y-0'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
-              ]"
-            >
-              <span v-if="isLoading" class="flex items-center justify-center relative z-10">
-                <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </span>
-              <span v-else-if="canBid" class="relative z-10">
-                入札する
-              </span>
-              <span v-else class="relative z-10">
-                {{ disabledReason }}
-              </span>
-            </button>
-          </div>
+        <!-- Desktop Bid Button -->
+        <div class="hidden md:block mb-6">
+          <button
+            @click="handleBid"
+            :disabled="!canBid"
+            class="w-full py-4 px-6 rounded-xl text-base lux-btn-gold tracking-widest"
+          >
+            <span v-if="isLoading" class="flex items-center justify-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </span>
+            <span v-else-if="canBid">Place Bid</span>
+            <span v-else class="text-lux-silver/50">{{ disabledReason || 'Bidding Unavailable' }}</span>
+          </button>
+        </div>
 
-          <!-- Status Messages -->
-          <div class="space-y-3">
-            <!-- Winning Status -->
-            <div
-              v-if="isWinning"
-              class="p-3 bg-amber-50 border-2 border-auction-gold rounded-lg flex items-center animate-pulse-slow"
-            >
-              <div class="flex-shrink-0 bg-amber-100 rounded-full p-1 mr-3">
-                <svg class="w-4 h-4 text-auction-gold" fill="currentColor" viewBox="0 0 20 20">
+        <!-- Status Messages -->
+        <div class="space-y-3">
+          <!-- Winning Status -->
+          <div
+            v-if="isWinning"
+            class="relative p-4 rounded-xl overflow-hidden lux-winning-glow"
+          >
+            <div class="absolute inset-0 bg-gradient-to-r from-lux-gold/10 via-lux-gold/5 to-lux-gold/10"></div>
+            <div class="relative z-10 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-lux-gold/20 flex items-center justify-center">
+                <svg class="w-4 h-4 text-lux-gold" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
               </div>
               <div>
-                <p class="text-sm font-bold text-auction-gold">最高入札者です！</p>
+                <p class="text-sm font-semibold text-lux-gold">Highest Bidder</p>
+                <p class="text-xs text-lux-gold/70">You are currently winning!</p>
               </div>
             </div>
+          </div>
 
-            <!-- Insufficient Points -->
-            <div
-              v-if="!hasEnoughPoints && item.status === 'active' && currentPrice > 0"
-              class="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center"
-            >
-              <svg class="w-5 h-5 text-orange-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <!-- Insufficient Points -->
+          <div
+            v-if="!hasEnoughPoints && item.status === 'active' && currentPrice > 0"
+            class="p-4 rounded-xl bg-red-950/30 border border-red-500/20 flex items-center gap-3"
+          >
+            <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
-              <p class="text-sm text-orange-800">
-                ポイント不足 (残: {{ formatNumber(availablePoints) }})
-              </p>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-red-300">Insufficient Points</p>
+              <p class="text-xs text-red-400/70">Balance: {{ formatNumber(availablePoints) }} pts</p>
             </div>
           </div>
         </div>
@@ -118,26 +128,26 @@
     </div>
 
     <!-- Mobile Sticky Bid Button -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 safe-area-bottom">
-      <div class="flex items-center justify-between gap-4 max-w-md mx-auto">
-        <div class="flex-shrink-0">
-          <div class="text-xs text-gray-500">現在価格</div>
-          <div class="text-xl font-bold text-gray-900">{{ formatNumber(currentPrice) }} <span class="text-xs font-normal">pts</span></div>
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+      <div class="lux-glass border-t border-lux-gold/20 p-4">
+        <div class="flex items-center justify-between gap-4 max-w-md mx-auto">
+          <div class="flex-shrink-0">
+            <div class="text-xs text-lux-silver uppercase tracking-wider">Current</div>
+            <div class="text-xl font-display lux-text-gold">
+              {{ formatNumber(currentPrice) }}
+              <span class="text-xs font-body text-lux-silver/60">pts</span>
+            </div>
+          </div>
+          <button
+            @click="handleBid"
+            :disabled="!canBid"
+            class="flex-1 py-3.5 px-6 rounded-xl text-sm lux-btn-gold tracking-widest"
+          >
+            <span v-if="isLoading">Processing...</span>
+            <span v-else-if="canBid">Place Bid</span>
+            <span v-else class="text-lux-silver/50">{{ disabledReason || 'Unavailable' }}</span>
+          </button>
         </div>
-        <button
-          @click="handleBid"
-          :disabled="!canBid"
-          :class="[
-            'flex-1 py-3 px-4 rounded-xl font-bold text-base transition-all duration-200 shadow-md',
-            canBid
-              ? 'bg-auction-gold text-white active:brightness-90'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-          ]"
-        >
-          <span v-if="isLoading">処理中...</span>
-          <span v-else-if="canBid">入札する</span>
-          <span v-else>{{ disabledReason || '入札不可' }}</span>
-        </button>
       </div>
     </div>
   </div>
@@ -191,7 +201,7 @@ watch(
       priceUpdated.value = true
       setTimeout(() => {
         priceUpdated.value = false
-      }, 300)
+      }, 1000)
     }
   }
 )
@@ -225,30 +235,8 @@ const itemImages = computed(() => {
   return []
 })
 
-function handleBid(event) {
+function handleBid() {
   if (props.canBid) {
-    // Create ripple effect
-    if (event) {
-      const button = event.currentTarget
-      const circle = document.createElement('span')
-      const diameter = Math.max(button.clientWidth, button.clientHeight)
-      const radius = diameter / 2
-
-      const rect = button.getBoundingClientRect()
-      
-      circle.style.width = circle.style.height = `${diameter}px`
-      circle.style.left = `${event.clientX - rect.left - radius}px`
-      circle.style.top = `${event.clientY - rect.top - radius}px`
-      circle.classList.add('ripple')
-
-      const ripple = button.getElementsByClassName('ripple')[0]
-      if (ripple) {
-        ripple.remove()
-      }
-
-      button.appendChild(circle)
-    }
-
     emit('bid')
   }
 }
@@ -259,20 +247,20 @@ function formatNumber(value) {
 
 function getStatusLabel(status) {
   const labels = {
-    pending: '待機中',
-    active: '入札受付中',
-    ended: '終了',
+    pending: 'Waiting',
+    active: 'Live',
+    ended: 'Ended',
   }
   return labels[status] || status
 }
 
 function getStatusClass(status) {
   const classes = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    active: 'bg-green-100 text-green-800',
-    ended: 'bg-gray-100 text-gray-800',
+    pending: 'lux-badge-pending',
+    active: 'lux-badge-active',
+    ended: 'lux-badge-ended',
   }
-  return classes[status] || 'bg-gray-100 text-gray-800'
+  return classes[status] || 'lux-badge-ended'
 }
 </script>
 
@@ -281,38 +269,10 @@ function getStatusClass(status) {
   padding-bottom: env(safe-area-inset-bottom, 1rem);
 }
 
-@keyframes pulse-slow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-.animate-pulse-slow {
-  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Ripple Effect */
-.ripple {
-  position: absolute;
-  border-radius: 50%;
-  transform: scale(0);
-  animation: ripple 0.6s linear;
-  background-color: rgba(255, 255, 255, 0.7);
-}
-
-@keyframes ripple {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-/* Enhanced Price Animation */
-@keyframes price-pop {
-  0% { transform: scale(1); color: #1f2937; } /* text-gray-900 */
-  50% { transform: scale(1.2); color: #2563eb; } /* text-blue-600 */
-  100% { transform: scale(1); color: #1f2937; }
-}
-
-.price-pop-enter-active {
-  animation: price-pop 0.4s ease-out;
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

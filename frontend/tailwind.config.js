@@ -48,11 +48,34 @@ export default {
           red: "#EF4444",
           blue: "#3B82F6",
         },
+        // Luxury Noir Theme Colors
+        lux: {
+          noir: {
+            DEFAULT: "hsl(0 0% 4%)",
+            light: "hsl(0 0% 8%)",
+            medium: "hsl(0 0% 12%)",
+            soft: "hsl(0 0% 16%)",
+          },
+          gold: {
+            DEFAULT: "hsl(43 74% 49%)",
+            light: "hsl(43 80% 65%)",
+            dark: "hsl(38 60% 40%)",
+            muted: "hsl(40 30% 45%)",
+          },
+          cream: "hsl(45 30% 96%)",
+          ivory: "hsl(40 25% 92%)",
+          pearl: "hsl(30 15% 85%)",
+          silver: "hsl(220 10% 70%)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        display: ['Cormorant Garamond', 'Georgia', 'serif'],
+        body: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {
