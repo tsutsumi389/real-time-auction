@@ -1,112 +1,168 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-gray-900">入札履歴</h2>
-      <span class="text-sm text-gray-500">{{ bids.length }}件</span>
+  <div class="bid-history-container rounded-2xl overflow-hidden h-full flex flex-col">
+    <!-- Header -->
+    <div class="px-6 py-5 border-b border-lux-gold/20 flex items-center justify-between bg-gradient-to-r from-lux-noir-light/80 to-lux-noir/80">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-lux-gold/20 to-lux-gold/5 border border-lux-gold/30 flex items-center justify-center">
+          <svg class="w-5 h-5 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="font-display text-lg text-lux-cream">入札履歴</h2>
+          <p class="text-[10px] text-lux-silver/50 uppercase tracking-widest">Bid History</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1.5 rounded-lg bg-lux-noir-medium border border-lux-gold/20 text-xs font-semibold text-lux-gold tabular-nums">
+          {{ bids.length }}
+        </span>
+      </div>
     </div>
 
     <!-- Bid List -->
-    <div class="space-y-2 max-h-[600px] overflow-y-auto custom-scrollbar">
-      <div
-        v-for="(bid, index) in bids"
-        :key="bid.id"
-        :class="[
-          'p-4 rounded-lg transition-all duration-200',
-          bid.is_winning
-            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-auction-gold shadow-sm'
-            : isOwnBid(bid)
-            ? 'bg-blue-50 border border-blue-100'
-            : 'bg-gray-50 border border-gray-100',
-          index === 0 ? 'animate-slide-in' : ''
-        ]"
-      >
-        <div class="flex items-start justify-between">
-          <!-- Left side: Bidder info -->
-          <div class="flex-1">
-            <div class="flex items-center gap-2">
-              <span
+    <div class="flex-1 overflow-y-auto lux-scrollbar p-4 space-y-3 bg-gradient-to-b from-lux-noir-light/30 to-transparent">
+      <TransitionGroup name="bid-list">
+        <div
+          v-for="(bid, index) in bids"
+          :key="bid.id"
+          :class="[
+            'relative rounded-xl p-4 transition-all duration-300',
+            bid.is_winning ? 'bid-card-winning' :
+            isOwnBid(bid) ? 'bid-card-own' : 'bid-card-other'
+          ]"
+        >
+          <!-- Winning Indicator -->
+          <div v-if="bid.is_winning" class="absolute -left-px top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-lux-gold-light via-lux-gold to-lux-gold-dark rounded-r-full shadow-lg shadow-lux-gold/30"></div>
+
+          <!-- Rank Badge for top 3 -->
+          <div
+            v-if="index < 3 && bid.is_winning"
+            class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-lux-gold to-lux-gold-dark flex items-center justify-center shadow-lg shadow-lux-gold/40 text-xs font-bold text-lux-noir"
+          >
+            {{ index + 1 }}
+          </div>
+
+          <div class="flex items-start justify-between gap-4">
+            <!-- Left: Bidder Info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1.5">
+                <!-- Avatar -->
+                <div
+                  :class="[
+                    'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
+                    bid.is_winning ? 'bg-lux-gold/20 text-lux-gold border border-lux-gold/40' :
+                    isOwnBid(bid) ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                    'bg-lux-noir-medium text-lux-silver/60 border border-lux-noir-soft'
+                  ]"
+                >
+                  {{ getBidderInitial(bid) }}
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <span
+                      :class="[
+                        'font-semibold text-sm truncate',
+                        bid.is_winning ? 'text-lux-gold' : isOwnBid(bid) ? 'text-blue-300' : 'text-lux-cream'
+                      ]"
+                    >
+                      {{ getBidderDisplayName(bid) }}
+                    </span>
+
+                    <span
+                      v-if="isOwnBid(bid)"
+                      class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-blue-500/25 text-blue-300 uppercase tracking-wider border border-blue-500/30"
+                    >
+                      You
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[11px] text-lux-silver/50 tabular-nums">
+                      {{ formatDateTime(bid.bid_at) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Price -->
+            <div class="text-right flex-shrink-0">
+              <div
                 :class="[
-                  'font-semibold',
-                  isOwnBid(bid) ? 'text-blue-900' : 'text-gray-900'
+                  'font-display text-xl font-light tabular-nums',
+                  bid.is_winning ? 'lux-text-gold' : 'text-lux-cream'
                 ]"
               >
-                {{ getBidderDisplayName(bid) }}
-              </span>
-              <span
-                v-if="isOwnBid(bid)"
-                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-600 text-white"
-              >
-                あなた
-              </span>
-            </div>
-            <div class="flex items-center gap-2 mt-2">
-              <span class="text-xs text-gray-500">
-                {{ formatDateTime(bid.bid_at) }}
-              </span>
-              <span
-                v-if="bid.is_winning"
-                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-auction-gold"
-              >
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                最高入札
-              </span>
+                {{ formatNumber(bid.price) }}
+              </div>
+              <div class="text-[9px] text-lux-silver/40 uppercase tracking-widest">points</div>
             </div>
           </div>
 
-          <!-- Right side: Price -->
-          <div class="text-right ml-4">
-            <div
-              :class="[
-                'text-xl font-bold',
-                bid.is_winning ? 'text-auction-gold' : 'text-gray-900'
-              ]"
-            >
-              {{ formatNumber(bid.price) }}
-            </div>
-            <div class="text-xs text-gray-500 mt-1">ポイント</div>
+          <!-- Winning Badge -->
+          <div
+            v-if="bid.is_winning"
+            class="mt-3 pt-3 border-t border-lux-gold/20 flex items-center justify-between"
+          >
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-lux-gold">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              最高入札額
+            </span>
+            <span class="text-[10px] text-lux-gold/60 uppercase tracking-wider">Leading</span>
           </div>
         </div>
-      </div>
+      </TransitionGroup>
 
       <!-- Empty State -->
       <div
         v-if="bids.length === 0"
-        class="text-center py-12 text-gray-500"
+        class="flex flex-col items-center justify-center py-16 text-center"
       >
-        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <p class="font-medium">入札履歴はありません</p>
-        <p class="text-sm mt-2">価格が開示されると入札できるようになります</p>
+        <div class="relative mb-6">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-lux-noir-light to-lux-noir-medium border border-lux-gold/20 flex items-center justify-center">
+            <svg class="w-10 h-10 text-lux-gold/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-lux-noir-medium border border-lux-gold/30 flex items-center justify-center">
+            <svg class="w-3 h-3 text-lux-gold/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </div>
+        </div>
+        <p class="font-display text-lg text-lux-cream mb-2">入札履歴がありません</p>
+        <p class="text-xs text-lux-silver/50 max-w-[220px] leading-relaxed">
+          オークションが開始されると、<br />入札履歴がここに表示されます
+        </p>
       </div>
     </div>
 
     <!-- Legend -->
     <div
       v-if="bids.length > 0"
-      class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-4 text-xs text-gray-600"
+      class="px-4 py-3 border-t border-lux-gold/15 bg-lux-noir-light/50 flex items-center justify-center gap-6 text-[10px] text-lux-silver/50 uppercase tracking-wider"
     >
-      <div class="flex items-center">
-        <span class="inline-block w-3 h-3 bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-auction-gold rounded mr-2"></span>
-        最高入札
+      <div class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-lux-gold-light to-lux-gold shadow-sm shadow-lux-gold/30"></span>
+        <span>最高額</span>
       </div>
-      <div class="flex items-center">
-        <span class="inline-block w-3 h-3 bg-blue-50 border border-blue-100 rounded mr-2"></span>
-        自分の入札
+      <div class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-sm shadow-blue-400/30"></span>
+        <span>あなた</span>
       </div>
-      <div class="flex items-center">
-        <span class="inline-block w-3 h-3 bg-gray-50 border border-gray-100 rounded mr-2"></span>
-        他者の入札
+      <div class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-lux-silver/40"></span>
+        <span>その他</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
 const props = defineProps({
   bids: {
     type: Array,
@@ -138,6 +194,14 @@ function getBidderDisplayName(bid) {
   return bid.bidder_display_name || '入札者'
 }
 
+// Get bidder initial for avatar
+function getBidderInitial(bid) {
+  const name = getBidderDisplayName(bid)
+  if (isOwnBid(bid)) return 'Y'
+  // Return first character
+  return name.charAt(0).toUpperCase()
+}
+
 // Format number with comma separator
 function formatNumber(value) {
   return new Intl.NumberFormat('ja-JP').format(value)
@@ -157,61 +221,82 @@ function formatDateTime(dateString) {
 
   if (isToday) {
     // Show only time for today
-    return new Intl.DateTimeFormat('ja-JP', {
+    return new Intl.DateTimeFormat('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: false,
     }).format(date)
   } else {
     // Show date and time for other days
-    return new Intl.DateTimeFormat('ja-JP', {
+    return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
     }).format(date)
   }
 }
 </script>
 
 <style scoped>
-/* Custom scrollbar */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e0 #f7fafc;
+/* Container Styling */
+.bid-history-container {
+  background: hsl(0 0% 4%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+/* Bid Card Styles */
+.bid-card-winning {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.04) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f7fafc;
-  border-radius: 4px;
+.bid-card-own {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.03) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 4px;
+.bid-card-other {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+  border: 1px solid rgba(60, 60, 60, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
+.bid-card-other:hover {
+  background: linear-gradient(135deg, rgba(35, 35, 35, 0.85) 0%, rgba(25, 25, 25, 0.95) 100%);
+  border-color: rgba(212, 175, 55, 0.15);
 }
 
-/* Slide-in animation for new bids */
-@keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+/* Bid List Transitions */
+.bid-list-enter-active {
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.animate-slide-in {
-  animation: slide-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+.bid-list-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bid-list-enter-from {
+  opacity: 0;
+  transform: translateY(-15px) scale(0.95);
+}
+
+.bid-list-leave-to {
+  opacity: 0;
+  transform: translateX(20px) scale(0.95);
+}
+
+.bid-list-move {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

@@ -1,38 +1,52 @@
 <template>
   <div class="search-bar" role="search" aria-label="オークション検索">
-    <div class="flex gap-2 sm:gap-4">
+    <div class="flex gap-3">
+      <!-- Search Input -->
       <div class="relative flex-1">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" :stroke-width="1.5" />
-        <Input
+        <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+          <Search class="h-5 w-5 text-lux-silver/50" :stroke-width="1.5" />
+        </div>
+        <input
           v-model="localKeyword"
           type="text"
           :placeholder="placeholder"
           :disabled="loading"
-          class="pl-10 pr-10"
+          class="search-input w-full h-12 pl-12 pr-12 rounded-xl lux-input text-base placeholder:text-lux-silver/40 focus:border-lux-gold/50 focus:ring-2 focus:ring-lux-gold/10 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="検索キーワード"
           @keyup.enter="handleSearch"
         />
-        <button
-          v-if="localKeyword"
-          @click="handleClear"
-          :disabled="loading"
-          class="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-          aria-label="検索キーワードをクリア"
-          type="button"
+        <Transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="opacity-0 scale-90"
+          enter-to-class="opacity-100 scale-100"
+          leave-active-class="transition-all duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100"
+          leave-to-class="opacity-0 scale-90"
         >
-          <X class="h-4 w-4" :stroke-width="1.5" />
-        </button>
+          <button
+            v-if="localKeyword"
+            @click="handleClear"
+            :disabled="loading"
+            class="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-lux-silver/60 hover:text-lux-cream hover:bg-lux-noir-soft/50 transition-all duration-200 disabled:opacity-50"
+            aria-label="検索キーワードをクリア"
+            type="button"
+          >
+            <X class="h-4 w-4" :stroke-width="1.5" />
+          </button>
+        </Transition>
       </div>
-      <Button
+
+      <!-- Search Button -->
+      <button
         @click="handleSearch"
         :disabled="loading"
-        variant="default"
+        class="search-button h-12 px-6 rounded-xl lux-btn-gold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="検索を実行"
       >
-        <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
-        <Search v-else class="mr-2 h-4 w-4" :stroke-width="1.5" />
-        {{ searchButtonText }}
-      </Button>
+        <Loader2 v-if="loading" class="h-5 w-5 animate-spin" />
+        <Search v-else class="h-5 w-5" :stroke-width="1.5" />
+        <span class="hidden sm:inline text-sm font-semibold tracking-wider">{{ searchButtonText }}</span>
+      </button>
     </div>
   </div>
 </template>
@@ -40,8 +54,6 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { Search, X, Loader2 } from 'lucide-vue-next'
-import Input from '@/components/ui/Input.vue'
-import Button from '@/components/ui/Button.vue'
 
 const props = defineProps({
   modelValue: {
@@ -90,5 +102,41 @@ const handleClear = () => {
 <style scoped>
 .search-bar {
   width: 100%;
+}
+
+/* Luxury Input Styling */
+.search-input {
+  background: hsl(0 0% 8%);
+  border: 1px solid hsl(0 0% 16%);
+  color: hsl(45 30% 96%);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+  color: hsl(220 10% 70% / 0.4);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: hsl(43 74% 49% / 0.5);
+  box-shadow: 0 0 0 3px hsl(43 74% 49% / 0.1);
+}
+
+/* Luxury color utilities */
+.text-lux-silver\/50 {
+  color: hsl(220 10% 70% / 0.5);
+}
+
+.text-lux-silver\/60 {
+  color: hsl(220 10% 70% / 0.6);
+}
+
+.text-lux-cream {
+  color: hsl(45 30% 96%);
+}
+
+.hover\:bg-lux-noir-soft\/50:hover {
+  background-color: hsl(0 0% 16% / 0.5);
 }
 </style>

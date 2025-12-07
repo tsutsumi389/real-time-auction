@@ -1,31 +1,37 @@
 <template>
-  <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+  <header class="header-glass border-b border-lux-gold/20 sticky top-0 z-20">
     <div class="px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <!-- 左側：ロゴ・タイトル -->
+      <div class="flex items-center justify-between h-16 sm:h-20">
+        <!-- 左側:ロゴ・タイトル -->
         <div class="flex items-center">
-          <div class="flex items-center gap-2">
-            <div class="text-2xl">🏇</div>
-            <h1 class="text-xl font-bold text-gray-900">リアルタイムオークション</h1>
+          <div class="flex items-center gap-3">
+            <div class="hidden sm:flex w-12 h-12 rounded-xl bg-gradient-to-br from-lux-gold/20 to-lux-gold/5 border border-lux-gold/40 flex-shrink-0 items-center justify-center shadow-lg shadow-lux-gold/10">
+              <svg class="w-6 h-6 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="font-display text-lg sm:text-xl text-lux-cream font-medium tracking-wide">リアルタイムオークション</h1>
+            </div>
           </div>
         </div>
 
-        <!-- 右側：ナビゲーション、ポイント、ユーザーメニュー -->
+        <!-- 右側:ナビゲーション、ユーザーメニュー -->
         <div class="flex items-center gap-4">
-          <!-- ナビゲーションリンク（デスクトップ） -->
+          <!-- ナビゲーションリンク(デスクトップ) -->
           <nav class="hidden md:flex items-center gap-6">
             <router-link
               to="/auctions"
-              class="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-              :class="{ 'text-blue-600': isCurrentRoute('/auctions') }"
+              class="text-sm font-medium text-lux-silver hover:text-lux-gold transition-colors"
+              :class="{ 'text-lux-gold': isCurrentRoute('/auctions') }"
             >
               オークション一覧
             </router-link>
           </nav>
 
-          <!-- ログイン済みの場合：ユーザーメニュー -->
+          <!-- ログイン済みの場合:ユーザーメニュー -->
           <div v-if="bidderAuthStore.isAuthenticated" class="flex items-center gap-3">
-            <!-- ユーザーアイコン（ドロップダウントリガー） -->
+            <!-- ユーザーアイコン(ドロップダウントリガー) -->
             <div class="relative">
               <button
                 @click="toggleMenu"
@@ -35,8 +41,8 @@
                 :aria-expanded="isMenuOpen"
                 aria-haspopup="true"
                 aria-label="ユーザーメニューを開く"
-                class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm transition-transform duration-200 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
-                :class="{ 'ring-2 ring-green-500 scale-105': isMenuOpen }"
+                class="h-10 w-10 rounded-full bg-gradient-to-br from-lux-gold to-lux-gold-dark flex items-center justify-center text-lux-noir font-semibold text-sm transition-transform duration-200 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-gold focus-visible:ring-offset-2 focus-visible:ring-offset-lux-noir"
+                :class="{ 'ring-2 ring-lux-gold scale-105': isMenuOpen }"
               >
                 {{ userInitial }}
               </button>
@@ -55,31 +61,31 @@
                   ref="menuRef"
                   role="menu"
                   aria-orientation="vertical"
-                  class="absolute right-0 top-full mt-2 w-60 bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-50"
+                  class="absolute right-0 top-full mt-2 w-60 lux-glass-strong rounded-xl border border-lux-gold/20 p-2 z-50 shadow-2xl"
                 >
                   <!-- ユーザー情報セクション -->
                   <div class="px-3 py-2 flex items-start gap-3 mb-1">
                     <!-- アバター -->
                     <div class="flex-shrink-0">
                       <div
-                        class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm"
+                        class="h-10 w-10 rounded-full bg-gradient-to-br from-lux-gold to-lux-gold-dark flex items-center justify-center text-lux-noir font-semibold text-sm"
                       >
                         {{ userInitial }}
                       </div>
                     </div>
                     <!-- 名前とメール -->
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-gray-900 truncate">
+                      <p class="text-sm font-semibold text-lux-cream truncate">
                         {{ displayName }}
                       </p>
-                      <p class="text-xs text-gray-500 truncate">
+                      <p class="text-xs text-lux-silver truncate">
                         {{ bidderAuthStore.user?.email || '' }}
                       </p>
                     </div>
                   </div>
 
                   <!-- セパレーター -->
-                  <div class="border-t border-gray-200 my-1"></div>
+                  <div class="border-t border-lux-gold/20 my-1"></div>
 
                   <!-- ログアウト -->
                   <button
@@ -87,7 +93,7 @@
                     :disabled="loading"
                     role="menuitem"
                     aria-label="ログアウト"
-                    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 rounded-md hover:bg-red-50 hover:text-red-700 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 rounded-lg hover:bg-red-950/30 hover:text-red-300 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <LogOut :size="18" :stroke-width="2" />
                     <span>{{ loading ? 'ログアウト中...' : 'ログアウト' }}</span>
@@ -97,17 +103,17 @@
             </div>
           </div>
 
-          <!-- 未ログインの場合：ログイン/新規登録ボタン -->
+          <!-- 未ログインの場合:ログイン/新規登録ボタン -->
           <div v-else class="flex items-center gap-3">
             <router-link
               to="/login"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              class="inline-flex items-center px-4 py-2 border border-lux-gold/30 shadow-sm text-sm font-medium rounded-lg text-lux-silver bg-lux-noir-light/50 hover:bg-lux-noir-light/80 hover:text-lux-gold transition-all duration-200"
             >
               ログイン
             </router-link>
             <router-link
               to="/register"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-lux-noir bg-lux-gold hover:bg-lux-gold-dark transition-all duration-200"
             >
               新規登録
             </router-link>
@@ -117,12 +123,12 @@
     </div>
 
     <!-- モバイルナビゲーション -->
-    <nav v-if="showMobileNav" class="md:hidden border-t border-gray-200 bg-white">
+    <nav v-if="showMobileNav" class="md:hidden border-t border-lux-gold/20 lux-glass">
       <div class="px-4 py-3 space-y-2">
         <router-link
           to="/auctions"
-          class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-          :class="{ 'text-blue-600 bg-blue-50': isCurrentRoute('/auctions') }"
+          class="block px-3 py-2 rounded-lg text-base font-medium text-lux-silver hover:text-lux-gold hover:bg-lux-noir-light/50 transition-colors"
+          :class="{ 'text-lux-gold bg-lux-gold/10': isCurrentRoute('/auctions') }"
           @click="showMobileNav = false"
         >
           オークション一覧
@@ -152,7 +158,7 @@ const isCurrentRoute = (path) => {
   return route.path === path || route.path.startsWith(path + '/')
 }
 
-// ユーザーイニシャル（アバター用）
+// ユーザーイニシャル(アバター用)
 const userInitial = computed(() => {
   const displayName = bidderAuthStore.user?.displayName || bidderAuthStore.user?.email || ''
   return displayName.charAt(0).toUpperCase()
@@ -195,6 +201,16 @@ async function handleLogout() {
 </script>
 
 <style scoped>
+/* Header Glass Effect */
+.header-glass {
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 0 rgba(212, 175, 55, 0.1);
+}
+
 /* モーション低減対応 */
 @media (prefers-reduced-motion: reduce) {
   .transition,

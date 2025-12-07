@@ -15,14 +15,14 @@
         @click="handleItemClick(item)"
         @keydown.enter="handleItemClick(item)"
         @keydown.space.prevent="handleItemClick(item)"
-        class="item-card group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden cursor-pointer
-               shadow-sm hover:shadow-xl hover:border-primary/30 dark:hover:border-primary/50 hover:-translate-y-1.5
-               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-900
+        class="item-card group relative lux-glass border border-lux-gold/20 rounded-2xl overflow-hidden cursor-pointer
+               shadow-sm hover:shadow-xl hover:shadow-lux-gold/10 hover:border-lux-gold/40 hover:-translate-y-1.5
+               focus:outline-none focus:ring-2 focus:ring-lux-gold focus:ring-offset-2 focus:ring-offset-lux-noir
                transition-all duration-300 ease-out"
         :aria-label="`LOT ${item.lot_number}: ${item.name}, 開始価格 ${formatPrice(item.starting_price)}pt`"
       >
         <!-- サムネイル画像 -->
-        <div class="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-700 overflow-hidden">
+        <div class="relative w-full aspect-[4/3] bg-lux-noir-light overflow-hidden">
           <img
             v-if="getItemThumbnail(item) && !imageErrors[item.id]"
             :src="getItemThumbnail(item)"
@@ -34,7 +34,7 @@
           <!-- プレースホルダー画像 -->
           <div
             v-else
-            class="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800"
+            class="w-full h-full flex flex-col items-center justify-center text-lux-gold/40 bg-gradient-to-br from-lux-noir-light to-lux-noir"
             role="img"
             aria-label="画像なし"
           >
@@ -64,36 +64,36 @@
         <div class="p-3 sm:p-4">
           <!-- LOT番号バッジ -->
           <div class="mb-2 flex items-center flex-wrap gap-2">
-            <span class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-primary bg-primary/10 dark:bg-primary/20 rounded-full">
+            <span class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-lux-gold bg-lux-gold/10 border border-lux-gold/30 rounded-full">
               LOT {{ item.lot_number }}
             </span>
             <!-- ステータスバッジ（オプション） -->
             <span
               v-if="item.status === 'active'"
-              class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40 rounded-full"
+              class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full"
             >
-              <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>
+              <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-1.5 animate-pulse"></span>
               入札中
             </span>
             <span
               v-else-if="item.status === 'ended'"
-              class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full"
+              class="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-lux-silver/60 bg-lux-silver/10 border border-lux-silver/20 rounded-full"
             >
               終了
             </span>
           </div>
 
           <!-- 商品名 -->
-          <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] leading-snug group-hover:text-primary transition-colors duration-200">
+          <h3 class="text-sm sm:text-base font-semibold text-lux-cream mb-3 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] leading-snug group-hover:text-lux-gold transition-colors duration-200">
             {{ item.name }}
           </h3>
 
           <!-- 価格セクション -->
-          <div class="space-y-1.5 pt-3 border-t border-gray-100 dark:border-gray-700">
+          <div class="space-y-1.5 pt-3 border-t border-lux-gold/20">
             <!-- 開始価格 -->
             <div class="flex items-baseline justify-between">
-              <span class="text-xs text-gray-500 dark:text-gray-400">開始価格</span>
-              <span class="text-base sm:text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+              <span class="text-xs text-lux-silver/60">開始価格</span>
+              <span class="text-base sm:text-lg font-bold text-lux-cream tabular-nums">
                 {{ formatPrice(item.starting_price) }}pt
               </span>
             </div>
@@ -103,8 +103,8 @@
               v-if="item.current_price && item.current_price > item.starting_price"
               class="flex items-baseline justify-between"
             >
-              <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">現在価格</span>
-              <span class="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+              <span class="text-xs text-emerald-400 font-medium">現在価格</span>
+              <span class="text-base sm:text-lg font-bold text-emerald-400 tabular-nums">
                 {{ formatPrice(item.current_price) }}pt
               </span>
             </div>
@@ -131,12 +131,12 @@
       role="status"
       aria-label="出品アイテムがありません"
     >
-      <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
-        <svg class="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-lux-gold/10 rounded-full mb-4">
+        <svg class="h-8 w-8 text-lux-gold/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
         </svg>
       </div>
-      <p class="text-gray-500 dark:text-gray-400 text-base sm:text-lg font-medium">
+      <p class="text-lux-silver/60 text-base sm:text-lg font-medium">
         このオークションにはまだアイテムが登録されていません
       </p>
     </div>
@@ -215,6 +215,89 @@ const handleItemClick = (item) => {
 </script>
 
 <style scoped>
+/* Luxury color utilities */
+.lux-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.border-lux-gold\/20 {
+  border-color: hsl(43 74% 49% / 0.2);
+}
+
+.border-lux-gold\/30 {
+  border-color: hsl(43 74% 49% / 0.3);
+}
+
+.border-lux-gold\/40 {
+  border-color: hsl(43 74% 49% / 0.4);
+}
+
+.hover\:shadow-lux-gold\/10:hover {
+  --tw-shadow-color: hsl(43 74% 49% / 0.1);
+}
+
+.ring-lux-gold {
+  --tw-ring-color: hsl(43 74% 49%);
+}
+
+.ring-offset-lux-noir {
+  --tw-ring-offset-color: hsl(0 0% 4%);
+}
+
+.focus\:ring-lux-gold:focus {
+  --tw-ring-color: hsl(43 74% 49%);
+}
+
+.focus\:ring-offset-lux-noir:focus {
+  --tw-ring-offset-color: hsl(0 0% 4%);
+}
+
+.bg-lux-noir-light {
+  background-color: hsl(0 0% 8%);
+}
+
+.bg-lux-noir {
+  background-color: hsl(0 0% 4%);
+}
+
+.text-lux-gold {
+  color: hsl(43 74% 49%);
+}
+
+.text-lux-cream {
+  color: hsl(45 30% 96%);
+}
+
+.text-lux-silver {
+  color: hsl(220 10% 70%);
+}
+
+.bg-lux-gold\/10 {
+  background-color: hsl(43 74% 49% / 0.1);
+}
+
+.text-lux-gold\/40 {
+  color: hsl(43 74% 49% / 0.4);
+}
+
+.text-lux-silver\/60 {
+  color: hsl(220 10% 70% / 0.6);
+}
+
+.bg-lux-silver\/10 {
+  background-color: hsl(220 10% 70% / 0.1);
+}
+
+.border-lux-silver\/20 {
+  border-color: hsl(220 10% 70% / 0.2);
+}
+
 /* Line clamp for item name */
 .line-clamp-2 {
   display: -webkit-box;
@@ -263,7 +346,7 @@ const handleItemClick = (item) => {
 
 /* Focus visible styles for better accessibility */
 .item-card:focus-visible {
-  outline: 2px solid hsl(var(--primary));
+  outline: 2px solid hsl(43 74% 49%);
   outline-offset: 2px;
 }
 

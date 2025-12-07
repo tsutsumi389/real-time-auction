@@ -4,7 +4,7 @@
       <div
         v-if="open"
         ref="modalBackdrop"
-        class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md"
         @click.self="handleClose"
         role="dialog"
         aria-modal="true"
@@ -13,14 +13,14 @@
       >
         <div
           ref="modalContent"
-          class="relative bg-white dark:bg-gray-900 shadow-2xl w-full h-full sm:h-auto sm:rounded-2xl sm:max-w-6xl sm:max-h-[90vh] overflow-y-auto focus:outline-none"
+          class="relative lux-modal-glass border border-lux-gold/20 shadow-2xl w-full h-full sm:h-auto sm:rounded-2xl sm:max-w-6xl sm:max-h-[90vh] overflow-y-auto focus:outline-none"
           tabindex="-1"
         >
           <!-- 閉じるボタン -->
           <button
             ref="closeButton"
             @click="handleClose"
-            class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+            class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2.5 text-lux-gold/60 hover:text-lux-gold bg-lux-noir-light/90 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl border border-lux-gold/20 hover:border-lux-gold/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lux-gold"
             aria-label="モーダルを閉じる"
           >
             <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -33,7 +33,7 @@
             <!-- 左側: メディアギャラリー -->
             <div class="lg:col-span-2 order-1">
               <!-- メイン画像/動画 -->
-              <div class="relative bg-gray-100 dark:bg-gray-800 rounded-xl sm:rounded-2xl overflow-hidden mb-4 h-[50vh] sm:h-[400px] lg:h-[500px] shadow-inner">
+              <div class="relative bg-lux-noir-light rounded-xl sm:rounded-2xl overflow-hidden mb-4 h-[50vh] sm:h-[400px] lg:h-[500px] shadow-inner border border-lux-gold/10">
                 <Transition name="image-fade" mode="out-in">
                   <img
                     v-if="currentMedia && currentMedia.media_type === 'image'"
@@ -57,7 +57,7 @@
                 </video>
                 <div
                   v-if="!currentMedia"
-                  class="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900"
+                  class="w-full h-full flex flex-col items-center justify-center text-lux-gold/40 bg-gradient-to-br from-lux-noir-light to-lux-noir"
                   role="img"
                   aria-label="画像がありません"
                 >
@@ -72,10 +72,10 @@
                   v-if="hasMultipleMedia"
                   @click="previousMedia"
                   :disabled="currentMediaIndex === 0"
-                  class="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-700 hover:scale-105 active:scale-95"
+                  class="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3 bg-lux-noir-light/95 backdrop-blur-sm rounded-full shadow-lg border border-lux-gold/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lux-gold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-lux-noir-light hover:border-lux-gold/40 hover:scale-105 active:scale-95"
                   :aria-label="`前の画像へ（現在 ${currentMediaIndex + 1}枚目 / 全${mediaList.length}枚）`"
                 >
-                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                   </svg>
                 </button>
@@ -84,10 +84,10 @@
                   v-if="hasMultipleMedia"
                   @click="nextMedia"
                   :disabled="currentMediaIndex >= mediaList.length - 1"
-                  class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-gray-700 hover:scale-105 active:scale-95"
+                  class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 p-2.5 sm:p-3 bg-lux-noir-light/95 backdrop-blur-sm rounded-full shadow-lg border border-lux-gold/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lux-gold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-lux-noir-light hover:border-lux-gold/40 hover:scale-105 active:scale-95"
                   :aria-label="`次の画像へ（現在 ${currentMediaIndex + 1}枚目 / 全${mediaList.length}枚）`"
                 >
-                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-lux-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                   </svg>
                 </button>
@@ -118,10 +118,10 @@
                   :aria-selected="currentMediaIndex === index"
                   :aria-label="`${media.media_type === 'video' ? '動画' : '画像'} ${index + 1}枚目`"
                   :class="[
-                    'flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary',
+                    'flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lux-gold',
                     currentMediaIndex === index
-                      ? 'border-primary ring-2 ring-primary/30 shadow-lg scale-105'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 opacity-70 hover:opacity-100'
+                      ? 'border-lux-gold ring-2 ring-lux-gold/30 shadow-lg scale-105'
+                      : 'border-lux-gold/20 hover:border-lux-gold/50 opacity-70 hover:opacity-100'
                   ]"
                 >
                   <img
@@ -131,8 +131,8 @@
                     class="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <div v-else class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center" aria-hidden="true">
-                    <svg class="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <div v-else class="w-full h-full bg-lux-noir-light flex items-center justify-center" aria-hidden="true">
+                    <svg class="h-6 w-6 sm:h-8 sm:w-8 text-lux-gold/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -146,43 +146,43 @@
               <div class="lg:sticky lg:top-0">
                 <!-- LOT番号 -->
                 <div class="mb-4 flex items-center flex-wrap gap-2">
-                  <span class="inline-flex items-center px-3 py-1.5 text-sm font-bold text-primary bg-primary/10 dark:bg-primary/20 rounded-full">
+                  <span class="inline-flex items-center px-3 py-1.5 text-sm font-bold text-lux-gold bg-lux-gold/10 border border-lux-gold/30 rounded-full">
                     LOT {{ item.lot_number }}
                   </span>
                   <!-- ステータスバッジ -->
                   <span
                     v-if="item.status === 'active'"
-                    class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40 rounded-full"
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full"
                   >
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></span>
                     入札中
                   </span>
                   <span
                     v-else-if="item.status === 'ended'"
-                    class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-full"
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-lux-silver/60 bg-lux-silver/10 border border-lux-silver/20 rounded-full"
                   >
                     終了
                   </span>
                 </div>
 
                 <!-- 商品名 -->
-                <h2 id="modal-title" class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                <h2 id="modal-title" class="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-lux-cream mb-4 leading-tight">
                   {{ item.name }}
                 </h2>
 
                 <!-- 価格情報 -->
-                <div class="mb-6 p-4 sm:p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700" role="region" aria-label="価格情報">
+                <div class="mb-6 p-4 sm:p-5 bg-gradient-to-br from-lux-gold/5 to-lux-gold/10 rounded-2xl border border-lux-gold/20" role="region" aria-label="価格情報">
                   <dl>
                     <div class="mb-2">
-                      <dt class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mb-1">開始価格</dt>
-                      <dd class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+                      <dt class="text-xs sm:text-sm text-lux-silver/60 font-medium uppercase tracking-wide mb-1">開始価格</dt>
+                      <dd class="text-2xl sm:text-3xl lg:text-4xl font-bold text-lux-cream tabular-nums">
                         {{ formatPrice(item.starting_price) }}pt
                       </dd>
                     </div>
                     <!-- 現在価格（入札がある場合） -->
-                    <div v-if="item.current_price && item.current_price > item.starting_price" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                      <dt class="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-medium uppercase tracking-wide mb-1">現在価格</dt>
-                      <dd class="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    <div v-if="item.current_price && item.current_price > item.starting_price" class="mt-4 pt-4 border-t border-lux-gold/20">
+                      <dt class="text-xs sm:text-sm text-emerald-400 font-medium uppercase tracking-wide mb-1">現在価格</dt>
+                      <dd class="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-400 tabular-nums">
                         {{ formatPrice(item.current_price) }}pt
                       </dd>
                     </div>
@@ -191,15 +191,15 @@
 
                 <!-- 説明文 -->
                 <div class="mb-6">
-                  <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                    <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <h3 class="text-base sm:text-lg font-semibold text-lux-cream mb-3 flex items-center">
+                    <svg class="h-5 w-5 mr-2 text-lux-gold/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
                     商品説明
                   </h3>
                   <div
                     id="modal-description"
-                    class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap max-h-48 sm:max-h-64 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl"
+                    class="text-lux-silver/80 text-sm leading-relaxed whitespace-pre-wrap max-h-48 sm:max-h-64 overflow-y-auto p-4 bg-lux-gold/5 border border-lux-gold/10 rounded-xl"
                   >
                     {{ item.description || '商品の説明はありません' }}
                   </div>
@@ -207,20 +207,20 @@
 
                 <!-- メタデータ -->
                 <div v-if="hasMetadata" class="mb-6" role="region" aria-label="詳細情報">
-                  <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                    <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <h3 class="text-base sm:text-lg font-semibold text-lux-cream mb-3 flex items-center">
+                    <svg class="h-5 w-5 mr-2 text-lux-gold/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                     </svg>
                     詳細情報
                   </h3>
-                  <dl class="space-y-0.5 max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
+                  <dl class="space-y-0.5 max-h-48 overflow-y-auto bg-lux-gold/5 border border-lux-gold/10 rounded-xl p-3">
                     <div
                       v-for="(value, key) in item.metadata"
                       :key="key"
-                      class="flex justify-between items-center py-2.5 px-2 hover:bg-white dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+                      class="flex justify-between items-center py-2.5 px-2 hover:bg-lux-gold/10 rounded-lg transition-colors"
                     >
-                      <dt class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ formatMetadataKey(key) }}</dt>
-                      <dd class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white text-right ml-4">{{ value }}</dd>
+                      <dt class="text-xs sm:text-sm text-lux-silver/60">{{ formatMetadataKey(key) }}</dt>
+                      <dd class="text-xs sm:text-sm font-semibold text-lux-cream text-right ml-4">{{ value }}</dd>
                     </div>
                   </dl>
                 </div>
@@ -228,7 +228,7 @@
                 <!-- 閉じるボタン -->
                 <button
                   @click="handleClose"
-                  class="w-full px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 hover:shadow-md active:scale-[0.98]"
+                  class="w-full px-6 py-3 bg-lux-gold/10 border border-lux-gold/30 text-lux-gold rounded-xl hover:bg-lux-gold/20 hover:border-lux-gold/40 transition-all duration-200 font-medium text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-lux-gold hover:shadow-md active:scale-[0.98]"
                 >
                   閉じる
                 </button>
@@ -444,6 +444,101 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Luxury modal glass effect */
+.lux-modal-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 15, 15, 0.95) 0%,
+    rgba(10, 10, 10, 0.98) 100%
+  );
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.border-lux-gold\/20 {
+  border-color: hsl(43 74% 49% / 0.2);
+}
+
+.border-lux-gold\/40 {
+  border-color: hsl(43 74% 49% / 0.4);
+}
+
+.bg-lux-noir-light\/90 {
+  background-color: hsl(0 0% 8% / 0.9);
+}
+
+.text-lux-gold {
+  color: hsl(43 74% 49%);
+}
+
+.text-lux-gold\/60 {
+  color: hsl(43 74% 49% / 0.6);
+}
+
+.ring-lux-gold {
+  --tw-ring-color: hsl(43 74% 49%);
+}
+
+.focus\:ring-lux-gold:focus {
+  --tw-ring-color: hsl(43 74% 49%);
+}
+
+.bg-lux-noir {
+  background-color: hsl(0 0% 4%);
+}
+
+.bg-lux-noir-light {
+  background-color: hsl(0 0% 8%);
+}
+
+.bg-lux-noir-light\/95 {
+  background-color: hsl(0 0% 8% / 0.95);
+}
+
+.text-lux-cream {
+  color: hsl(45 30% 96%);
+}
+
+.text-lux-silver\/60 {
+  color: hsl(220 10% 70% / 0.6);
+}
+
+.text-lux-silver\/80 {
+  color: hsl(220 10% 70% / 0.8);
+}
+
+.bg-lux-gold\/5 {
+  background-color: hsl(43 74% 49% / 0.05);
+}
+
+.bg-lux-gold\/10 {
+  background-color: hsl(43 74% 49% / 0.1);
+}
+
+.from-lux-gold\/5 {
+  --tw-gradient-from: hsl(43 74% 49% / 0.05);
+}
+
+.to-lux-gold\/10 {
+  --tw-gradient-to: hsl(43 74% 49% / 0.1);
+}
+
+.border-lux-gold\/10 {
+  border-color: hsl(43 74% 49% / 0.1);
+}
+
+.bg-lux-silver\/10 {
+  background-color: hsl(220 10% 70% / 0.1);
+}
+
+.border-lux-silver\/20 {
+  border-color: hsl(220 10% 70% / 0.2);
+}
+
+.font-display {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
 /* Modal animation */
 .modal-enter-active,
 .modal-leave-active {
