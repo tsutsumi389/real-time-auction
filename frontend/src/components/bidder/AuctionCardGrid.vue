@@ -66,7 +66,7 @@ const props = defineProps({
   },
   emptyMessage: {
     type: String,
-    default: 'No auctions found'
+    default: 'オークションが見つかりませんでした'
   },
   skeletonCount: {
     type: Number,

@@ -3,7 +3,7 @@
     class="auction-card-skeleton lux-glass-strong rounded-2xl overflow-hidden border border-lux-gold/10"
     role="status"
     aria-busy="true"
-    aria-label="Loading auction card"
+    aria-label="オークションカードを読み込み中"
   >
     <!-- Thumbnail Skeleton -->
     <div class="relative w-full h-52 bg-lux-noir-medium">
@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    <span class="sr-only">Loading</span>
+    <span class="sr-only">読み込み中</span>
   </div>
 </template>
 

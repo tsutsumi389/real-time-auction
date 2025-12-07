@@ -2,7 +2,7 @@
   <article
     class="auction-card lux-glass-strong rounded-2xl overflow-hidden border border-lux-gold/10 hover:border-lux-gold/30 transition-all duration-500 group"
     role="article"
-    :aria-label="`${auction.title} auction`"
+    :aria-label="`${auction.title}のオークション`"
   >
     <!-- Thumbnail Image -->
     <div class="relative w-full h-52 bg-lux-noir-light overflow-hidden">
@@ -16,7 +16,7 @@
       <div v-else class="w-full h-full flex items-center justify-center bg-lux-noir-medium">
         <div class="text-center">
           <ImageOff class="mx-auto h-12 w-12 mb-3 text-lux-silver/30" :stroke-width="1.5" />
-          <p class="text-xs text-lux-silver/40 font-medium tracking-wide">NO IMAGE</p>
+          <p class="text-xs text-lux-silver/40 font-medium tracking-wide">画像なし</p>
         </div>
       </div>
 
@@ -36,7 +36,7 @@
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-lux-noir/80 backdrop-blur-sm border border-lux-gold/20">
           <Package2 class="h-4 w-4 text-lux-gold" :stroke-width="1.5" />
           <span class="text-sm font-semibold text-lux-cream">{{ auction.item_count }}</span>
-          <span class="text-xs text-lux-silver">items</span>
+          <span class="text-xs text-lux-silver">点</span>
         </div>
       </div>
     </div>
@@ -50,7 +50,7 @@
 
       <!-- Description -->
       <p class="text-sm text-lux-silver/70 mb-5 line-clamp-2 leading-relaxed">
-        {{ auction.description || 'No description available' }}
+        {{ auction.description || 'オークションの説明はありません' }}
       </p>
 
       <!-- Meta Info -->
@@ -61,7 +61,7 @@
             <Calendar class="h-4 w-4 text-lux-gold/60" :stroke-width="1.5" />
           </div>
           <div class="min-w-0">
-            <p class="text-xs text-lux-silver/50 uppercase tracking-wider mb-0.5">Started</p>
+            <p class="text-xs text-lux-silver/50 tracking-wider mb-0.5">開始</p>
             <p class="text-lux-cream text-sm font-medium truncate">{{ formatDate(auction.started_at) }}</p>
           </div>
         </div>
@@ -72,7 +72,7 @@
             <Clock class="h-4 w-4 text-lux-gold/60" :stroke-width="1.5" />
           </div>
           <div class="min-w-0">
-            <p class="text-xs text-lux-silver/50 uppercase tracking-wider mb-0.5">Updated</p>
+            <p class="text-xs text-lux-silver/50 tracking-wider mb-0.5">更新</p>
             <p class="text-lux-cream text-sm font-medium truncate">{{ formatDate(auction.updated_at) }}</p>
           </div>
         </div>
@@ -83,21 +83,21 @@
         <button
           @click="handleViewDetails"
           class="flex-1 h-11 rounded-xl bg-lux-noir-medium border border-lux-noir-soft text-sm font-medium text-lux-cream tracking-wide hover:border-lux-gold/40 hover:bg-lux-noir-soft transition-all duration-300"
-          :aria-label="`View details of ${auction.title}`"
+          :aria-label="`${auction.title}の詳細を見る`"
         >
-          Details
+          詳細を見る
         </button>
         <button
           v-if="auction.status === 'active'"
           @click="handleJoinAuction"
           class="flex-1 h-11 rounded-xl lux-btn-gold text-sm font-semibold tracking-wider flex items-center justify-center gap-2"
-          :aria-label="`Join ${auction.title} auction`"
+          :aria-label="`${auction.title}に参加する`"
         >
           <span class="relative flex h-2 w-2">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lux-noir opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-lux-noir"></span>
           </span>
-          JOIN LIVE
+          参加する
         </button>
       </div>
     </div>
@@ -106,10 +106,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { Package2, Calendar, Clock, ImageOff } from 'lucide-vue-next'
-
-const router = useRouter()
 
 const props = defineProps({
   auction: {
@@ -125,10 +122,10 @@ const imageError = ref(false)
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
+  return new Intl.DateTimeFormat('ja-JP', {
     year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
   }).format(date)
@@ -168,13 +165,13 @@ const getStatusIndicatorClass = () => {
 const getStatusLabel = () => {
   switch (props.auction.status) {
     case 'active':
-      return 'LIVE'
+      return '開催中'
     case 'ended':
-      return 'ENDED'
+      return '終了'
     case 'cancelled':
-      return 'CANCELLED'
+      return '中止'
     default:
-      return props.auction.status?.toUpperCase() || 'UNKNOWN'
+      return props.auction.status || '不明'
   }
 }
 
