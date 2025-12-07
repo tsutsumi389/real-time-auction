@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen" :class="layoutClass">
     <!-- 入札者用ヘッダー（入札者認証が必要なルートのみ） -->
     <BidderHeader v-if="shouldShowBidderHeader" />
 
@@ -17,6 +17,11 @@ const route = useRoute()
 // 入札者用ヘッダーを表示するかどうか
 const shouldShowBidderHeader = computed(() => {
   return route.meta.requiresBidderAuth === true
+})
+
+// 入札者用ルートの場合はラグジュアリーテーマ、それ以外は通常の背景
+const layoutClass = computed(() => {
+  return route.meta.requiresBidderAuth === true ? 'bg-lux-noir' : 'bg-gray-50'
 })
 </script>
 
