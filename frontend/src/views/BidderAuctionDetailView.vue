@@ -47,16 +47,16 @@
           <button
             v-if="auction && auction.status === 'active'"
             @click="handleGoToLive"
-            class="group inline-flex items-center px-6 py-2.5 text-sm font-medium text-lux-noir bg-gradient-to-r from-lux-gold to-yellow-500 rounded-xl shadow-md shadow-lux-gold/20 hover:shadow-lg hover:shadow-lux-gold/30 transform hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lux-gold focus:ring-offset-lux-noir"
+            class="group inline-flex items-center px-6 py-3 text-sm font-semibold text-lux-noir bg-gradient-to-r from-lux-gold via-yellow-400 to-lux-gold rounded-xl shadow-lg shadow-lux-gold/30 hover:shadow-xl hover:shadow-lux-gold/50 transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lux-gold focus:ring-offset-lux-noir border-2 border-lux-gold/50 hover:border-lux-gold animate-shimmer"
             aria-label="ライブ入札画面へ移動"
           >
-            <span class="relative flex h-2 w-2 mr-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lux-noir opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-lux-noir"></span>
+            <span class="relative flex h-2.5 w-2.5 mr-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
             </span>
             ライブ入札へ
-            <svg class="h-5 w-5 ml-2 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            <svg class="h-5 w-5 ml-2.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
             </svg>
           </button>
         </nav>
@@ -663,6 +663,21 @@ onUnmounted(() => {
   font-family: 'Cormorant Garamond', Georgia, serif;
 }
 
+/* Shimmer animation for live button */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   .auction-detail-content,
@@ -671,7 +686,8 @@ onUnmounted(() => {
     opacity: 1;
   }
 
-  .animate-pulse {
+  .animate-pulse,
+  .animate-shimmer {
     animation: none;
   }
 }
