@@ -41,8 +41,8 @@
                 :aria-expanded="isMenuOpen"
                 aria-haspopup="true"
                 aria-label="ユーザーメニューを開く"
-                class="h-10 w-10 rounded-full bg-gradient-to-br from-lux-gold to-lux-gold-dark flex items-center justify-center text-lux-noir font-semibold text-sm transition-transform duration-200 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-gold focus-visible:ring-offset-2 focus-visible:ring-offset-lux-noir"
-                :class="{ 'ring-2 ring-lux-gold scale-105': isMenuOpen }"
+                class="h-10 w-10 rounded-full bg-gradient-to-br from-lux-gold via-amber-400 to-lux-gold-dark flex items-center justify-center text-lux-noir font-bold text-base shadow-lg shadow-lux-gold/50 border-2 border-lux-gold/30 transition-all duration-200 ease-out hover:scale-110 hover:shadow-xl hover:shadow-lux-gold/70 hover:border-lux-gold/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lux-gold focus-visible:ring-offset-2 focus-visible:ring-offset-lux-noir"
+                :class="{ 'ring-2 ring-lux-gold scale-110 shadow-xl shadow-lux-gold/70': isMenuOpen }"
               >
                 {{ userInitial }}
               </button>
@@ -68,7 +68,7 @@
                     <!-- アバター -->
                     <div class="flex-shrink-0">
                       <div
-                        class="h-10 w-10 rounded-full bg-gradient-to-br from-lux-gold to-lux-gold-dark flex items-center justify-center text-lux-noir font-semibold text-sm"
+                        class="h-10 w-10 rounded-full bg-gradient-to-br from-lux-gold via-amber-400 to-lux-gold-dark flex items-center justify-center text-lux-noir font-bold text-base shadow-md shadow-lux-gold/40 border-2 border-lux-gold/20"
                       >
                         {{ userInitial }}
                       </div>
